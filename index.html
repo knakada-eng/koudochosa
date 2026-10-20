@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="現地調査">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="leaflet.css">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>現地調査入力</title>
 <style>
@@ -76,6 +77,36 @@
   .warnbox { background:var(--errbg); color:var(--err); border-radius:10px; padding:10px 12px; font-size:15px; }
   .undo { position:fixed; left:12px; right:12px; bottom:16px; max-width:616px; margin:0 auto; background:#14232d; color:#fff; border-radius:12px; padding:8px 8px 8px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px; z-index:45; }
   .undo button { background:#2c4f63; border:0; color:#fff; font-weight:bold; font-size:16px; border-radius:8px; padding:10px 14px; white-space:nowrap; }
+  .seg { display:flex; background:#e3e8eb; border-radius:12px; padding:4px; gap:4px; margin-bottom:12px; }
+  .seg button { flex:1; border:0; background:transparent; border-radius:9px; padding:10px; font:inherit; font-size:16px; font-weight:bold; color:var(--mute); }
+  .seg button.on { background:#fff; color:var(--fg); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  .reclist { display:flex; flex-direction:column; gap:8px; }
+  .reccard { display:grid; grid-template-columns:72px 1fr; gap:10px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px; text-align:left; font:inherit; color:var(--fg); }
+  .reccard img, .reccard .noimg { width:72px; height:54px; object-fit:cover; border-radius:6px; background:#dfe5e9; display:block; }
+  .reccard .t { font-weight:bold; }
+  .reccard .d { font-size:13px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .badges { display:flex; gap:6px; flex-wrap:wrap; margin-top:3px; }
+  .bdg { font-size:11px; padding:1px 7px; border-radius:9px; background:#e8eef2; color:var(--mute); }
+  .bdg.here { background:#dff0e4; color:var(--ok); } .bdg.gps { background:#e8f1fb; color:#0b4f8a; } .bdg.mark { background:#f3eafa; color:#6b2f8f; }
+  .bdg.warn { background:var(--warnbg); color:var(--warn); } .bdg.bad { background:var(--errbg); color:var(--err); }
+  .photos { display:flex; gap:8px; overflow-x:auto; }
+  .photos img { height:120px; border-radius:8px; display:block; }
+  .minimap { height:220px; border-radius:10px; margin-top:8px; background:#dfe5e9; isolation:isolate; }   /* 地図のボタンが上の画面に重ならないように */
+  #pickMap { isolation:isolate; }
+  .posline { font-size:14px; margin-top:6px; }
+  .btnrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .btnrow .btn { flex:1; min-width:140px; }
+  #picker { position:fixed; inset:0; z-index:60; background:#000; display:flex; flex-direction:column; }
+  #pickMap { flex:1; }
+  #pickBar { background:#16303f; color:#fff; padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:8px; }
+  #pickBar .btnrow { margin:0; }
+  #pickHint { font-size:14px; }
+  .cross { position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px; z-index:500; pointer-events:none; }
+  .cross::before, .cross::after { content:''; position:absolute; background:#ff2d2d; box-shadow:0 0 0 1px #fff; }
+  .cross::before { left:21px; top:0; width:2px; height:44px; } .cross::after { top:21px; left:0; height:2px; width:44px; }
+  #pickWrap { position:relative; flex:1; display:flex; }
+  #wait { position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; }
+  #wait .box { background:#fff; border-radius:14px; padding:18px; width:min(320px,86vw); text-align:center; }
   .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#14232d; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .2s; z-index:50; pointer-events:none; }
   .toast.on { opacity:.95; }
 </style>
@@ -98,6 +129,56 @@
       <button class="btn acc wide" id="connGo">登録</button>
       <p id="connMsg" style="font-size:14px;color:var(--err)"></p>
     </div>
+  </section>
+
+  <div class="seg hidden" id="modebar"><button id="mKoudo">耕土厚</button><button id="mSrv">調査票（写真）</button></div>
+
+  <!-- 調査票の一覧 -->
+  <section id="srvList" class="hidden">
+    <button class="btn acc wide" id="srvNew" style="margin-top:0;font-size:18px;padding:16px">📷 撮影して調査票を作る</button>
+    <div style="font-size:12px;color:var(--mute);text-align:center;margin-top:4px">写真は台帳と同じ 1280×960（4:3）で保存します。スマホを横にして撮ってください。</div>
+    <input type="file" id="srvFile" accept="image/*" capture="environment" class="hidden">
+    <div class="card" style="margin-top:12px">
+      <div id="gpsState" style="font-size:14px">位置：取得中…</div>
+      <div class="btnrow">
+        <button class="btn sub" id="headPerm">方位を使う（最初に1回）</button>
+        <button class="btn sub" id="markBtn">目印でずれを測る</button>
+        <button class="btn sub" id="tileBtn">この辺りの航空写真を保存</button>
+      </div>
+      <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h2>調査票（<span id="srvCount">0</span>件）</h2>
+      <div class="reclist" id="srvItems"></div>
+    </div>
+  </section>
+
+  <!-- 1件の調査票 -->
+  <section id="srvRec" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 id="recTitle" style="margin:0">写真番号</h2><span id="recTime" style="font-size:12px;color:var(--mute)"></span></div>
+      <div class="photos" id="recPhotos" style="margin-top:8px"></div>
+      <button class="btn sub wide" id="recAddPhoto">＋ 写真を追加</button>
+      <input type="file" id="recFile" accept="image/*" capture="environment" class="hidden">
+    </div>
+    <div class="card">
+      <div class="field"><label>区画（空でもよい）</label><input type="text" id="recPlot" list="plotNames" autocomplete="off"><datalist id="plotNames"></datalist></div>
+      <div class="field"><label>調査内容（調査紙では3行まで）</label><textarea id="recText" rows="4" style="width:100%;font:inherit;font-size:17px;padding:10px;border:1px solid var(--line);border-radius:10px" placeholder="例）PH300B×400H&#10;天端Co B200 t100"></textarea></div>
+    </div>
+    <div class="card">
+      <h2>位置と撮影方向</h2>
+      <div class="posline" id="recPos"></div>
+      <div id="recMap" class="minimap"></div>
+      <div class="btnrow">
+        <button class="btn go" id="recHere">今ここに合わせる</button>
+        <button class="btn sub" id="recSuspect">今ここは怪しい</button>
+      </div>
+      <div class="posline" id="recHead"></div>
+      <div class="btnrow"><button class="btn sub" id="recHeadFix">撮影方向を地図で直す</button></div>
+      <div style="font-size:12px;color:var(--mute);margin-top:6px">地図の 青＝GPS（撮影時）、紫＝目印で補正、緑＝今ここ、黄色の線＝撮影方向。位置は上書きせず全部残ります。</div>
+    </div>
+    <button class="btn acc wide" id="recDone">一覧に戻る</button>
+    <button class="btn dangerline wide" id="recDel">この調査票を削除…</button>
   </section>
 
   <!-- 区画を選ぶ画面 -->
@@ -146,9 +227,14 @@
   </section>
 </main>
 <div class="toast" id="toast"></div>
+<div id="picker" class="hidden"><div id="pickWrap"><div id="pickMap"></div><div class="cross"></div></div>
+  <div id="pickBar"><div id="pickHint"></div><div class="btnrow"><button class="btn sub" id="pickLayer">地形図にする</button><button class="btn sub" id="pickGps">GPSの位置へ</button></div>
+  <div class="btnrow"><button class="btn sub" id="pickCancel">やめる</button><button class="btn go" id="pickOk">この位置で決定</button></div></div></div>
+<div id="wait" class="hidden"><div class="box"><div id="waitText" style="font-size:16px;margin-bottom:12px">位置を取得中…</div><button class="btn sub wide" id="waitSkip">待たずに保存</button></div></div>
 <div class="sheet hidden" id="sheet"><div class="sheetbox" id="sheetBox"></div></div>
 <div class="undo hidden" id="undo"><span id="undoText"></span><button id="undoBtn">元に戻す</button></div>
 
+<script src="leaflet.js"></script>
 <script>
 "use strict";
 /* ---------------- 設定・保存 ---------------- */
@@ -171,7 +257,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.2';
+const VERSION = 'v0.3';
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
 let keyBad = false;                      // 合言葉が止められた・間違っている
 async function call(fn, ...args) {
@@ -237,6 +323,7 @@ function localState(type, plot) {        // サーバーの値＋まだ届いて
 }
 /* 届いた操作を、スマホに置いているサーバーの値へ反映 */
 function applyAcked(o) {
+  if (o.kind === 'srv') return;           // 調査票の操作は、スマホ側の調査票の記録で持っている
   const k = cacheKey(o.type, o.plot);
   if (o.kind === 'plot') {
     if (o.action === '削除') { LS.set(trashKey(o.type, o.plot), LS.get(k, emptyState())); LS.del(k); }
@@ -331,6 +418,7 @@ async function flush() {
     if (res.rejected.length) showMsg('保存できなかった入力があります：' + lastError);
     if (PLOT) { STATE = localState(TYPE, PLOT); render(); }   // 行の表示を「送信待ち」→「保存済み」に
     online = true;
+    if (typeof uploadPhotos === 'function') setTimeout(uploadPhotos, 50);
   } catch (e) {
     if (e.server && e.message === 'KEY') { keyBad = true; online = true; }
     else if (e.server) { online = true; lastError = e.message; }
@@ -342,18 +430,21 @@ async function flush() {
 }
 function updateSync() {
   const s = $('sync');
+  const ph = (typeof photoPending === 'number' && photoPending) ? '・写真 ' + photoPending + '枚' : '';
+  if (!keyBad && !queue.length && ph) { s.className = 'wait'; s.textContent = (online ? '送信中… ' : '送信待ち（スマホに保存済み）') + ph.slice(1); return; }
   if (keyBad) { s.className = 'err'; s.textContent = 'このスマホの合言葉が使えません（止められたか、変わりました）。入力はスマホに残っています。管理する人に連絡してください'; }
-  else if (queue.length && !online) { s.className = 'wait'; s.textContent = '送信待ち ' + queue.length + '件（スマホに保存済み・電波が戻ると自動で送ります）'; }
-  else if (queue.length) { s.className = 'wait'; s.textContent = '送信中… ' + queue.length + '件'; }
+  else if (queue.length && !online) { s.className = 'wait'; s.textContent = '送信待ち ' + queue.length + '件' + ph + '（スマホに保存済み・電波が戻ると自動で送ります）'; }
+  else if (queue.length) { s.className = 'wait'; s.textContent = '送信中… ' + queue.length + '件' + ph; }
   else if (lastError) { s.className = 'err'; s.textContent = '一部保存できませんでした'; }
   else { s.className = ''; s.textContent = '✓ すべて保存済み'; }
 }
-window.addEventListener('online', () => { online = true; flush(); });
+window.addEventListener('online', () => { online = true; flush(); if (typeof uploadPhotos === 'function') uploadPhotos(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) flush(); });
 
 /* ---------------- 画面：区画を選ぶ ---------------- */
 function showHome() {
-  PLOT = null; LS.del('current');
+  PLOT = null; LS.del('current'); LS.set('mode', 'koudo');
+  hideSurvey(); setModeBar('koudo');
   $('home').classList.remove('hidden'); $('plotView').classList.add('hidden'); $('back').classList.add('hidden');
   $('title').textContent = (TYPE || '現地調査入力');
   showMsg('');
@@ -491,7 +582,8 @@ async function openPlot(plot) {
   plot = norm(plot); if (!plot) return;
   const isNew = !currentPlots().some(e => e.plot === plot && (e.first || !e.registered));
   PLOT = plot; LS.set('current', { type: TYPE, plot });
-  $('home').classList.add('hidden'); $('plotView').classList.remove('hidden'); $('back').classList.remove('hidden');
+  hideSurvey(); $('modebar').classList.add('hidden');
+  $('home').classList.add('hidden'); $('plotView').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = '← 区画';
   setTitle();
   showMsg(''); $('freePlot').value = '';
   STATE = localState(TYPE, plot);
@@ -656,14 +748,14 @@ $('finish').onclick = () => {
   setTimeout(showHome, 600);
 };
 $('reopen').onclick = () => { record({ kind: 'status', action: '再開' }); toast('修正できるようにしました'); };
-$('back').onclick = showHome;
+$('back').onclick = () => { if (!$('srvRec').classList.contains('hidden')) showSurvey(); else showHome(); };
 $('who').value = LS.get('who', ''); $('who').onchange = () => LS.set('who', $('who').value.trim());  // 記録シートの「入力者」に入る（スマホに覚える）
 $('wipe').onclick = () => {           // 個人のスマホに調査データを残さないため
-  if (queue.length) { alert('まだ送れていない入力が ' + queue.length + ' 件あります。電波のある所で「すべて保存済み」になってから押してください。'); return; }
+  if (queue.length || photoPending) { alert('まだ送れていない入力が ' + (queue.length + photoPending) + ' 件あります。電波のある所で「すべて保存済み」になってから押してください。'); return; }
   if (!confirm('このスマホに残っている調査の記録を消します。\n（スプレッドシートの記録は消えません）')) return;
   Object.keys(localStorage).filter(k => k.startsWith('chosa:') && !['chosa:cfg', 'chosa:who', 'chosa:conn'].includes(k)).forEach(k => localStorage.removeItem(k));
   LS.set('plots:' + TYPE, (CFG.visited || {})[TYPE] || []);
-  toast('このスマホの記録を消しました'); renderPlotList();
+  clearPhotos().then(() => { refreshPending(); toast('このスマホの記録を消しました'); renderPlotList(); });
 };
 $('search').oninput = renderPlotList;
 $('freeGo').onclick = () => openPlot($('freePlot').value);
@@ -672,7 +764,7 @@ $('typeSel').onchange = () => { TYPE = $('typeSel').value; LS.set('type', TYPE);
 
 /* ---------------- 起動 ---------------- */
 function showSetup(msg) {
-  $('setup').classList.remove('hidden'); $('home').classList.add('hidden'); $('plotView').classList.add('hidden');
+  $('setup').classList.remove('hidden'); $('home').classList.add('hidden'); $('plotView').classList.add('hidden'); hideSurvey(); $('modebar').classList.add('hidden');
   $('sync').className = ''; $('sync').textContent = '接続コードの登録が必要です'; $('connMsg').textContent = msg || '';
 }
 $('connGo').onclick = async () => {
@@ -716,12 +808,394 @@ async function start() {
   TYPE = LS.get('type', null); if (!typeOf(TYPE)) TYPE = CFG.types[0].name; sel.value = TYPE;
   $('typeCard').classList.toggle('hidden', CFG.types.length < 2);
   const cur = LS.get('current', null);
-  if (cur && cur.type === TYPE && cur.plot) openPlot(cur.plot); else showHome();      // 前回開いていた区画に戻る
+  if (LS.get('mode', 'koudo') === 'srv') showSurvey();
+  else if (cur && cur.type === TYPE && cur.plot) openPlot(cur.plot); else showHome();      // 前回開いていた区画に戻る
+  refreshPending();
   flush(); updateSync();
 }
-start();
+// start() は調査票の部分（下のscript）を読み込んだあとに呼ぶ
 // 画面をスマホに保存して、電波がなくても開けるようにする
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+<script>
+"use strict";
+/* =====================================================================
+ *  調査票（写真＋内容＋位置）
+ *   ・写真は撮った時点で 1600px に縮めてスマホ（IndexedDB）に保存し、電波があればドライブへ送る
+ *   ・位置は上書きしない：GPS（撮影時）は固定、今ここ・目印で補正は候補として全部残す
+ *   ・使う位置：今ここ（一番新しい）→ 目印で補正 → GPS。今ここに「怪しい」を付けると今ここは飛ばす
+ * ===================================================================== */
+var photoPending = 0;
+const GSI = { photo: 'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', std: 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png' };
+const ATT = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>';
+let lastFix = null, geoWatch = null, heading = null, headingOn = false, curRec = null, recMap = null;
+
+/* ---------- 写真の保存場所（IndexedDB） ---------- */
+const idb = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('chosa', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('photos', { keyPath: 'pid' });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction('photos', mode); const st = t.objectStore('photos'); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); };
+  return {
+    put: v => tx('readwrite', st => st.put(v)),
+    get: k => tx('readonly', st => st.get(k)),
+    all: () => tx('readonly', st => st.getAll()),
+    clear: () => tx('readwrite', st => st.clear())
+  };
+})();
+async function clearPhotos() { try { await idb.clear(); } catch (e) {} LS.del('srv:ops'); LS.del('srv:no'); LS.del('srv:offset'); }
+async function refreshPending() { try { photoPending = (await idb.all()).filter(p => !p.sent).length; } catch (e) { photoPending = 0; } updateSync(); }
+const urlCache = {};
+async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p) return ''; return (urlCache[pid] = URL.createObjectURL(p.blob)); }
+
+/* ---------- 写真を写真台帳と同じ規格にする（4:3・1280×960、向きを直してJPEG） ----------
+ *  台帳（現況調査写真）に貼っている写真と同じ 1280×960。4:3 でない写真は真ん中を 4:3 に切り出す。
+ *  縦に構えて撮った写真は 960×1280（台帳の枠は横長なので、なるべく横向きで撮る）。 */
+function shrink(file, longSide = 1280) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight, land = w >= h;
+      const target = land ? 4 / 3 : 3 / 4;
+      let sw = w, sh = h;
+      if (w / h > target) sw = Math.round(h * target); else sh = Math.round(w / target);    // 4:3 に切り出す
+      const outW = land ? longSide : Math.round(longSide * 3 / 4), outH = land ? Math.round(longSide * 3 / 4) : longSide;
+      const c = document.createElement('canvas'); c.width = outW; c.height = outH;
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+      g.drawImage(img, Math.round((w - sw) / 2), Math.round((h - sh) / 2), sw, sh, 0, 0, outW, outH);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res({ blob: b, portrait: !land }) : rej(new Error('写真を変換できませんでした')), 'image/jpeg', 0.88);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('写真を読み込めませんでした')); };
+    img.src = url;
+  });
+}
+
+/* ---------- 調査票の記録（このスマホで行った操作。送信は耕土厚と同じ送信待ちで） ---------- */
+function srvOps() { return LS.get('srv:ops', []); }
+function recordSrv(action, rec, data) {
+  const op = { id: uuid(), at: nowIso(), kind: 'srv', action, rec, data: data || {}, who: LS.get('who', '') };
+  const all = srvOps(); all.push(op); LS.set('srv:ops', all);
+  queue.push(op); LS.set('queue', queue); flush();
+  return op;
+}
+function reduceSurvey(rows) {     // コード.gs の reduceSurvey と同じ決まり
+  const out = {};
+  rows.slice().sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : 0).forEach(r => {
+    const d = r.data || {}; let s = out[r.rec];
+    if (r.action === '作成') { if (s) return; s = out[r.rec] = { id: r.rec, no: d.no, created: r.at, photos: (d.photos || []).slice(), plot: d.plot || '', text: '', gps: d.gps || null, heading: d.heading ?? null, headingSrc: d.heading == null ? '' : '方位センサー', cands: [], suspect: false, deleted: false }; if (d.mark) s.cands.push({ src: 'mark', lat: d.mark.lat, lon: d.mark.lon, at: r.at }); return; }
+    if (!s) return;
+    if (r.action === '内容') { if (d.field === '区画') s.plot = d.value || ''; else if (d.field === '内容') s.text = d.value || ''; }
+    else if (r.action === '写真追加') { if (!s.photos.includes(d.pid)) s.photos.push(d.pid); }
+    else if (r.action === '位置') { s.cands.push({ src: d.src, lat: d.lat, lon: d.lon, at: r.at }); if (d.src === 'here' || d.src === 'pc') s.suspect = false; }
+    else if (r.action === '怪しい') s.suspect = !!d.value;
+    else if (r.action === '方位') { s.heading = d.value === '' ? null : d.value; s.headingSrc = '手で修正'; }
+    else if (r.action === '削除') s.deleted = true; else if (r.action === '復元') s.deleted = false;
+  });
+  return out;
+}
+function adopted(s) {
+  const last = srcs => { const c = s.cands.filter(x => srcs.includes(x.src)); return c.length ? c[c.length - 1] : null; };
+  const hand = last(['here', 'pc']); if (hand && !s.suspect) return { kind: 'here', label: '今ここ', lat: hand.lat, lon: hand.lon };
+  const mk = last(['mark']); if (mk) return { kind: 'mark', label: '目印で補正', lat: mk.lat, lon: mk.lon };
+  if (s.gps) return { kind: 'gps', label: 'GPS', lat: s.gps.lat, lon: s.gps.lon };
+  return { kind: 'none', label: '位置なし', lat: null, lon: null };
+}
+const recs = () => reduceSurvey(srvOps());
+function distM(a, b, c, d) { const r = Math.PI / 180, x = (d - b) * r * Math.cos((a + c) / 2 * r), y = (c - a) * r; return Math.hypot(x, y) * 6371000; }
+function bearing(a, b, c, d) { const r = Math.PI / 180, y = Math.sin((d - b) * r) * Math.cos(c * r), x = Math.cos(a * r) * Math.sin(c * r) - Math.sin(a * r) * Math.cos(c * r) * Math.cos((d - b) * r); return (Math.atan2(y, x) / r + 360) % 360; }
+const dirName = h => h == null ? '' : ['北', '北東', '東', '南東', '南', '南西', '西', '北西'][Math.round(h / 45) % 8];
+
+/* ---------- GPS と 方位 ---------- */
+function startGeo() {
+  if (geoWatch !== null || !navigator.geolocation) return;
+  geoWatch = navigator.geolocation.watchPosition(p => {
+    lastFix = { lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy * 10) / 10, t: Date.now() };
+    showGps();
+  }, e => { $('gpsState').textContent = e.code === 1 ? '位置：使えません（設定で位置情報を許可してください）' : '位置：取得できていません'; }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+}
+function stopGeo() { if (geoWatch !== null) { navigator.geolocation.clearWatch(geoWatch); geoWatch = null; } }
+function freshFix(sec = 15) { return lastFix && Date.now() - lastFix.t < sec * 1000 ? lastFix : null; }
+function showGps() {
+  const f = freshFix(30);
+  $('gpsState').innerHTML = f ? '位置：<b>±' + Math.round(f.acc) + 'm</b>' + (f.acc > 10 ? '（ずれが大きめ。少し待つか、撮ったあと「今ここ」で直す）' : '') : '位置：取得中…';
+  $('gpsState').style.color = f && f.acc > 10 ? 'var(--warn)' : '';
+  const off = activeOffset();
+  $('markState').textContent = off ? '目印のずれ：東へ' + off.e.toFixed(1) + 'm・北へ' + off.n.toFixed(1) + 'm を差し引き中（' + new Date(off.t).toTimeString().slice(0, 5) + 'に測定・30分有効）' : '';
+  $('headPerm').classList.toggle('hidden', headingOn);
+}
+function onOrient(e) {
+  let h = null;
+  if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;
+  else if (e.absolute && typeof e.alpha === 'number') h = (360 - e.alpha) % 360;
+  if (h !== null) { heading = h; if (!headingOn) { headingOn = true; showGps(); } }
+}
+function startHeading() {
+  if (typeof DeviceOrientationEvent === 'undefined') return;
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') return;   // iPhone はボタンで許可をもらう
+  window.addEventListener('deviceorientationabsolute', onOrient); window.addEventListener('deviceorientation', onOrient);
+}
+$('headPerm').onclick = async () => {
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const r = await DeviceOrientationEvent.requestPermission();
+      if (r !== 'granted') { toast('方位が許可されませんでした'); return; }
+    }
+    window.addEventListener('deviceorientation', onOrient); window.addEventListener('deviceorientationabsolute', onOrient);
+    toast('方位を使います');
+  } catch (e) { toast('この端末では方位が使えません'); }
+};
+
+/* ---------- 目印でずれを差し引く（補助） ---------- */
+function activeOffset() {
+  const o = LS.get('srv:offset', null);
+  if (!o || Date.now() - o.t > 30 * 60 * 1000) return null;
+  if (lastFix && distM(o.lat, o.lon, lastFix.lat, lastFix.lon) > 500) return null;     // 500m 以上離れたら使わない
+  return o;
+}
+function applyOffset(f) {
+  const o = activeOffset(); if (!o || !f) return null;
+  const r = Math.PI / 180;
+  return { lat: f.lat + o.n / 6371000 / r, lon: f.lon + o.e / (6371000 * Math.cos(f.lat * r)) / r };
+}
+$('markBtn').onclick = () => {
+  const f = freshFix(20);
+  if (!f) { toast('先に位置が取れるまで待ってください'); return; }
+  openPicker({ mode: 'mark', center: [f.lat, f.lon], gps: f, hint: '目印（図面や航空写真に写っている物）の上に立って、十字を自分の位置に合わせてください' }, c => {
+    const r = Math.PI / 180;
+    const o = { n: (c.lat - f.lat) * r * 6371000, e: (c.lng - f.lon) * r * 6371000 * Math.cos(f.lat * r), t: Date.now(), lat: f.lat, lon: f.lon };
+    LS.set('srv:offset', o); showGps(); toast('ずれを記録しました（このあと30分、近くで撮る写真に使います）');
+  });
+};
+
+/* ---------- 画面 ---------- */
+function setModeBar(m) { $('modebar').classList.remove('hidden'); $('mKoudo').classList.toggle('on', m === 'koudo'); $('mSrv').classList.toggle('on', m === 'srv'); }
+function hideSurvey() { ['srvList', 'srvRec'].forEach(id => $(id).classList.add('hidden')); curRec = null; }
+$('mKoudo').onclick = () => { stopGeo(); showHome(); };
+$('mSrv').onclick = () => showSurvey();
+function showSurvey() {
+  PLOT = null; LS.set('mode', 'srv'); curRec = null;
+  ['home', 'plotView', 'srvRec'].forEach(id => $(id).classList.add('hidden'));
+  $('srvList').classList.remove('hidden'); $('back').classList.add('hidden'); setModeBar('srv');
+  $('title').textContent = '調査票'; showMsg('');
+  startGeo(); startHeading(); showGps(); renderList();
+}
+async function renderList() {
+  const all = Object.values(recs()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
+  $('srvCount').textContent = all.length;
+  const box = $('srvItems'); box.innerHTML = '';
+  if (!all.length) { box.innerHTML = '<span style="color:var(--mute);font-size:14px">まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。</span>'; return; }
+  const photos = await idb.all().catch(() => []);
+  const sent = {}; photos.forEach(p => sent[p.pid] = p.sent);
+  for (const s of all) {
+    const a = adopted(s), b = document.createElement('button'); b.className = 'reccard';
+    const im = s.photos[0] ? await photoUrl(s.photos[0]) : '';
+    const unsent = s.photos.filter(pid => sent[pid] === false).length;
+    b.innerHTML = (im ? '<img alt="">' : '<div class="noimg"></div>') + '<div style="min-width:0"><div class="t"></div><div class="d"></div><div class="badges"></div></div>';
+    if (im) b.querySelector('img').src = im;
+    b.querySelector('.t').textContent = 'No.' + s.no + (s.plot ? '　区画 ' + s.plot : '');
+    b.querySelector('.d').textContent = (s.text || '（内容なし）').split('\n')[0];
+    const bd = b.querySelector('.badges');
+    const add = (t, c) => { const x = document.createElement('span'); x.className = 'bdg ' + c; x.textContent = t; bd.append(x); };
+    add(a.label + (a.kind === 'gps' && s.gps ? ' ±' + Math.round(s.gps.acc) + 'm' : ''), a.kind === 'none' ? 'bad' : a.kind);
+    if (s.suspect) add('今ここ怪しい', 'warn');
+    if (unsent) add('写真 送信待ち', 'warn');
+    b.onclick = () => openRec(s.id);
+    box.append(b);
+  }
+}
+
+/* ---------- 撮影して調査票を作る ---------- */
+let pending = null;    // 撮影ボタンを押した瞬間の方位と位置
+$('srvNew').onclick = () => { pending = { heading, fix: freshFix(15), at: Date.now() }; $('srvFile').value = ''; $('srvFile').click(); };
+$('srvFile').onchange = async () => {
+  const file = $('srvFile').files[0]; if (!file) return;
+  let blob, portrait;
+  try { ({ blob, portrait } = await shrink(file)); } catch (e) { toast(e.message); return; }
+  if (portrait) toast('縦向きの写真です（台帳の枠は横長なので、次はスマホを横にして撮ると収まりがよくなります）');
+  let fix = pending && pending.fix || freshFix(15);
+  if (!fix) fix = await waitFix(20);                              // 位置がまだなら少し待つ（待たずに保存もできる）
+  const no = LS.get('srv:no', 0) + 1; LS.set('srv:no', no);
+  const rec = 'r' + uuid().slice(3), pid = 'p' + uuid().slice(3);
+  await idb.put({ pid, rec, blob, sent: false, at: nowIso(), name: 'No' + String(no).padStart(3, '0') + '_' + pid + '.jpg' });
+  const gps = fix ? { lat: fix.lat, lon: fix.lon, acc: fix.acc } : null;
+  const mk = applyOffset(fix);
+  const h = pending && pending.heading != null ? Math.round(pending.heading) : null;
+  recordSrv('作成', rec, { no, photos: [pid], gps, heading: h, mark: mk, plot: LS.get('srv:lastPlot', '') });
+  await refreshPending(); uploadPhotos();
+  openRec(rec, true);
+};
+function waitFix(sec) {
+  return new Promise(res => {
+    if (freshFix(15)) return res(freshFix(15));
+    $('wait').classList.remove('hidden'); let left = sec;
+    const tick = setInterval(() => {
+      const f = freshFix(5);
+      $('waitText').textContent = '位置を取得中…（あと' + (left--) + '秒）';
+      if (f || left < 0) done(f);
+    }, 1000);
+    const done = f => { clearInterval(tick); $('wait').classList.add('hidden'); $('waitSkip').onclick = null; res(f || null); };
+    $('waitSkip').onclick = () => done(null);
+  });
+}
+
+/* ---------- 1件の調査票 ---------- */
+async function openRec(id, fresh) {
+  const s = recs()[id]; if (!s) return;
+  curRec = id;
+  ['home', 'plotView', 'srvList'].forEach(x => $(x).classList.add('hidden')); $('modebar').classList.add('hidden');
+  $('srvRec').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = '← 一覧';
+  $('title').textContent = '調査票 No.' + s.no; window.scrollTo(0, 0);
+  $('recTitle').textContent = '写真番号 ' + s.no; $('recTime').textContent = String(s.created).replace('T', ' ').slice(0, 16);
+  $('recPlot').value = s.plot; $('recText').value = s.text;
+  const dl = $('plotNames'); dl.innerHTML = ''; try { currentPlots().forEach(e => { const o = document.createElement('option'); o.value = e.plot; dl.append(o); }); } catch (e) {}
+  const ph = $('recPhotos'); ph.innerHTML = '';
+  for (const pid of s.photos) { const u = await photoUrl(pid); if (u) { const im = document.createElement('img'); im.src = u; im.alt = '写真'; ph.append(im); } }
+  renderPos();
+  if (fresh) setTimeout(() => $('recText').focus(), 300);
+}
+function renderPos() {
+  const s = recs()[curRec]; if (!s) return;
+  const a = adopted(s), g = s.gps;
+  let t = '使う位置：<b>' + a.label + '</b>';
+  if (a.kind !== 'gps' && a.kind !== 'none' && g) t += '（GPSから ' + distM(g.lat, g.lon, a.lat, a.lon).toFixed(1) + 'm）';
+  if (g) t += '　GPSの精度 ±' + Math.round(g.acc) + 'm'; else t += '　GPSなし';
+  if (s.suspect) t += '<br><span style="color:var(--warn)">今ここに「怪しい」が付いています（GPSなどを使っています）</span>';
+  $('recPos').innerHTML = t;
+  const hasHere = s.cands.some(c => c.src === 'here' || c.src === 'pc');
+  $('recSuspect').classList.toggle('hidden', !hasHere);
+  $('recSuspect').textContent = s.suspect ? '「怪しい」を外す' : '今ここは怪しい';
+  $('recHead').textContent = '撮影方向：' + (s.heading == null ? '記録なし' : Math.round(s.heading) + '°（' + dirName(s.heading) + '）・' + s.headingSrc);
+  drawMini(s, a);
+}
+function baseLayers() {
+  return { photo: L.tileLayer(GSI.photo, { maxNativeZoom: 18, maxZoom: 20, attribution: ATT }), std: L.tileLayer(GSI.std, { maxNativeZoom: 18, maxZoom: 20, attribution: ATT }) };
+}
+function drawMini(s, a) {
+  if (typeof L === 'undefined') return;
+  if (!recMap) { recMap = L.map('recMap', { zoomControl: false, attributionControl: true }); baseLayers().photo.addTo(recMap); recMap._g = L.layerGroup().addTo(recMap); }
+  const g = recMap._g; g.clearLayers();
+  const pts = [];
+  if (s.gps) { L.circle([s.gps.lat, s.gps.lon], { radius: s.gps.acc, color: '#4aa3ff', weight: 1, fillOpacity: .08 }).addTo(g); L.circleMarker([s.gps.lat, s.gps.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#1764b5', fillOpacity: 0.2 }).addTo(g); pts.push([s.gps.lat, s.gps.lon]); }
+  s.cands.forEach(c => { const here = c.src !== 'mark'; L.circleMarker([c.lat, c.lon], { radius: here ? 6 : 5, color: '#fff', weight: 2, fillColor: here ? '#1b7f3b' : '#6b2f8f', fillOpacity: 0.5 }).addTo(g); pts.push([c.lat, c.lon]); });
+  if (a.lat != null) {
+    L.circleMarker([a.lat, a.lon], { radius: 8, color: '#fff', weight: 3, fillColor: a.kind === 'here' ? '#1b7f3b' : a.kind === 'mark' ? '#6b2f8f' : '#1764b5', fillOpacity: 1 }).addTo(g);
+    if (s.gps && a.kind !== 'gps') L.polyline([[s.gps.lat, s.gps.lon], [a.lat, a.lon]], { color: '#fff', weight: 2, dashArray: '4 4' }).addTo(g);
+    if (s.heading != null) { const r = Math.PI / 180, d = 15, h = s.heading * r; L.polyline([[a.lat, a.lon], [a.lat + d * Math.cos(h) / 6371000 / r, a.lon + d * Math.sin(h) / (6371000 * Math.cos(a.lat * r)) / r]], { color: '#ffd400', weight: 4 }).addTo(g); }
+    pts.push([a.lat, a.lon]);
+  }
+  setTimeout(() => { recMap.invalidateSize(); if (pts.length) recMap.fitBounds(L.latLngBounds(pts).pad(0.6), { maxZoom: 19 }); else if (lastFix) recMap.setView([lastFix.lat, lastFix.lon], 18); }, 30);
+}
+$('recPlot').onchange = () => { const v = norm($('recPlot').value); $('recPlot').value = v; LS.set('srv:lastPlot', v); recordSrv('内容', curRec, { field: '区画', value: v }); };
+$('recText').onchange = () => recordSrv('内容', curRec, { field: '内容', value: $('recText').value.replace(/\s+$/, '') });
+$('recDone').onclick = () => { $('recText').blur(); $('recPlot').blur(); setTimeout(showSurvey, 50); };
+$('recHere').onclick = () => {
+  const s = recs()[curRec], a = adopted(s), f = freshFix(30);
+  const c = a.lat != null ? [a.lat, a.lon] : f ? [f.lat, f.lon] : null;
+  openPicker({ mode: 'here', center: c, gps: s.gps, hint: '地図を動かして、十字を撮影した場所に合わせてください' }, ll => { recordSrv('位置', curRec, { src: 'here', lat: ll.lat, lon: ll.lng }); renderPos(); toast('今ここの位置にしました'); });
+};
+$('recSuspect').onclick = () => { const s = recs()[curRec]; recordSrv('怪しい', curRec, { value: !s.suspect }); renderPos(); toast(s.suspect ? '今ここの位置に戻しました' : 'GPSなどの位置に切り替えました（今ここも残っています）'); };
+$('recHeadFix').onclick = () => {
+  const s = recs()[curRec], a = adopted(s);
+  if (a.lat == null) { toast('先に位置を決めてください'); return; }
+  openPicker({ mode: 'head', center: [a.lat, a.lon], from: [a.lat, a.lon], gps: s.gps, hint: '写真に写っている方向（写した物）に十字を合わせてください' }, ll => {
+    const h = Math.round(bearing(a.lat, a.lon, ll.lat, ll.lng)); recordSrv('方位', curRec, { value: h }); renderPos(); toast('撮影方向を ' + h + '°（' + dirName(h) + '）にしました');
+  });
+};
+$('recAddPhoto').onclick = () => { $('recFile').value = ''; $('recFile').click(); };
+$('recFile').onchange = async () => {
+  const file = $('recFile').files[0]; if (!file || !curRec) return;
+  let blob; try { ({ blob } = await shrink(file)); } catch (e) { toast(e.message); return; }
+  const s = recs()[curRec], pid = 'p' + uuid().slice(3);
+  await idb.put({ pid, rec: curRec, blob, sent: false, at: nowIso(), name: 'No' + String(s.no).padStart(3, '0') + '_' + pid + '.jpg' });
+  recordSrv('写真追加', curRec, { pid }); await refreshPending(); uploadPhotos(); openRec(curRec);
+};
+$('recDel').onclick = () => {
+  const id = curRec, s = recs()[id];
+  sheet(box => {
+    box.append(el('h3', '', '⚠ 写真番号 ' + s.no + ' の調査票を削除しますか？'));
+    const w = el('div', 'warnbox'); w.append(el('div', '', '写真 ' + s.photos.length + '枚' + (s.text ? '・内容「' + s.text.split('\n')[0].slice(0, 20) + '」' : '')));
+    w.append(el('div', '', '削除すると一覧と調査票一覧から消えます。')); box.append(w);
+    box.append(el('p', '', '※ 写真と記録は消えずに残ります。削除の直後なら「元に戻す」で戻せます。'));
+    const no = el('button', 'btn acc', 'やめる（削除しない）'); no.onclick = () => sheet(null);
+    const yes = el('button', 'btn danger', '削除する');
+    yes.onclick = () => { sheet(null); recordSrv('削除', id, {}); showSurvey(); showUndo('写真番号 ' + s.no + ' を削除しました', () => { recordSrv('復元', id, {}); renderList(); toast('元に戻しました'); }); };
+    box.append(no, yes);
+  });
+};
+
+/* ---------- 地図で位置・方向を指定する画面 ---------- */
+let pick = null, pickMap = null, pickLayers = null, pickCb = null;
+function openPicker(opt, cb) {
+  if (typeof L === 'undefined') { toast('地図を読み込めませんでした'); return; }
+  pick = opt; pickCb = cb;
+  $('picker').classList.remove('hidden'); $('pickHint').textContent = opt.hint;
+  if (!pickMap) {
+    pickMap = L.map('pickMap', { zoomControl: true }); pickLayers = baseLayers(); pickLayers.photo.addTo(pickMap); pickMap._cur = 'photo';
+    pickMap._g = L.layerGroup().addTo(pickMap);
+    L.control.scale({ imperial: false }).addTo(pickMap);
+  }
+  const g = pickMap._g; g.clearLayers();
+  if (opt.gps) { L.circle([opt.gps.lat, opt.gps.lon], { radius: opt.gps.acc, color: '#4aa3ff', weight: 1, fillOpacity: .08 }).addTo(g); L.circleMarker([opt.gps.lat, opt.gps.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#1764b5', fillOpacity: .4 }).addTo(g); }
+  if (opt.from) L.circleMarker(opt.from, { radius: 7, color: '#fff', weight: 2, fillColor: '#1b7f3b', fillOpacity: 1 }).addTo(g);
+  setTimeout(() => { pickMap.invalidateSize(); pickMap.setView(opt.center || [36.7, 137.0], opt.center ? 19 : 10); }, 30);
+}
+$('pickCancel').onclick = () => { $('picker').classList.add('hidden'); pick = null; };
+$('pickOk').onclick = () => { const c = pickMap.getCenter(); $('picker').classList.add('hidden'); const cb = pickCb; pick = null; if (cb) cb(c); };
+$('pickGps').onclick = () => { const f = freshFix(60) || (pick && pick.gps); if (f) pickMap.setView([f.lat, f.lon], Math.max(pickMap.getZoom(), 18)); else toast('GPSの位置がありません'); };
+$('pickLayer').onclick = () => {
+  const to = pickMap._cur === 'photo' ? 'std' : 'photo';
+  pickMap.removeLayer(pickLayers[pickMap._cur]); pickLayers[to].addTo(pickMap); pickMap._cur = to;
+  $('pickLayer').textContent = to === 'photo' ? '地形図にする' : '航空写真にする';
+};
+
+/* ---------- 航空写真を前もって保存（電波のない現場用） ---------- */
+function tileXY(lat, lon, z) { const n = 2 ** z, r = Math.PI / 180; return [Math.floor((lon + 180) / 360 * n), Math.floor((1 - Math.log(Math.tan(lat * r) + 1 / Math.cos(lat * r)) / Math.PI) / 2 * n)]; }
+$('tileBtn').onclick = async () => {
+  const f = freshFix(120); if (!f) { toast('位置が取れてから押してください'); return; }
+  if (!('caches' in window)) { toast('この端末では保存できません'); return; }
+  const list = [], R = 600, r = Math.PI / 180;
+  const dLat = R / 6371000 / r, dLon = R / (6371000 * Math.cos(f.lat * r)) / r;
+  for (let z = 14; z <= 18; z++) {
+    const [x0, y0] = tileXY(f.lat + dLat, f.lon - dLon, z), [x1, y1] = tileXY(f.lat - dLat, f.lon + dLon, z);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) list.push(GSI.photo.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+  }
+  const cache = await caches.open('tiles-v1'); let ok = 0, ng = 0;
+  $('tileBtn').disabled = true;
+  for (let i = 0; i < list.length; i++) {
+    $('tileBtn').textContent = '保存中… ' + (i + 1) + '/' + list.length;
+    try { if (!(await cache.match(list[i]))) { const res = await fetch(list[i], { mode: 'cors' }); if (res.ok) { await cache.put(list[i], res); ok++; } else ng++; } else ok++; } catch (e) { ng++; }
+  }
+  $('tileBtn').disabled = false; $('tileBtn').textContent = 'この辺りの航空写真を保存';
+  toast(ng ? '保存 ' + ok + '枚・失敗 ' + ng + '枚（電波のある所でもう一度）' : '半径600mの航空写真を保存しました（' + ok + '枚）');
+};
+
+/* ---------- 写真をドライブへ送る（1枚ずつ。届いたら「送信済み」に） ---------- */
+let uploading = false;
+function b64(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(r.error); r.readAsDataURL(blob); }); }
+async function uploadPhotos() {
+  if (uploading || !CONN || keyBad) return;
+  uploading = true;
+  try {
+    let list = (await idb.all()).filter(p => !p.sent).sort((a, b) => a.at < b.at ? -1 : 1);
+    for (const p of list) {
+      const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: await b64(p.blob) });
+      p.sent = true; p.url = res && res.url || ''; await idb.put(p);
+      await refreshPending(); online = true;
+    }
+  } catch (e) {
+    if (e.server && e.message === 'KEY') keyBad = true; else if (!e.server) online = false;
+    setTimeout(uploadPhotos, online ? 30000 : 10000);
+  } finally {
+    uploading = false; await refreshPending();
+    if (!$('srvList').classList.contains('hidden')) renderList();
+  }
+}
+
+start();
 </script>
 </body>
 </html>
