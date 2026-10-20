@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#16303f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="現地調査">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>現地調査入力</title>
+<style>
+  :root { --bg:#f3f5f6; --card:#fff; --fg:#14232d; --mute:#5d6d78; --line:#d3dbe0; --ok:#1b7f3b; --okbg:#e5f4ea;
+          --warn:#a35a00; --warnbg:#fff3df; --err:#b3261e; --errbg:#fde7e5; --acc:#0b5cad; --lock:#eef1f3; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font:16px/1.5 -apple-system, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif; color:var(--fg); background:var(--bg); }
+  header { position:sticky; top:0; z-index:10; background:#16303f; color:#fff; padding:10px 14px; display:flex; align-items:center; gap:10px; }
+  header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  header button { background:#2c4f63; color:#fff; border:0; border-radius:8px; padding:8px 12px; font-size:15px; }
+  #sync { font-size:12px; padding:6px 14px; background:var(--okbg); color:var(--ok); border-bottom:1px solid var(--line); }
+  #sync.wait { background:var(--warnbg); color:var(--warn); font-weight:bold; }
+  #sync.err { background:var(--errbg); color:var(--err); font-weight:bold; }
+  main { padding:12px; max-width:640px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
+  .card h2 { font-size:15px; margin:0 0 8px; color:var(--mute); }
+  select, input[type=text], input[type=search], input[type=date] { width:100%; font:inherit; font-size:18px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  input[type=date] { min-height:46px; -webkit-appearance:none; appearance:none; }
+  .plots { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; }
+  .plotbtn { border:1px solid var(--line); background:#fff; border-radius:10px; padding:10px 6px; font-size:17px; font-weight:bold; text-align:center; }
+  .plotbtn small { display:block; font-size:11px; font-weight:normal; color:var(--mute); }
+  .plotbtn.done { background:var(--okbg); border-color:#9cd3ad; }
+  .plotbtn.doing { background:var(--warnbg); border-color:#f0c98a; }
+  .row { display:grid; grid-template-columns:62px 1fr auto; gap:8px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+  .row:last-of-type { border-bottom:0; }
+  .row .lab { font-weight:bold; font-size:16px; }
+  .row .lab small { display:block; font-weight:normal; font-size:11px; color:var(--mute); }
+  .val { display:flex; align-items:center; gap:6px; }
+  .val input { font-size:24px; font-weight:bold; text-align:right; padding:8px 10px; }
+  .val .unit { color:var(--mute); }
+  .locked .val input { background:var(--lock); color:var(--fg); border-color:transparent; }
+  .btn { font:inherit; font-size:16px; font-weight:bold; border:0; border-radius:10px; padding:12px 14px; min-width:76px; }
+  .btn.go { background:var(--ok); color:#fff; }
+  .btn.sub { background:#e3e8eb; color:var(--fg); font-weight:normal; }
+  .btn.wide { width:100%; margin-top:10px; padding:14px; font-size:17px; }
+  .btn.acc { background:var(--acc); color:#fff; }
+  .btn:disabled { opacity:.4; }
+  .meta { grid-column:2 / 4; font-size:12px; color:var(--mute); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .meta .okmark { color:var(--ok); font-weight:bold; }
+  .meta .pending { color:var(--warn); font-weight:bold; }
+  .dig { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--line); border-radius:16px; font-size:13px; background:#fff; }
+  .dig.on { background:#5b3a12; color:#fff; border-color:#5b3a12; font-weight:bold; }
+  .avg { font-size:15px; margin-top:6px; }
+  .avg b { font-size:22px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1px solid var(--line); background:#fff; border-radius:18px; padding:8px 14px; font-size:16px; }
+  .chip.on { background:var(--acc); color:#fff; border-color:var(--acc); font-weight:bold; }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-size:13px; color:var(--mute); margin-bottom:4px; }
+  .req::after { content:' *'; color:var(--err); }
+  .status { display:inline-block; font-size:12px; padding:2px 8px; border-radius:10px; background:var(--warnbg); color:var(--warn); }
+  .status.done { background:var(--okbg); color:var(--ok); }
+  .msg { padding:10px 12px; border-radius:10px; margin-bottom:12px; font-size:14px; }
+  .msg.err { background:var(--errbg); color:var(--err); }
+  .msg.info { background:#e8f1fb; color:#0b4f8a; }
+  .hidden { display:none !important; }
+  .plotbtn { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action:manipulation; }
+  .plotbtn.new { border-style:dashed; }
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:40; display:flex; align-items:flex-end; justify-content:center; }
+  .sheetbox { background:#fff; width:100%; max-width:640px; border-radius:16px 16px 0 0; padding:16px 16px 22px; }
+  .sheetbox h3 { margin:0 0 10px; font-size:18px; }
+  .sheetbox .btn { width:100%; margin-top:8px; padding:14px; font-size:17px; }
+  .sheetbox p { margin:6px 0; font-size:15px; }
+  .btn.danger { background:var(--err); color:#fff; }
+  .btn.dangerline { background:#fff; color:var(--err); border:1px solid var(--err); }
+  .warnbox { background:var(--errbg); color:var(--err); border-radius:10px; padding:10px 12px; font-size:15px; }
+  .undo { position:fixed; left:12px; right:12px; bottom:16px; max-width:616px; margin:0 auto; background:#14232d; color:#fff; border-radius:12px; padding:8px 8px 8px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px; z-index:45; }
+  .undo button { background:#2c4f63; border:0; color:#fff; font-weight:bold; font-size:16px; border-radius:8px; padding:10px 14px; white-space:nowrap; }
+  .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#14232d; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .2s; z-index:50; pointer-events:none; }
+  .toast.on { opacity:.95; }
+</style>
+</head>
+<body>
+<header>
+  <button id="back" class="hidden">← 区画</button>
+  <h1 id="title">現地調査入力</h1>
+</header>
+<div id="sync">読み込み中…</div>
+<main>
+  <div id="msg" class="msg err hidden"></div>
+
+  <!-- 最初に1回：接続コードを入れる画面 -->
+  <section id="setup" class="hidden">
+    <div class="card">
+      <h2>はじめに（このスマホで1回だけ）</h2>
+      <p style="font-size:15px;margin:0 0 8px">管理する人から届いた<b>接続コード</b>を貼り付けて「登録」を押してください。</p>
+      <textarea id="connCode" rows="4" style="width:100%;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px" placeholder="ここに接続コードを貼り付け"></textarea>
+      <button class="btn acc wide" id="connGo">登録</button>
+      <p id="connMsg" style="font-size:14px;color:var(--err)"></p>
+    </div>
+  </section>
+
+  <!-- 区画を選ぶ画面 -->
+  <section id="home" class="hidden">
+    <div class="card" id="typeCard">
+      <h2>調査の種類</h2>
+      <select id="typeSel"></select>
+    </div>
+    <div class="card">
+      <h2>入力する人</h2>
+      <input type="text" id="who" placeholder="名前（例 山田）" autocomplete="name">
+    </div>
+    <div class="card">
+      <h2>区画番号を入れて開く</h2>
+      <div style="display:flex;gap:8px"><input type="text" id="freePlot" placeholder="例 1、2、2-1" autocomplete="off" enterkeyhint="go"><button class="btn acc" id="freeGo">開く</button></div>
+      <div class="chips" id="suggest" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <h2 style="margin:0">区画</h2><span style="font-size:12px;color:var(--mute)">長押しで番号の変更・削除</span>
+      </div>
+      <input type="search" id="search" class="hidden" placeholder="区画番号で絞り込み" autocomplete="off" style="margin-top:8px">
+      <div class="plots" id="plotList" style="margin-top:10px"></div>
+    </div>
+    <div style="text-align:center;margin:18px 0 8px">
+      <button class="btn sub" id="wipe" style="font-size:13px;padding:8px 14px">このスマホに残っている記録を消す</button>
+      <div style="font-size:12px;color:var(--mute);margin-top:6px">調査が終わったら押してください。スプレッドシートの記録は消えません。</div>
+      <div style="font-size:12px;color:var(--mute);margin-top:14px"><span id="connInfo"></span>　<a href="#" id="connChange">接続コードを入れ直す</a>　<span id="ver"></span></div>
+    </div>
+  </section>
+
+  <!-- 1つの区画を入力する画面 -->
+  <section id="plotView" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 id="posTitle" style="margin:0">調査位置</h2><span id="plotStatus" class="status">入力中</span>
+      </div>
+      <div id="rows"></div>
+      <button class="btn sub wide" id="addPos">＋ 位置を追加</button>
+      <div class="avg" id="avg"></div>
+    </div>
+    <div class="card" id="fieldsCard"><h2>この区画の情報</h2><div id="fields"></div></div>
+    <button class="btn acc wide" id="finish">この区画を完了</button>
+    <button class="btn sub wide hidden" id="reopen">完了を取り消して修正する</button>
+    <p style="font-size:12px;color:var(--mute);text-align:center">確定した値はすぐ保存されます。電波がないときはスマホに保存し、電波が戻ると自動で送ります。</p>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<div class="sheet hidden" id="sheet"><div class="sheetbox" id="sheetBox"></div></div>
+<div class="undo hidden" id="undo"><span id="undoText"></span><button id="undoBtn">元に戻す</button></div>
+
+<script>
+"use strict";
+/* ---------------- 設定・保存 ---------------- */
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('chosa:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('chosa:' + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('chosa:' + k); } catch (e) {} }
+};
+let CFG = LS.get('cfg', null);          // 最後に取得した設定（電波がなくても開けるように）
+let TYPE = null, PLOT = null, STATE = null;
+let queue = LS.get('queue', []);        // まだ届いていない操作
+let sending = false, lastError = '', online = true;
+
+function uuid() { return 'op-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+function nowIso() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().replace('Z', ''); }
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('on'), 1800); }
+function showMsg(t, kind) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (kind || 'err') + (t ? '' : ' hidden'); }
+function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type); }
+function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
+
+/* ---------------- サーバーとのやりとり ---------------- */
+const VERSION = 'v0.2';
+let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
+let keyBad = false;                      // 合言葉が止められた・間違っている
+async function call(fn, ...args) {
+  if (!CONN) throw new Error('未登録');
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+  try {
+    // text/plain で送る（Googleの受け付け口に、別の場所の画面から送るための決まった形）
+    const r = await fetch(CONN.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                      body: JSON.stringify({ key: CONN.key, fn, args }), signal: ctl.signal, redirect: 'follow' });
+    const j = await r.json();
+    if (!j.ok) { const e = new Error(j.error || 'エラー'); e.server = true; throw e; }
+    keyBad = false;
+    return j.result;
+  } finally { clearTimeout(timer); }
+}
+function parseConn(text) {               // 接続コード（またはそれを含むリンク）を読む
+  let t = String(text || '').trim(); const m = t.match(/(?:^|[#&?])c=([A-Za-z0-9_\-]+)/); if (m) t = m[1];
+  t = t.replace(/\s+/g, '');
+  try {
+    const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((t.length + 3) % 4));
+    const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+    if (o && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(o.a) && o.k && o.k.length >= 16) return { api: o.a, key: o.k, name: o.n || '' };
+  } catch (e) {}
+  return null;
+}
+
+/* ---------------- 区画の状態（サーバーの値＋まだ届いていない操作） ---------------- */
+function emptyState() { return { pos: {}, fields: {}, status: '' }; }
+function applyOp(s, op) {
+  if (op.kind === 'pos') {
+    const k = op.item + '#' + op.pos, cur = s.pos[k] || { value: '', locked: false };
+    if (op.action === '確定') s.pos[k] = { value: op.value, locked: true, at: op.at };
+    else if (op.action === '解除') s.pos[k] = { value: cur.value, locked: false, at: op.at };
+    else if (op.action === '削除') delete s.pos[k];
+  } else if (op.kind === 'field') s.fields[op.item] = op.value;
+  else if (op.kind === 'status') s.status = op.action === '完了' ? '完了' : '入力中';
+  return s;
+}
+/* 区画で最初に確定したとき、空なら作業日＝今日、天候＝このスマホで今日最後に入れた天候 を自動で入れる（あとで直せる） */
+const CARRY = ['天候'];
+function today() { const d = new Date(); return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0'); }
+function autoFill() {
+  fieldsOf(TYPE).forEach(f => {
+    if (String(STATE.fields[f.id] ?? '') !== '') return;
+    let v = '';
+    if (f.kind === '日付') v = today();
+    else if (CARRY.includes(f.id)) { const l = LS.get('last:' + f.id, null); if (l && l.d === today()) v = l.v; }
+    if (v) record({ kind: 'field', item: f.id, value: v });
+  });
+}
+function cacheKey(type, plot) { return 'plot:' + type + ':' + plot; }
+function pendingFor(type, plot) { return queue.filter(o => o.type === type && o.plot === plot); }
+function trashKey(type, plot) { return 'trash:' + type + ':' + plot; }
+function localState(type, plot) {        // サーバーの値＋まだ届いていない操作（削除・元に戻すも同じ順で）
+  let s = JSON.parse(JSON.stringify(LS.get(cacheKey(type, plot), emptyState())));
+  let saved = LS.get(trashKey(type, plot), null);
+  pendingFor(type, plot).forEach(o => {
+    if (o.kind === 'plot' && o.action === '削除') { saved = s; s = emptyState(); }
+    else if (o.kind === 'plot' && o.action === '復元') { if (saved) { s = saved; saved = null; } }
+    else applyOp(s, o);
+  });
+  return s;
+}
+/* 届いた操作を、スマホに置いているサーバーの値へ反映 */
+function applyAcked(o) {
+  const k = cacheKey(o.type, o.plot);
+  if (o.kind === 'plot') {
+    if (o.action === '削除') { LS.set(trashKey(o.type, o.plot), LS.get(k, emptyState())); LS.del(k); }
+    else if (o.action === '復元') { const t = LS.get(trashKey(o.type, o.plot), null); if (t) { LS.set(k, t); LS.del(trashKey(o.type, o.plot)); } }
+    // 番号変更は、変更した時点でスマホの値を移してある
+  } else LS.set(k, applyOp(LS.get(k, emptyState()), o));
+  const pk = 'plots:' + o.type; LS.set(pk, applyPlotOp(LS.get(pk, []), o));
+}
+
+/* ---------------- 区画の一覧（現地で追加・番号変更・削除） ---------------- */
+function norm(p) {                       // 全角数字・いろいろなハイフンをそろえる
+  return String(p || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[ー－‐−–—―ｰ]/g, '-').replace(/\s+/g, '').replace(/^区画/, '');
+}
+function applyPlotOp(list, op) {
+  list = list.map(e => Object.assign({}, e));
+  let e = list.find(x => x.plot === op.plot);
+  const fresh = () => { if (e) { Object.assign(e, { status: '', first: op.at, deleted: false }); } else { e = { plot: op.plot, status: '', first: op.at }; list.push(e); } };
+  if (op.kind === 'plot') {
+    if (op.action === '追加') { if (!e || e.deleted) fresh(); }
+    else if (op.action === '削除') { if (e) e.deleted = true; }
+    else if (op.action === '復元') { if (e) e.deleted = false; }
+    else if (op.action === '番号変更' && e && !e.deleted) {
+      const to = list.find(x => x.plot === op.value && !x.deleted);
+      if (to) { list.splice(list.indexOf(e), 1); } else { list = list.filter(x => x.plot !== op.value); e.plot = op.value; }
+    }
+    return list;
+  }
+  if (!e || e.deleted) fresh();
+  if (op.kind === 'status') e.status = op.action === '完了' ? '完了' : '入力中';
+  else if (e.status !== '完了') e.status = '入力中';
+  return list;
+}
+function currentPlots() {
+  let list = LS.get('plots:' + TYPE, []);
+  queue.filter(o => o.type === TYPE).forEach(o => { list = applyPlotOp(list, o); });
+  list = list.filter(e => !e.deleted);
+  (CFG.plots || []).filter(p => !p.type || p.type === TYPE).forEach(p => {   // 区画一覧に登録してあれば、未着手も出す
+    const e = list.find(x => x.plot === p.plot);
+    if (e) e.plan = p.plan; else list.push({ plot: p.plot, status: '', first: '', plan: p.plan, registered: true });
+  });
+  return list;
+}
+function natCmp(a, b) {
+  const pa = a.split(/(\d+)/), pb = b.split(/(\d+)/);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || '', y = pb[i] || ''; if (x === y) continue;
+    if (/^\d+$/.test(x) && /^\d+$/.test(y)) return Number(x) - Number(y);
+    return x < y ? -1 : 1;
+  }
+  return 0;
+}
+function suggestions(list) {             // 直前に追加した区画から「次の番号」の候補を作る
+  const used = new Set(list.map(e => e.plot));
+  const last = list.filter(e => e.first).sort((a, b) => a.first < b.first ? -1 : 1).pop();
+  if (!last) return used.has('1') ? [] : ['1'];
+  const parts = last.plot.split('-'), out = [];
+  const bump = (arr, i) => { const c = arr.slice(0, i + 1); if (!/^\d+$/.test(c[i])) return null; c[i] = String(Number(c[i]) + 1); return c.join('-'); };
+  let a = bump(parts, parts.length - 1); while (a && used.has(a)) a = bump(a.split('-'), parts.length - 1);
+  if (a) out.push(a);
+  if (parts.length === 1) { let b = last.plot + '-1'; let n = 1; while (used.has(b)) b = last.plot + '-' + (++n); out.push(b); }
+  else { let b = bump(parts, 0); while (b && used.has(b)) b = bump(b.split('-'), 0); if (b) out.push(b); }
+  return out;
+}
+
+/* 操作を記録して送る（先にスマホに保存してから送る） */
+function record(op) {
+  op.id = uuid(); op.at = nowIso(); op.type = TYPE; op.plot = op.plot || PLOT; op.who = LS.get('who', '');
+  queue.push(op); LS.set('queue', queue);
+  if (op.plot === PLOT && op.kind !== 'plot') {
+    STATE = applyOp(STATE, op);
+    if (op.kind === 'field' && CARRY.includes(op.item) && op.value) LS.set('last:' + op.item, { v: op.value, d: today() });
+    if (op.kind === 'pos' && op.action === '確定') autoFill();
+  }
+  if (PLOT) render(); else renderPlotList();
+  flush();
+  return op;
+}
+
+async function flush() {
+  updateSync();
+  if (sending || !queue.length) return;
+  sending = true; updateSync();
+  const batch = queue.slice(0, 50);
+  try {
+    const res = await call('api_submit', batch);
+    const done = new Set(res.accepted.concat(res.rejected.map(r => r.id)));
+    // 届いた操作は、区画ごとの保存済みの値に反映してから送信待ちから外す
+    batch.filter(o => done.has(o.id)).forEach(o => { if (!res.rejected.find(r => r.id === o.id)) applyAcked(o); });
+    queue = queue.filter(o => !done.has(o.id)); LS.set('queue', queue);
+    lastError = res.rejected.length ? res.rejected.map(r => r.error).join(' / ') : '';
+    if (res.rejected.length) showMsg('保存できなかった入力があります：' + lastError);
+    if (PLOT) { STATE = localState(TYPE, PLOT); render(); }   // 行の表示を「送信待ち」→「保存済み」に
+    online = true;
+  } catch (e) {
+    if (e.server && e.message === 'KEY') { keyBad = true; online = true; }
+    else if (e.server) { online = true; lastError = e.message; }
+    else { online = false; lastError = ''; }
+  } finally {
+    sending = false; updateSync();
+    if (queue.length) setTimeout(flush, keyBad ? 60000 : lastError ? 30000 : online ? 300 : 8000);
+  }
+}
+function updateSync() {
+  const s = $('sync');
+  if (keyBad) { s.className = 'err'; s.textContent = 'このスマホの合言葉が使えません（止められたか、変わりました）。入力はスマホに残っています。管理する人に連絡してください'; }
+  else if (queue.length && !online) { s.className = 'wait'; s.textContent = '送信待ち ' + queue.length + '件（スマホに保存済み・電波が戻ると自動で送ります）'; }
+  else if (queue.length) { s.className = 'wait'; s.textContent = '送信中… ' + queue.length + '件'; }
+  else if (lastError) { s.className = 'err'; s.textContent = '一部保存できませんでした'; }
+  else { s.className = ''; s.textContent = '✓ すべて保存済み'; }
+}
+window.addEventListener('online', () => { online = true; flush(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flush(); });
+
+/* ---------------- 画面：区画を選ぶ ---------------- */
+function showHome() {
+  PLOT = null; LS.del('current');
+  $('home').classList.remove('hidden'); $('plotView').classList.add('hidden'); $('back').classList.add('hidden');
+  $('title').textContent = (TYPE || '現地調査入力');
+  showMsg('');
+  renderPlotList();
+}
+function renderPlotList() {
+  if (PLOT) return;
+  const all = currentPlots().sort((a, b) => natCmp(a.plot, b.plot));
+  $('search').classList.toggle('hidden', all.length < 16);
+  const q = norm($('search').value);
+  const box = $('plotList'); box.innerHTML = '';
+  all.filter(e => !q || e.plot.includes(q)).forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'plotbtn' + (e.status === '完了' ? ' done' : e.status ? ' doing' : '');
+    b.append(document.createTextNode(e.plot));
+    const sm = document.createElement('small');
+    sm.textContent = e.status === '完了' ? '完了' : e.status ? '入力中' : (e.registered ? (e.plan ? '計画 ' + e.plan : '未着手') : '未入力');
+    b.append(sm);
+    longPress(b, () => openPlot(e.plot), () => plotMenu(e));
+    box.append(b);
+  });
+  if (!all.length) box.innerHTML = '<span style="color:var(--mute);font-size:14px">まだ区画がありません。上の欄に区画番号を入れて「開く」を押してください。</span>';
+  const sg = $('suggest'); sg.innerHTML = '';
+  const cand = suggestions(all.filter(e => !e.registered || e.first));
+  if (cand.length) {
+    const l = document.createElement('span'); l.textContent = '次の区画：'; l.style.cssText = 'font-size:13px;color:var(--mute);align-self:center'; sg.append(l);
+    cand.forEach(c => { const x = document.createElement('button'); x.className = 'chip'; x.textContent = c; x.onclick = () => openPlot(c); sg.append(x); });
+  }
+}
+
+/* 長押し（0.6秒）でメニュー、ふつうに押すと開く */
+function longPress(el, onTap, onLong) {
+  let timer = null, fired = false, sx = 0, sy = 0;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  el.addEventListener('pointerdown', ev => { fired = false; sx = ev.clientX; sy = ev.clientY; cancel(); timer = setTimeout(() => { fired = true; timer = null; if (navigator.vibrate) navigator.vibrate(30); onLong(); }, 600); });
+  el.addEventListener('pointermove', ev => { if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 12) cancel(); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => el.addEventListener(t, cancel));
+  el.addEventListener('contextmenu', ev => ev.preventDefault());
+  el.addEventListener('click', ev => { if (fired) { ev.preventDefault(); fired = false; return; } onTap(); });
+}
+
+/* ---------------- 区画のメニュー（番号を変える・削除） ---------------- */
+function sheet(build) {
+  const box = $('sheetBox'); box.innerHTML = '';
+  if (!build) { $('sheet').classList.add('hidden'); return; }
+  build(box); $('sheet').classList.remove('hidden');
+}
+$('sheet').addEventListener('click', ev => { if (ev.target === $('sheet')) sheet(null); });
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+function plotMenu(e) {
+  sheet(box => {
+    box.append(el('h3', '', '区画 ' + e.plot));
+    const open = el('button', 'btn acc', '開く'); open.onclick = () => { sheet(null); openPlot(e.plot); };
+    const ren = el('button', 'btn sub', '区画番号を変える'); ren.onclick = () => renameFlow(e.plot);
+    box.append(open, ren);
+    if (!e.registered || e.first) { const del = el('button', 'btn dangerline', 'この区画を削除…'); del.onclick = () => deleteFlow(e.plot); box.append(del); }
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no);
+  });
+}
+
+function renameFlow(old) {
+  sheet(box => {
+    box.append(el('h3', '', '区画番号を変える'));
+    box.append(el('p', '', '区画 ' + old + ' の新しい番号'));
+    const inp = el('input'); inp.type = 'text'; inp.value = old; inp.autocomplete = 'off'; inp.dataset.k = 'rename';
+    const msg = el('p'); msg.style.color = 'var(--err)';
+    const ok = el('button', 'btn acc', '変更する');
+    ok.onclick = () => {
+      const nv = norm(inp.value);
+      if (!nv) { msg.textContent = '区画番号を入れてください'; return; }
+      if (nv === old) { sheet(null); return; }
+      if (currentPlots().some(x => x.plot === nv && (x.first || !x.registered))) { msg.textContent = '区画 ' + nv + ' はすでにあります。別の番号にしてください'; return; }
+      doRename(old, nv); sheet(null); toast('区画 ' + old + ' → ' + nv + ' に変えました');
+    };
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null);
+    box.append(inp, msg, ok, no);
+    setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  });
+}
+function moveLocal(type, from, to) {   // スマホに置いている値・入力途中の数字を新しい番号へ移す
+  Object.keys(localStorage).forEach(k => {
+    for (const pre of ['chosa:plot:', 'chosa:draft:', 'chosa:draftf:', 'chosa:extra:']) {
+      const head = pre + type + ':' + from;
+      if (k === head || k.startsWith(head + ':')) { localStorage.setItem(pre + type + ':' + to + k.slice(head.length), localStorage.getItem(k)); localStorage.removeItem(k); }
+    }
+  });
+}
+function doRename(old, nv) {
+  const op = record({ kind: 'plot', plot: old, action: '番号変更', value: nv });
+  // まだ送っていない入力は新しい番号に付け替え、変更の後の操作として送る
+  let t = Date.parse(op.at + 'Z');
+  queue.forEach(o => { if (o.type === TYPE && o.plot === old && o !== op) { o.plot = nv; o.at = new Date(++t).toISOString().replace('Z', ''); } });
+  LS.set('queue', queue);
+  moveLocal(TYPE, old, nv);
+  const cur = LS.get('current', null); if (cur && cur.plot === old) LS.set('current', { type: TYPE, plot: nv });
+  if (PLOT === old) { PLOT = nv; STATE = localState(TYPE, nv); setTitle(); render(); } else renderPlotList();
+}
+
+function deleteFlow(plot) {
+  const s = localState(TYPE, plot);
+  const n = Object.keys(s.pos).filter(k => s.pos[k].value !== '').length;
+  const f = Object.keys(s.fields).filter(k => String(s.fields[k] || '') !== '' && s.fields[k] !== 'なし');
+  sheet(box => {
+    box.append(el('h3', '', '⚠ 区画 ' + plot + ' を削除しますか？'));
+    const w = el('div', 'warnbox');
+    w.innerHTML = '';
+    w.append(el('div', '', n || f.length ? '入力済み：' + [n ? (n + 'か所の値') : '', f.length ? f.join('・') : ''].filter(String).join('、') : '入力済みの値はありません'));
+    w.append(el('div', '', '削除すると、区画の一覧と集計表から消えます。'));
+    box.append(w);
+    box.append(el('p', '', '※ 記録シートには残ります。削除の直後なら「元に戻す」で戻せます。'));
+    const no = el('button', 'btn acc', 'やめる（削除しない）'); no.onclick = () => sheet(null);
+    const yes = el('button', 'btn danger', '削除する');
+    yes.onclick = () => { sheet(null); doDelete(plot); };
+    box.append(no, yes);
+  });
+}
+function doDelete(plot) {
+  record({ kind: 'plot', plot, action: '削除' });
+  ['chosa:draft:', 'chosa:draftf:', 'chosa:extra:'].forEach(pre => Object.keys(localStorage).filter(k => k.startsWith(pre + TYPE + ':' + plot + ':') || k === pre + TYPE + ':' + plot).forEach(k => localStorage.removeItem(k)));
+  const cur = LS.get('current', null); if (cur && cur.plot === plot) LS.del('current');
+  if (PLOT === plot) showHome(); else renderPlotList();
+  showUndo('区画 ' + plot + ' を削除しました', () => { record({ kind: 'plot', plot, action: '復元' }); toast('区画 ' + plot + ' を元に戻しました'); });
+}
+function showUndo(text, fn) {
+  $('undoText').textContent = text; $('undo').classList.remove('hidden');
+  clearTimeout(showUndo.h);
+  $('undoBtn').onclick = () => { $('undo').classList.add('hidden'); clearTimeout(showUndo.h); fn(); };
+  showUndo.h = setTimeout(() => $('undo').classList.add('hidden'), 10000);
+}
+
+/* ---------------- 画面：区画を入力する ---------------- */
+async function openPlot(plot) {
+  plot = String(plot).trim(); if (!plot) return;
+  plot = norm(plot); if (!plot) return;
+  const isNew = !currentPlots().some(e => e.plot === plot && (e.first || !e.registered));
+  PLOT = plot; LS.set('current', { type: TYPE, plot });
+  $('home').classList.add('hidden'); $('plotView').classList.remove('hidden'); $('back').classList.remove('hidden');
+  setTitle();
+  showMsg(''); $('freePlot').value = '';
+  STATE = localState(TYPE, plot);
+  if (isNew) record({ kind: 'plot', action: '追加' }); else render();
+  window.scrollTo(0, 0);
+  try {
+    const server = await call('api_getPlot', TYPE, plot);
+    if (PLOT !== plot) return;
+    LS.set(cacheKey(TYPE, plot), server);
+    STATE = localState(TYPE, plot); render();
+  } catch (e) { /* 電波がないときはスマホの保存分で表示 */ }
+}
+
+function setTitle() {
+  const info = (CFG.plots || []).find(p => p.plot === PLOT && (!p.type || p.type === TYPE));
+  $('title').textContent = '区画 ' + PLOT + (info && info.plan ? '（計画 ' + info.plan + '）' : '');
+}
+function posFields() { return fieldsOf(TYPE).filter(f => f.kind === '位置数値'); }
+function selFields() { return fieldsOf(TYPE).filter(f => f.kind === '位置選択'); }
+function positionCount() {
+  const t = typeOf(TYPE) || {}, init = t.initialPositions || 4;
+  let max = init;
+  Object.keys(STATE.pos).forEach(k => { max = Math.max(max, Number(k.split('#')[1])); });
+  const extra = LS.get('extra:' + TYPE + ':' + PLOT, 0);
+  return Math.min(Math.max(max, init + extra), t.maxPositions || 8);
+}
+function draftKey(item, n) { return 'draft:' + TYPE + ':' + PLOT + ':' + item + ':' + n; }
+
+function render() {
+  if (!PLOT) return;
+  // 入力中の箱があれば、描き直した後もそこに入力を続けられるようにする（送信完了で描き直すため）
+  const ae = document.activeElement, keep = ae && ae.dataset && ae.dataset.k ? { k: ae.dataset.k, s: ae.selectionStart, e: ae.selectionEnd } : null;
+  renderBody();
+  if (keep) {
+    const el = document.querySelector('[data-k="' + keep.k + '"]');
+    if (el && !el.readOnly) { el.focus({ preventScroll: true }); try { el.setSelectionRange(keep.s, keep.e); } catch (x) {} }
+  }
+}
+function renderBody() {
+  const t = typeOf(TYPE) || {}, pf = posFields(), sf = selFields();
+  const label = t.positionLabel || '位置';
+  $('posTitle').textContent = pf.map(f => f.label + (f.unit ? '（' + f.unit + '）' : '')).join('・') || '調査位置';
+  const done = STATE.status === '完了';
+  $('plotStatus').textContent = done ? '完了' : '入力中'; $('plotStatus').className = 'status' + (done ? ' done' : '');
+  const rows = $('rows'); rows.innerHTML = '';
+  const n = positionCount();
+  const pendingIds = new Set(pendingFor(TYPE, PLOT).map(o => o.item + '#' + o.pos));
+  for (let i = 1; i <= n; i++) {
+    pf.forEach(f => {
+      const k = f.id + '#' + i, c = STATE.pos[k], locked = !!(c && c.locked);
+      const row = document.createElement('div'); row.className = 'row' + (locked ? ' locked' : '');
+      const lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = label + i;
+      if (pf.length > 1) { const sm = document.createElement('small'); sm.textContent = f.label; lab.append(sm); }
+      const val = document.createElement('div'); val.className = 'val';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.autocomplete = 'off';
+      inp.value = locked ? c.value : (LS.get(draftKey(f.id, i), null) ?? (c ? c.value : '')); inp.dataset.k = 'p:' + k;
+      inp.readOnly = locked; inp.placeholder = '－';
+      inp.oninput = () => LS.set(draftKey(f.id, i), inp.value);          // 確定前の入力もスマホに残す
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } };
+      const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = f.unit || '';
+      val.append(inp, unit);
+      const btn = document.createElement('button'); btn.className = 'btn ' + (locked ? 'sub' : 'go');
+      btn.textContent = locked ? '解除' : '確定';
+      btn.onclick = () => {
+        if (locked) { record({ kind: 'pos', item: f.id, pos: i, action: '解除' }); toast(label + i + ' を解除しました'); return; }
+        const v = inp.value.trim().replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+        if (v === '' || !isFinite(Number(v))) { showMsg(label + i + '：数値を入れてください'); inp.focus(); return; }
+        if (f.min !== '' && f.min !== undefined && Number(v) < Number(f.min)) { showMsg(label + i + '：' + f.min + '以上で入れてください'); return; }
+        if (f.max !== '' && f.max !== undefined && Number(v) > Number(f.max)) { showMsg(label + i + '：' + f.max + '以下で入れてください'); return; }
+        showMsg('');
+        LS.del(draftKey(f.id, i));
+        record({ kind: 'pos', item: f.id, pos: i, value: v, action: '確定' });
+        toast(label + i + '：' + v + (f.unit || '') + ' を確定');
+      };
+      const meta = document.createElement('div'); meta.className = 'meta';
+      if (locked) {
+        const s = document.createElement('span');
+        if (pendingIds.has(k)) { s.className = 'pending'; s.textContent = '● スマホに保存（送信待ち）'; }
+        else { s.className = 'okmark'; s.textContent = '✓ 確定・保存済み ' + String(c.at || '').slice(11, 16); }
+        meta.append(s);
+      } else if (c && c.value !== '') { const s = document.createElement('span'); s.textContent = '解除中（直したら確定を押してください）'; meta.append(s); }
+      sf.forEach(sel => {      // 掘削など「どの位置か」を選ぶ項目：各位置の行に印を出す
+        if (f !== pf[0]) return;
+        const on = String(STATE.fields[sel.id] || '') === String(i);
+        const d = document.createElement('button'); d.className = 'dig' + (on ? ' on' : '');
+        d.textContent = (on ? '◉ ' : '○ ') + sel.label;
+        d.onclick = () => { record({ kind: 'field', item: sel.id, value: on ? 'なし' : String(i) }); toast(on ? sel.label + 'の指定を外しました' : label + i + ' を' + sel.label + 'にしました'); };
+        meta.append(d);
+      });
+      row.append(lab, val, btn, meta);
+      rows.append(row);
+    });
+  }
+  $('addPos').disabled = n >= (t.maxPositions || 8);
+  // 平均
+  $('avg').innerHTML = '';
+  pf.forEach(f => {
+    const vals = Object.keys(STATE.pos).filter(k => k.startsWith(f.id + '#') && STATE.pos[k].value !== '').map(k => Number(STATE.pos[k].value));
+    if (!vals.length) return;
+    const d = Number(t.digits || 0), k = Math.pow(10, d);
+    const a = Math.round(vals.reduce((x, y) => x + y, 0) / vals.length * k + 1e-9) / k;
+    const div = document.createElement('div'); div.innerHTML = f.label + ' 平均 <b></b> ' + (f.unit || '') + '（' + vals.length + 'か所）';
+    div.querySelector('b').textContent = a; $('avg').append(div);
+  });
+  renderFields();
+  $('finish').classList.toggle('hidden', done); $('reopen').classList.toggle('hidden', !done);
+}
+
+function renderFields() {
+  const box = $('fields'); box.innerHTML = '';
+  const fs = fieldsOf(TYPE).filter(f => ['選択', '選択＋自由', '数値', '文字', '日付'].includes(f.kind));
+  $('fieldsCard').classList.toggle('hidden', !fs.length);
+  fs.forEach(f => {
+    const wrap = document.createElement('div'); wrap.className = 'field';
+    const lab = document.createElement('label'); lab.textContent = f.label + (f.unit ? '（' + f.unit + '）' : ''); if (f.required) lab.className = 'req';
+    wrap.append(lab);
+    const cur = STATE.fields[f.id] ?? '';
+    if (f.kind === '選択' || f.kind === '選択＋自由') {
+      const chips = document.createElement('div'); chips.className = 'chips';
+      f.options.forEach(o => {
+        const c = document.createElement('button'); c.className = 'chip' + (cur === o ? ' on' : ''); c.textContent = o;
+        c.onclick = () => { LS.del('draftf:' + TYPE + ':' + PLOT + ':' + f.id); record({ kind: 'field', item: f.id, value: cur === o ? '' : o }); };
+        chips.append(c);
+      });
+      wrap.append(chips);
+      if (f.kind === '選択＋自由') {      // 選択肢にないものは手入力（例：耕作物の新しい作物）
+        const other = cur !== '' && !f.options.includes(cur);
+        const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = 'その他（ここに入力）'; inp.style.marginTop = '8px';
+        const dk = 'draftf:' + TYPE + ':' + PLOT + ':' + f.id;
+        inp.value = LS.get(dk, null) ?? (other ? cur : ''); inp.dataset.k = 'o:' + f.id;
+        if (other) inp.style.borderColor = 'var(--acc)';
+        inp.oninput = () => LS.set(dk, inp.value);
+        inp.onchange = () => { LS.del(dk); const v = inp.value.trim(); if (v !== cur && (v !== '' || other)) record({ kind: 'field', item: f.id, value: v }); };
+        wrap.append(inp);
+      }
+    } else if (f.kind === '日付') {      // 作業日：カレンダーから選ぶか手で入れる（最初の確定で今日が自動で入る）
+      const inp = document.createElement('input'); inp.type = 'date'; inp.dataset.k = 'f:' + f.id;
+      inp.value = String(cur).replace(/\//g, '-').replace(/-(\d)(?=-|$)/g, '-0$1');
+      inp.onchange = () => { const v = inp.value ? inp.value.replace(/-/g, '/') : ''; if (v !== cur) record({ kind: 'field', item: f.id, value: v }); };
+      wrap.append(inp);
+    } else {
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = LS.get('draftf:' + TYPE + ':' + PLOT + ':' + f.id, null) ?? cur; inp.dataset.k = 'f:' + f.id;
+      if (f.kind === '数値') inp.inputMode = 'decimal';
+      inp.oninput = () => LS.set('draftf:' + TYPE + ':' + PLOT + ':' + f.id, inp.value);
+      inp.onchange = () => { LS.del('draftf:' + TYPE + ':' + PLOT + ':' + f.id); if (inp.value !== cur) record({ kind: 'field', item: f.id, value: inp.value.trim() }); };
+      wrap.append(inp);
+    }
+    box.append(wrap);
+  });
+}
+
+$('addPos').onclick = () => { const k = 'extra:' + TYPE + ':' + PLOT; LS.set(k, LS.get(k, 0) + 1); render(); };
+$('finish').onclick = () => {
+  const t = typeOf(TYPE) || {}, init = t.initialPositions || 4, label = t.positionLabel || '位置';
+  const probs = [];
+  posFields().forEach(f => { for (let i = 1; i <= init; i++) { const c = STATE.pos[f.id + '#' + i]; if (!c || !c.locked) probs.push(label + i + 'の' + f.label + 'が未確定'); } });
+  document.querySelectorAll('#rows .row:not(.locked) input').forEach(inp => { if (inp.value.trim() !== '' && !probs.length) probs.push('確定していない入力があります'); });
+  fieldsOf(TYPE).filter(f => f.required && f.kind !== '位置数値').forEach(f => { if (String(STATE.fields[f.id] || '') === '') probs.push(f.label + 'が未入力'); });
+  selFields().forEach(f => { if (!STATE.fields[f.id] || STATE.fields[f.id] === 'なし') probs.push(f.label + 'の位置が選ばれていません'); });
+  if (probs.length && !confirm('次の点が残っています。\n・' + probs.join('\n・') + '\n\nこのまま完了にしますか？')) return;
+  record({ kind: 'status', action: '完了' }); toast('区画 ' + PLOT + ' を完了にしました');
+  setTimeout(showHome, 600);
+};
+$('reopen').onclick = () => { record({ kind: 'status', action: '再開' }); toast('修正できるようにしました'); };
+$('back').onclick = showHome;
+$('who').value = LS.get('who', ''); $('who').onchange = () => LS.set('who', $('who').value.trim());  // 記録シートの「入力者」に入る（スマホに覚える）
+$('wipe').onclick = () => {           // 個人のスマホに調査データを残さないため
+  if (queue.length) { alert('まだ送れていない入力が ' + queue.length + ' 件あります。電波のある所で「すべて保存済み」になってから押してください。'); return; }
+  if (!confirm('このスマホに残っている調査の記録を消します。\n（スプレッドシートの記録は消えません）')) return;
+  Object.keys(localStorage).filter(k => k.startsWith('chosa:') && !['chosa:cfg', 'chosa:who', 'chosa:conn'].includes(k)).forEach(k => localStorage.removeItem(k));
+  LS.set('plots:' + TYPE, (CFG.visited || {})[TYPE] || []);
+  toast('このスマホの記録を消しました'); renderPlotList();
+};
+$('search').oninput = renderPlotList;
+$('freeGo').onclick = () => openPlot($('freePlot').value);
+$('freePlot').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('freeGo').click(); } };
+$('typeSel').onchange = () => { TYPE = $('typeSel').value; LS.set('type', TYPE); showHome(); };
+
+/* ---------------- 起動 ---------------- */
+function showSetup(msg) {
+  $('setup').classList.remove('hidden'); $('home').classList.add('hidden'); $('plotView').classList.add('hidden');
+  $('sync').className = ''; $('sync').textContent = '接続コードの登録が必要です'; $('connMsg').textContent = msg || '';
+}
+$('connGo').onclick = async () => {
+  const c = parseConn($('connCode').value);
+  if (!c) { $('connMsg').textContent = '接続コードが読めません。届いた文字を全部そのまま貼り付けてください。'; return; }
+  const before = CONN; CONN = c;
+  $('connMsg').style.color = 'var(--mute)'; $('connMsg').textContent = '確認しています…';
+  try { await call('api_getConfig'); }
+  catch (e) {
+    $('connMsg').style.color = 'var(--err)';
+    if (e.server && e.message === 'KEY') { CONN = before; $('connMsg').textContent = 'この接続コードは使えません（止められているか、古いコードです）。'; return; }
+    if (e.server) { CONN = before; $('connMsg').textContent = 'エラー：' + e.message; return; }
+    CONN = before; $('connMsg').textContent = '接続できません。電波のある場所でもう一度押してください。'; return;
+  }
+  LS.set('conn', c); if (c.name && !LS.get('who', '')) LS.set('who', c.name);
+  $('who').value = LS.get('who', '');
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  $('setup').classList.add('hidden'); toast('登録しました'); start();
+};
+window.addEventListener('hashchange', () => { if (location.hash.includes('c=')) start(); });
+$('connChange').onclick = ev => { ev.preventDefault(); $('connCode').value = ''; showSetup(); };
+
+async function start() {
+  // リンク（…#c=接続コード）で開いたときは、その接続コードを入れた状態で登録画面を出す
+  const fromLink = location.hash.includes('c=') ? parseConn(location.hash) : null;
+  if (fromLink && (!CONN || CONN.key !== fromLink.key)) { $('connCode').value = location.hash.slice(1); showSetup(); return; }
+  if (!CONN) { showSetup(); return; }
+  $('connInfo').textContent = '登録：' + (CONN.name || '');
+  $('ver').textContent = VERSION;
+  try {
+    CFG = await call('api_getConfig'); LS.set('cfg', CFG); online = true;
+    // 区画の一覧はサーバーの値を正とする（送信待ちの分は画面に出すときに足す）
+    Object.keys(CFG.visited || {}).forEach(t => LS.set('plots:' + t, CFG.visited[t]));
+  } catch (e) {
+    if (e.server && e.message === 'KEY') { keyBad = true; } else online = false;
+    if (!CFG) { $('sync').className = 'err'; $('sync').textContent = keyBad ? 'このスマホの合言葉が使えません。管理する人に連絡してください。' : '接続できません。最初の1回は電波のある場所で開いてください。'; return; }
+  }
+  if (!CFG.types || !CFG.types.length) { showMsg('「調査種類」シートに調査が登録されていません。'); return; }
+  const sel = $('typeSel'); sel.innerHTML = '';
+  CFG.types.forEach(t => { const o = document.createElement('option'); o.value = o.textContent = t.name; sel.append(o); });
+  TYPE = LS.get('type', null); if (!typeOf(TYPE)) TYPE = CFG.types[0].name; sel.value = TYPE;
+  $('typeCard').classList.toggle('hidden', CFG.types.length < 2);
+  const cur = LS.get('current', null);
+  if (cur && cur.type === TYPE && cur.plot) openPlot(cur.plot); else showHome();      // 前回開いていた区画に戻る
+  flush(); updateSync();
+}
+start();
+// 画面をスマホに保存して、電波がなくても開けるようにする
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
