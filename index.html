@@ -44,6 +44,13 @@
   body.hasdock .toast { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
   body.hasdock .undo { bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
   .memk .mepin { width:22px; height:22px; border-radius:50%; background:#1764b5; border:4px solid #fff; box-shadow:0 0 0 2px #111; }
+  #mapDocRow { display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:8px; }
+  #mapDocRow.hidden { display:none; }
+  #mapDocRow label { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  #mapDocRow input[type=checkbox] { width:22px; height:22px; }
+  #mapDocRow input[type=range] { flex:1; min-width:0; }
+  #mapDocRow .lab { color:var(--mute); white-space:nowrap; }
+  #mapDocRow b { min-width:3.2em; text-align:right; }
   #mainMap { isolation:isolate; position:relative; z-index:0; height:calc(100dvh - 420px); min-height:260px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
   .drawgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px; }
   .drawgrid button { border:1px solid var(--line); border-radius:10px; background:#fff; padding:0; text-align:left; font:inherit; overflow:hidden; }
@@ -321,13 +328,16 @@
   <section id="mapView" class="hidden">
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
+      <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab">航空写真</span><input type="range" id="mapPhotoOp" min="0" max="100" step="5" value="50"><b id="mapPhotoPct">50%</b></div>
       <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
         <button class="btn sub" id="headPerm">方位を使う<small>最初に1回</small></button>
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
         <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
+        <button class="btn sub" id="planBtn">計画を取り込む<small>線・名前・図面PDF</small></button>
       </div>
+      <input type="file" id="planFile" multiple class="hidden">
       <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
     </div>
   </section>
@@ -483,7 +493,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.5.2β';
+const VERSION = 'v0.5.3β';
 const NEED_SERVER = '0.5.2';              // この版の画面が前提とする受け付け側（Apps Script）の版
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
@@ -2428,7 +2438,7 @@ $('areaQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.prevent
 const KSTYLE = {
   '用水路': { c: '#e53935', tag: '用' }, '排水路': { c: '#1565c0', tag: '排' }, '農道': { c: '#9ccc3d', tag: '農', thick: true },
   'ため池': { c: '#a8e4f5', tag: '池', hatch: 'hFine' }, '区画': { c: '#ffffff', tag: '区', hatch: 'hCoarse' },
-  '管水路・暗渠': { c: '#8d6e63', tag: '管' }, 'その他': { c: '#9e9e9e', tag: '他' }
+  '管水路・暗渠': { c: '#8d6e63', tag: '管' }, '構造物': { c: '#7b1fa2', tag: '構' }, 'その他': { c: '#9e9e9e', tag: '他' }
 };
 function kst(k) { return KSTYLE[k] || { c: '#9e9e9e', tag: String(k || '他').slice(0, 1) }; }
 const kindColor = k => kst(k).c;
@@ -2524,7 +2534,7 @@ function clipSeg(p, q, r) {               // 画面の四角に入っている�
   return null;
 }
 function placeLabels(map) {
-  if (!map._tlab) return;
+  if (!map._tlab || !map._loaded) return;          // 地図の位置が決まる前は出さない（決まると moveend で出す）
   const g = map._tlab; g.clearLayers();
   const list = tgts(); if (!list.length) return;
   const sz = map.getSize(), r = { x0: 24, y0: 24, x1: sz.x - 24, y1: sz.y - 24 };
@@ -2866,11 +2876,11 @@ function solve3(M, b) {
 const imgToLL = (A, u, v) => { const m = MERC.unproject(L.point(A[0] * u + A[1] * v + A[2], A[3] * u + A[4] * v + A[5])); return [m.lat, m.lng]; };
 /* 地図に図面を重ねる層（拡大・回転・ゆがみを CSS の行列で） */
 const DocLayer = L.Layer ? L.Layer.extend({
-  initialize(url, w, h, A, op) { this._url = url; this._w = w; this._h = h; this._A = A; this._op = op == null ? .55 : op; },
+  initialize(url, w, h, A, op, pane) { this._url = url; this._w = w; this._h = h; this._A = A; this._op = op == null ? .55 : op; this._pane = pane; },
   onAdd(map) {
     const im = this._img = L.DomUtil.create('img', 'docov');
     im.src = this._url; im.style.cssText = 'position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;max-width:none;width:' + this._w + 'px;height:' + this._h + 'px;opacity:' + this._op;
-    map.getPanes().overlayPane.appendChild(im);
+    (map.getPane(this._pane || 'overlayPane') || map.getPanes().overlayPane).appendChild(im);
     map.on('zoomend viewreset moveend', this._up, this); map.on('zoomstart', this._hide, this); this._up();
   },
   onRemove(map) { this._img.remove(); map.off('zoomend viewreset moveend', this._up, this); map.off('zoomstart', this._hide, this); },
@@ -2878,7 +2888,7 @@ const DocLayer = L.Layer ? L.Layer.extend({
   setA(A) { this._A = A; this._up(); },
   _hide() { if (this._img) this._img.style.display = 'none'; },
   _up() {
-    const m = this._map, A = this._A; if (!m || !A) return;
+    const m = this._map, A = this._A; if (!m || !A || !m._loaded) return;      // 地図の位置が決まる前は待つ（決まると moveend で呼ばれる）
     const P = (u, v) => m.latLngToLayerPoint(imgToLL(A, u, v)), o = P(0, 0), ex = P(this._w, 0), ey = P(0, this._h);
     this._img.style.transform = 'matrix(' + [(ex.x - o.x) / this._w, (ex.y - o.y) / this._w, (ey.x - o.x) / this._h, (ey.y - o.y) / this._h, o.x, o.y].join(',') + ')';
     this._img.style.display = '';
@@ -3576,7 +3586,7 @@ function showMap() {
     mainMap = L.map('mainMap', { zoomControl: true }); mainLayers = baseLayers(); mainLayers.photo.addTo(mainMap); mainMap._cur = 'photo';
     L.control.scale({ imperial: false }).addTo(mainMap);
   }
-  drawTargets(mainMap); drawRecArrows(mainMap); drawMe();
+  drawTargets(mainMap); drawRecArrows(mainMap); drawMe(); mapDocs();
   setTimeout(() => {
     mainMap.invalidateSize();
     if (mainMap._placed) return; mainMap._placed = true;
@@ -3591,8 +3601,99 @@ function drawMe() {
   if (!meMark) meMark = L.marker([f.lat, f.lon], { interactive: false, zIndexOffset: 2000, icon: L.divIcon({ className: 'memk', html, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(mainMap);
   else meMark.setLatLng([f.lat, f.lon]);
 }
-$('mapLayer').onclick = () => { const to = mainMap._cur === 'photo' ? 'std' : 'photo'; mainMap.removeLayer(mainLayers[mainMap._cur]); mainLayers[to].addTo(mainMap); mainMap._cur = to; $('mapLayer').textContent = to === 'photo' ? '地形図にする' : '航空写真にする'; };
+$('mapLayer').onclick = () => { const to = mainMap._cur === 'photo' ? 'std' : 'photo'; mainMap.removeLayer(mainLayers[mainMap._cur]); mainLayers[to].addTo(mainMap); mainMap._cur = to; $('mapLayer').textContent = to === 'photo' ? '地形図にする' : '航空写真にする'; mapDocs(); };
 $('mapHere').onclick = () => { const f = freshFix(120); if (f) { mainMap.setView([f.lat, f.lon], Math.max(mainMap.getZoom(), 18)); drawMe(); } else toast('今の位置が取れていません'); };
+
+/* ---- 位置図に図面を重ねる：図面は航空写真の下に置き、航空写真の濃さ（透け具合）を変えて見比べる ---- */
+let mapDocL = [], mapDocGen = 0;
+function mapPhotoApply() {
+  if (!mainMap) return;
+  const on = $('mapDocOn').checked && !$('mapDocRow').classList.contains('hidden'), op = Number($('mapPhotoOp').value);
+  $('mapPhotoPct').textContent = op + '%';
+  mainLayers[mainMap._cur].setOpacity(on ? op / 100 : 1);
+}
+function mapDocs() {
+  if (!mainMap || typeof L === 'undefined') return;
+  const list = uls().filter(u => u.A), on = !!list.length && LS.get('mapDocOn', true);
+  $('mapDocRow').classList.toggle('hidden', !list.length);
+  $('mapDocOn').checked = on; $('mapPhotoOp').value = LS.get('mapPhotoOp', 50);
+  if (!mainMap.getPane('docPane')) mainMap.createPane('docPane').style.zIndex = 150;     // 航空写真（200）の下
+  mapDocL.forEach(o => mainMap.removeLayer(o)); mapDocL = [];
+  mapPhotoApply();
+  if (!on) return;
+  const gen = ++mapDocGen;
+  list.forEach(async u => { const url = await docUrl(u.id); if (!url || gen !== mapDocGen) return; mapDocL.push(new DocLayer(url, u.w, u.h, u.A, 1, 'docPane').addTo(mainMap)); });
+}
+$('mapDocOn').onchange = () => { LS.set('mapDocOn', $('mapDocOn').checked); mapDocs(); };
+$('mapPhotoOp').oninput = () => { LS.set('mapPhotoOp', Number($('mapPhotoOp').value)); mapPhotoApply(); };
+
+/* ---- 計画を取り込む：会社で作った「計画対象物」のファイル（.json：線・名前）と、重ねる図面PDF ----
+   線と名前は「対象」として登録し、受け付け側を通して同じ業務のスマホ全部に届く。図面の画像はこの端末の中だけ */
+function planHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
+function planGuessKind(n) { for (const k of ['排水路', '用水路', '農道', 'ため池', '区画']) if (n.includes(k)) return k; return /池/.test(n) ? 'ため池' : /構造物|水門|分水|桝|ます/.test(n) ? '構造物' : 'その他'; }
+function planTargets(gj) {
+  const out = [], r7 = v => Math.round(v * 1e7) / 1e7, LL = c => [r7(c[1]), r7(c[0])];
+  (gj && Array.isArray(gj.features) ? gj.features : []).forEach(f => {
+    const p = f.properties || {}, g = f.geometry || {};
+    const name = String(p.name || p['名前'] || p['名称'] || p.NAME || '').trim().slice(0, 60); if (!name) return;
+    const kind = String(p.kind || p['工種'] || planGuessKind(name)), reuse = !!(p.reuse || p['既設利用']);
+    let n = 0;
+    const add = (shape, pts) => {
+      if (shape === 'poly' && pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) pts = pts.slice(0, -1);
+      if (pts.length < (shape === 'poly' ? 3 : 2) || pts.length > 3000 || pts.some(q => !isFinite(q[0]) || !isFinite(q[1]))) return;
+      out.push({ id: 'p' + planHash(kind + '|' + name) + (n ? '-' + n : ''), name, kind, shape, reuse, pts }); n++;
+    };
+    const circle = c => { const k = Math.cos(c[1] * Math.PI / 180), r = 6 / 6371000 * 180 / Math.PI; return Array.from({ length: 16 }, (_, i) => [r7(c[1] + r * Math.sin(i * Math.PI / 8)), r7(c[0] + r / k * Math.cos(i * Math.PI / 8))]); };
+    if (g.type === 'LineString') add('line', g.coordinates.map(LL));
+    else if (g.type === 'MultiLineString') g.coordinates.forEach(l => add('line', l.map(LL)));
+    else if (g.type === 'Polygon') add('poly', g.coordinates[0].map(LL));
+    else if (g.type === 'MultiPolygon') g.coordinates.forEach(pg => add('poly', pg[0].map(LL)));
+    else if (g.type === 'Point') add('poly', circle(g.coordinates));
+  });
+  return out;
+}
+$('planBtn').onclick = () => { $('planFile').value = ''; $('planFile').click(); };
+$('planFile').onchange = () => planImport([...$('planFile').files]);
+async function planImport(files) {
+  const js = files.find(f => /\.(geo)?json$/i.test(f.name) || /json/i.test(f.type));
+  const doc = files.find(f => f !== js && (/pdf|image/i.test(f.type) || /\.(pdf|jpe?g|png)$/i.test(f.name)));
+  if (!js) { toast('計画のファイル（.json）を選んでください。重ねる図面PDFは一緒に選びます'); return; }
+  let gj; try { gj = JSON.parse(await js.text()); } catch (e) { toast('計画のファイルを読めませんでした'); return; }
+  const list = planTargets(gj), ul = gj.underlay && Array.isArray(gj.underlay.ctrl) && gj.underlay.ctrl.length >= 2 ? gj.underlay : null;
+  if (!list.length && !(ul && doc)) { toast('このファイルには取り込めるものがありません'); return; }
+  sheet(box => {
+    box.append(el('h3', '', '計画を取り込む'));
+    if (gj.name) box.append(el('p', '', String(gj.name)));
+    const by = {}; list.forEach(t => (by[t.kind] = by[t.kind] || []).push(t.name));
+    Object.keys(by).forEach(k => { const d = el('div', 'card'); d.style.cssText = 'margin:6px 0;border-left:7px solid ' + kindColor(k); d.append(el('div', '', kst(k).tag + '　' + k + '（' + by[k].length + '）'), el('div', '', [...new Set(by[k])].join('、'))); d.firstChild.style.fontWeight = 'bold'; d.lastChild.style.cssText = 'font-size:13px;color:var(--mute)'; box.append(d); });
+    if (ul) box.append(el('p', '', doc ? '📄 図面「' + doc.name + '」を位置図に重ねます。' : '※ 図面PDFも一緒に選ぶと、位置図に重ねられます（今回は線と名前だけ）。'));
+    if (gj.note) { const n = el('p', '', String(gj.note)); n.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(n); }
+    box.append(el('p', '', '線と名前は、この業務のほかのスマホにも届きます。同じファイルをもう一度取り込むと、上書きします（重なりません）。'));
+    const ok = el('button', 'btn acc', '取り込む'); ok.id = 'planOk';
+    ok.onclick = async () => {
+      ok.disabled = true; ok.textContent = '取り込んでいます…';
+      const ids = new Set(list.map(t => t.id)), at = nowIso();
+      if (list.length) { tgtsSet(tgts().filter(t => !ids.has(t.id)).concat(list.map(t => Object.assign(t, { at })))); list.forEach(t => tgtSent(t)); }
+      let docMsg = '';
+      if (ul && doc) {
+        try {
+          const im = await fileToImage(doc, ul.page || 1), pairs = ul.ctrl.map(c => ({ img: [c[0] * im.w, c[1] * im.h], geo: [c[2], c[3]] })), fit = fitAffine(pairs);
+          if (!fit) throw new Error('位置を合わせられませんでした');
+          const id = 'u' + planHash(ul.name || doc.name);
+          await docDb.put({ id, blob: im.blob, w: im.w, h: im.h });
+          if (docUrls[id]) { URL.revokeObjectURL(docUrls[id]); delete docUrls[id]; }
+          ulsSet(uls().filter(u => u.id !== id).concat([{ id, name: String(ul.name || doc.name), w: im.w, h: im.h, pairs, A: fit.A, op: .55, on: true, rms: fit.rms }]));
+          LS.set('mapDocOn', true); docMsg = '・図面を重ねました';
+        } catch (e) { docMsg = '（図面は読み込めませんでした：' + (e.message || e) + '）'; }
+      }
+      sheet(null); mapDocs();
+      const pts = list.flatMap(t => t.pts); if (mainMap && pts.length) mainMap.fitBounds(L.latLngBounds(pts).pad(0.15), { maxZoom: 18 });
+      toast(list.length + '件の計画を取り込みました' + docMsg);
+    };
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null);
+    box.append(ok, no);
+  });
+}
 
 /* ---- 図面：前もって取り込み、現場では画像を出すだけ（軽い・電波なし） ----
    PDFは各ページを、取り込むときに1回だけ画像にしてスマホに保存（字が読める細かさ：長い辺 4000px）。サムネイルも作っておく */
