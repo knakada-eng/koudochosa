@@ -26,6 +26,8 @@
   #devBar { font-size:12px; padding:4px 14px; background:#eef3f6; color:#16303f; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
   #devBar.hidden, #oldSrv.hidden { display:none; }
   .gpsline { font-size:13px; margin:2px 2px 0; }
+  .btn small { display:block; font-size:12px; font-weight:normal; opacity:.75; margin-top:2px; line-height:1.3; }
+  .btnrow .btn { line-height:1.35; }
   #videoLine, #photoLine { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#eef3f6; font-size:13px; }
   #videoLine.hidden, #photoLine.hidden { display:none; }
   #videoLine .btn, #photoLine .btn { min-width:0; padding:10px 12px; font-size:14px; }
@@ -42,7 +44,7 @@
   body.hasdock .toast { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
   body.hasdock .undo { bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
   .memk .mepin { width:22px; height:22px; border-radius:50%; background:#1764b5; border:4px solid #fff; box-shadow:0 0 0 2px #111; }
-  #mainMap { height:calc(100dvh - 420px); min-height:260px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
+  #mainMap { isolation:isolate; position:relative; z-index:0; height:calc(100dvh - 420px); min-height:260px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
   .drawgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px; }
   .drawgrid button { border:1px solid var(--line); border-radius:10px; background:#fff; padding:0; text-align:left; font:inherit; overflow:hidden; }
   .drawgrid img { width:100%; aspect-ratio:4/3; object-fit:contain; background:#f4f6f8; display:block; }
@@ -261,10 +263,10 @@
     <div id="bizLine" style="font-size:12px;color:var(--mute);margin:-4px 0 6px"></div>
     <input type="file" id="srvFile" accept="image/*" capture="environment" class="hidden">
     <div id="gpsState" class="gpsline">位置：取得中…</div>
-    <div class="btnrow" style="margin-top:4px"><button class="btn sub" id="srvSitu">📷 状況写真（続けて撮る）</button><button class="btn sub" id="srvNocho">📒 野帳を撮る（控え）</button><button class="btn sub" id="srvVideo">🎥 動画</button></div>
+    <div class="btnrow" style="margin-top:4px"><button class="btn sub" id="srvSitu">📷 状況写真<small>続けて撮る</small></button><button class="btn sub" id="srvNocho">📒 野帳<small>控え・台帳に出さない</small></button><button class="btn sub" id="srvVideo">🎥 動画<small>Wi-Fiで送る</small></button></div>
     <input type="file" id="videoFile" accept="video/*" capture="environment" class="hidden">
-    <div id="videoLine" class="hidden"><span id="videoMsg"></span><button class="btn go" id="videoSend">🎥 動画を送る（Wi-Fiで）</button></div>
-    <div id="photoLine" class="hidden"><span id="photoMsg"></span><button class="btn go" id="photoSend">📷 写真を送る（Wi-Fiで）</button></div>
+    <div id="videoLine" class="hidden"><span id="videoMsg"></span><button class="btn go" id="videoSend">🎥 送る</button></div>
+    <div id="photoLine" class="hidden"><span id="photoMsg"></span><button class="btn go" id="photoSend">📷 送る</button></div>
     <input type="file" id="nochoFile" accept="image/*" capture="environment" class="hidden">
     <input type="file" id="situFile" accept="image/*" capture="environment" class="hidden">
     <div id="situBar" class="hidden"><span id="situMsg"></span><span style="display:flex;gap:6px"><button class="btn go" id="situAgain">📷 続けて撮る</button><button class="btn sub" id="situEnd">終わる</button></span></div>
@@ -275,7 +277,7 @@
       <div class="reclist" id="srvItems"></div>
     </div>
     </div>
-    <button class="btn acc wide" id="dayEnd" style="margin-top:4px">🏁 今日の調査を終える（送信を確かめる）</button>
+    <button class="btn acc wide" id="dayEnd" style="margin-top:4px">🏁 今日の調査を終える<small>送信を確かめる</small></button>
   </section>
 
   <!-- 1件の調査票 -->
@@ -321,10 +323,10 @@
     <div class="card" style="margin-top:8px">
       <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
-        <button class="btn sub" id="headPerm">方位を使う（最初に1回）</button>
-        <button class="btn sub" id="markBtn">目印でずれを測る</button>
-        <button class="btn sub" id="tileBtn">航空写真を前もって保存</button>
-        <button class="btn sub" id="tgtBtn">対象を描く（水路・道路・池）</button>
+        <button class="btn sub" id="headPerm">方位を使う<small>最初に1回</small></button>
+        <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
+        <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
+        <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
       </div>
       <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
     </div>
@@ -353,7 +355,7 @@
     <div class="card">
       <h2>区画番号を入れて開く</h2>
       <div style="display:flex;gap:8px"><input type="text" id="freePlot" placeholder="例 1、2、2-1" autocomplete="off" enterkeyhint="go"><button class="btn acc" id="freeGo">開く</button></div>
-      <button class="btn sub wide" id="plotAdd" style="margin-top:8px">＋ 一覧に追加（開かずに。まとめて：16-4、16-5／16-4〜16-6）</button>
+      <button class="btn sub wide" id="plotAdd" style="margin-top:8px">＋ 一覧に追加<small>開かずに・まとめて（例 16-4〜16-6）</small></button>
       <div class="chips" id="suggest" style="margin-top:10px"></div>
     </div>
     <div class="card">
@@ -384,7 +386,7 @@
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2 style="margin:0">作業写真</h2><span id="kdPos" style="font-size:13px;color:var(--mute)"></span></div>
       <div id="kdNext"></div>
       <div class="kdgrid" id="kdGrid"></div>
-      <div class="btnrow"><button class="btn sub" id="kdSwap">近景⇔遠景を入れ替える</button><button class="btn sub" id="kdMore">＋ 写真を足す</button><button class="btn sub" id="kdNocho">📒 野帳を撮る</button></div>
+      <div class="btnrow"><button class="btn sub" id="kdSwap">近景⇔遠景<small>入れ替える</small></button><button class="btn sub" id="kdMore">＋ 写真を足す</button><button class="btn sub" id="kdNocho">📒 野帳</button></div>
       <input type="file" id="kdFile" accept="image/*" capture="environment" class="hidden">
     </div>
     <div class="card" id="fieldsCard"><h2>この区画の情報</h2><div id="fields"></div></div>
@@ -481,8 +483,9 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.5.1β';
-const NEED_SERVER = '0.5';                // この版の画面が前提とする受け付け側（Apps Script）の版
+const VERSION = 'v0.5.2β';
+const NEED_SERVER = '0.5.2';              // この版の画面が前提とする受け付け側（Apps Script）の版
+function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
 let keyBad = false;                      // 合言葉が止められた・間違っている
 async function call(fn, ...args) {
@@ -661,7 +664,7 @@ async function flush() {
 let serverVer = null;
 function noteServer(v) {
   serverVer = v || '';
-  const old = !serverVer || Number(serverVer) < Number(NEED_SERVER);
+  const old = !serverVer || verLt(serverVer, NEED_SERVER);
   const b = $('oldSrv'); b.classList.toggle('hidden', !old);
   if (old) b.textContent = '受け付け側（Apps Script）が古いです。スプレッドシートの Apps Script を ' + VERSION + ' に合わせて更新してください。それまで記録と写真はスマホに残っています（消えません）。';
   if (!old) autoResend();
@@ -684,6 +687,7 @@ function updateSync() {
   updateBadge();
   const s = $('sync');
   const ph = (typeof photoPending === 'number' && photoPending) ? '・写真 ' + photoPending + '枚' : '';
+  if (!keyBad && !queue.length && ph && typeof photoError === 'string' && photoError) { s.className = 'err'; s.textContent = '写真を送れません（スマホに残っています）：' + photoError + ' ' + ph.slice(1); return; }
   if (!keyBad && !queue.length && ph) { s.className = 'wait'; s.textContent = (online ? '送信中… ' : '送信待ち（スマホに保存済み）') + ph.slice(1); return; }
   if (keyBad) { s.className = 'err'; s.textContent = 'このスマホの合言葉が使えません（止められたか、変わりました）。入力はスマホに残っています。管理する人に連絡してください'; }
   else if (queue.length && !online) { s.className = 'wait'; s.textContent = '送信待ち ' + queue.length + '件' + ph + '（スマホに保存済み・電波が戻ると自動で送ります）'; }
@@ -1215,7 +1219,7 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => navigato
  *   ・位置は上書きしない：GPS（撮影時）は固定、今ここ・目印で補正は候補として全部残す
  *   ・使う位置：今ここ（一番新しい）→ 目印で補正 → GPS。今ここに「怪しい」を付けると今ここは飛ばす
  * ===================================================================== */
-var photoPending = 0;
+var photoPending = 0, photoError = '';
 const GSI = { photo: 'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', std: 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png' };
 const ATT = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>';
 let lastFix = null, geoWatch = null, heading = null, headingOn = false, curRec = null, recMap = null;
@@ -3257,7 +3261,7 @@ function drawSiteLayer(map, g) {
 /* 他の機種の進み具合を受け取る（調査票の画面を開いている間、電波があれば5分おき） */
 let progTimer = null;
 async function pullProgress() {
-  if (!CONN || !online || document.hidden || !serverVer || Number(serverVer) < Number(NEED_SERVER)) return;
+  if (!CONN || !online || document.hidden || !serverVer || verLt(serverVer, NEED_SERVER)) return;
   try { const r = await call('api_progress'); if (r && r.others) setOthers(r.others); if (r && r.site) LS.set('site', r.site); refreshTargets(); renderDevBar(); } catch (e) {}
 }
 function startProgress() { clearInterval(progTimer); progTimer = setInterval(pullProgress, 300000); pullProgress(); }
@@ -3382,7 +3386,7 @@ function prepSheet() {
   sheet(box => {
     box.append(el('h3', '', '🧰 明日の準備チェック'));
     const row = (ok, text, btn) => { const r = el('div', 'setrow'); const t = el('span', '', (ok ? '✓ ' : '⚠ ') + text); t.style.color = ok ? 'var(--ok)' : 'var(--warn)'; t.style.fontWeight = 'bold'; r.append(t); if (btn) r.append(btn); box.append(r); };
-    const newSrv = !!serverVer && Number(serverVer) >= Number(NEED_SERVER);
+    const newSrv = !!serverVer && !verLt(serverVer, NEED_SERVER);
     row(newSrv, newSrv ? '受け付け側は新しい版（' + serverVer + '）' : '受け付け側（Apps Script）が古いか、まだ確かめられていません（電波のある所で開き直す）');
     const alive = areasAll().filter(areaAlive);
     const tb = el('button', 'minibtn', alive.length ? '追加する' : '保存する'); tb.onclick = () => { sheet(null); openArea('tiles'); };
@@ -3421,7 +3425,7 @@ function leaveChecks() {
   // 説明文が空
   const empty = mine.filter(s => !s.situ && !s.nocho && !String(s.text || '').trim()).length;
   if (empty) out.push('説明文が空の調査票 ' + empty + '件（帰社後にAIで埋めることもできます）');
-  const vp = videoPending().length; if (vp) out.push('動画 ' + vp + '本がまだ送れていません（Wi-Fiにつないで「動画を送る」）');
+  const vp = videoPending().length; if (vp) out.push('動画 ' + vp + '本がまだ送れていません（Wi-Fiにつないで HOME の「🎥 送る」）');
   return out;
 }
 function leaveBox(box) {
@@ -3538,11 +3542,13 @@ async function uploadPhotos(force) {
     let list = (await idb.all()).filter(p => !p.sent).sort((a, b) => a.at < b.at ? -1 : 1);
     for (const p of list) {
       const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: await b64(p.blob) });
-      p.sent = true; p.url = res && res.url || ''; await idb.put(p);
+      p.sent = true; p.url = res && res.url || ''; await idb.put(p); photoError = '';
       await refreshPending(); online = true;
     }
   } catch (e) {
     if (e.server && e.message === 'KEY') keyBad = true; else if (!e.server) online = false;
+    photoError = e.server && e.message !== 'KEY' ? e.message : '';      // 受け付け側が写真を受け取れなかった理由（帯に出す）
+    if (photoError && /不明な操作/.test(photoError)) noteServer('');
     setTimeout(uploadPhotos, online ? 30000 : 10000);
   } finally {
     uploading = false; uploadPhotos.go = false; await refreshPending();
@@ -3701,16 +3707,16 @@ $('videoFile').onchange = async () => {
                  devNo: devNo(), name: worker(), size: file.size, type: file.type || 'video/mp4', file: (devNo() ? devNo() + '_' : '') + '動画_' + stamp + '.' + ext, sent: false, offset: 0 };
   try { await vdb.put({ vid, biz: BIZ, blob: file }); } catch (e) { toast('動画を保存できませんでした（スマホの空きを確かめてください）'); return; }
   LS.set('videos', videoMeta().concat([meta])); updateSync(); renderSendLines();
-  toast('🎥 動画を保存しました（' + Math.round(file.size / 1048576) + 'MB）。Wi-Fiにつないだら「動画を送る」で送ります' + (f ? '' : '（位置なし）'));
+  toast('🎥 動画を保存しました（' + Math.round(file.size / 1048576) + 'MB）。Wi-Fiにつないだら HOME の「🎥 送る」で送ります' + (f ? '' : '（位置なし）'));
   refreshTargets();
 };
 function renderSendLines() {
   const v = videoPending(), mb = Math.round(v.reduce((a, x) => a + (x.size - (x.offset || 0)), 0) / 1048576);
   $('videoLine').classList.toggle('hidden', !v.length || !CONN);
-  if (v.length) $('videoMsg').textContent = '🎥 送っていない動画 ' + v.length + '本（約' + mb + 'MB）';
+  if (v.length) $('videoMsg').textContent = '🎥 送っていない動画 ' + v.length + '本（約' + mb + 'MB）。Wi-Fiのときに →';
   const manual = SET().photoManual && photoPending;
   $('photoLine').classList.toggle('hidden', !manual);
-  if (manual) $('photoMsg').textContent = '📷 送っていない写真 ' + photoPending + '枚';
+  if (manual) $('photoMsg').textContent = '📷 送っていない写真 ' + photoPending + '枚。Wi-Fiのときに →';
   updateBadge();
 }
 $('photoSend').onclick = () => { uploadPhotos.go = true; uploadPhotos(true); toast('写真を送っています'); };
@@ -3741,7 +3747,7 @@ async function sendVideos() {
     }
     toast('✓ 動画を送りました');
   } catch (e) {
-    toast(e.server && /不明な操作/.test(e.message) ? '受け付け側が古いので動画を送れません（Apps Script を更新してください）' : '動画を送れませんでした（電波のよい所で、もう一度「動画を送る」）');
+    toast(e.server && /不明な操作/.test(e.message) ? '受け付け側が古いので動画を送れません（Apps Script を更新してください）' : '動画を送れませんでした（電波のよい所で、もう一度「🎥 送る」）');
   } finally { videoSending = false; renderSendLines(); }
 }
 $('videoSend').onclick = () => sendVideos();
