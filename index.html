@@ -22,6 +22,7 @@
   #sync { font-size:12px; padding:6px 14px; background:var(--okbg); color:var(--ok); border-bottom:1px solid var(--line); }
   #sync.wait { background:var(--warnbg); color:var(--warn); font-weight:bold; }
   #sync.err { background:var(--errbg); color:var(--err); font-weight:bold; }
+  #sync.hold { background:#e8eef3; color:#16303f; font-weight:bold; }
   #oldSrv { font-size:13px; padding:8px 14px; background:var(--errbg); color:var(--err); font-weight:bold; border-bottom:1px solid var(--line); }
   #devBar { font-size:12px; padding:4px 14px; background:#eef3f6; color:#16303f; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
   #devBar.hidden, #oldSrv.hidden { display:none; }
@@ -57,9 +58,22 @@
   #mapDocRow b { min-width:3.2em; text-align:right; }
   #gkBar { position:relative; z-index:30; background:#16303f; color:#fff; border-radius:12px 12px 0 0; padding:8px 10px; font-size:14px; }
   #gkBar.hidden { display:none; }
-  #gkBtns { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  #gkBtns { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+  #gkBtns .gkrow { display:flex; flex-wrap:wrap; gap:6px; }
   #gkBtns button { flex:1 1 auto; min-height:40px; border:0; border-radius:8px; background:#fff; color:#16303f; font-weight:bold; font-size:14px; padding:6px 8px; }
+  #gkBtns button:disabled { opacity:.45; }
   #gkBtns button.end { background:#2e7d32; color:#fff; }
+  #gkBtns button.go { background:#1764b5; color:#fff; }
+  #gkBtns .tools button { font-size:13px; padding:6px 4px; min-height:38px; }
+  #gkBtns .tools button.on { background:#ffd9f0; outline:3px solid #fff; box-shadow:inset 0 0 0 2px #16303f; text-decoration:underline; }
+  #gkBtns .style button { font-size:13px; min-height:34px; background:#e8eef3; }
+  #gkBtns .sw { display:inline-block; width:14px; height:14px; border-radius:50%; border:2px solid #16303f; vertical-align:-2px; margin:0 3px; }
+  .gktx span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; font-family:'Hiragino Maru Gothic ProN','Hiragino Maru Gothic Pro','Zen Maru Gothic','Hiragino Sans',sans-serif; font-weight:bold;
+    text-shadow:-2px 0 #fff, 2px 0 #fff, 0 -2px #fff, 0 2px #fff, -1.5px -1.5px #fff, 1.5px 1.5px #fff, -1.5px 1.5px #fff, 1.5px -1.5px #fff; }
+  .gktx.wh span { text-shadow:-2px 0 #111, 2px 0 #111, 0 -2px #111, 0 2px #111, -1.5px -1.5px #111, 1.5px 1.5px #111, -1.5px 1.5px #111, 1.5px -1.5px #111; }
+  .gkv span { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fff; border:3px solid #16303f; color:#16303f; font-weight:bold; font-size:13px; }
+  .gklock { touch-action:none; }
+  #gkCheck.on, #gkDraw.on, #gkEraseBtn.on, #gkEditBtn.on { outline:3px solid #16303f; text-decoration:underline; }
   .gkon { display:flex; align-items:center; gap:6px; font-size:13px; margin:2px 0 8px; } .gkon input { width:20px; height:20px; margin:0; }
   .gkok span, .gkng span, .gkln span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; font-family:'Hiragino Maru Gothic ProN','Hiragino Maru Gothic Pro','Zen Maru Gothic','Hiragino Sans',sans-serif; font-weight:bold;
     text-shadow:-2px 0 #fff, 2px 0 #fff, 0 -2px #fff, 0 2px #fff, -1.5px -1.5px #fff, 1.5px 1.5px #fff, -1.5px 1.5px #fff, 1.5px -1.5px #fff; }
@@ -182,10 +196,23 @@
   .bdg { font-size:11px; padding:1px 7px; border-radius:9px; background:#e8eef2; color:var(--mute); }
   .bdg.here { background:#dff0e4; color:var(--ok); } .bdg.photo { background:#e6f4ea; color:#1b5e20; } .bdg.gps { background:#e8f1fb; color:#0b4f8a; } .bdg.mark { background:#f3eafa; color:#6b2f8f; }
   .bdg.warn { background:var(--warnbg); color:var(--warn); } .bdg.bad { background:var(--errbg); color:var(--err); }
-  .bdg.cross { background:#16303f; color:#fff; font-weight:bold; }
+  .bdg.xbdg { background:#16303f; color:#fff; font-weight:bold; }
   .reccard .noimg { display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--mute); }
   .photos { display:flex; gap:8px; overflow-x:auto; }
   .photos img { height:120px; border-radius:8px; display:block; }
+  #pickOpRow { display:flex; align-items:center; gap:8px; font-size:13px; margin:4px 0; } #pickOpRow.hidden { display:none; } #pickOpRow input { flex:1; }
+  #micBox { position:fixed; left:0; right:0; bottom:0; z-index:3000; padding:12px; } #micBox.hidden { display:none; } #micBox .box { background:#16303f; color:#fff; border-radius:14px; padding:14px; box-shadow:0 4px 18px rgba(0,0,0,.35); } #micText { min-height:28px; margin:8px 0; font-size:18px; }
+  .xrow { display:flex; gap:8px; } .xrow .crossrow { flex:1; margin-top:8px; }
+  .fnslots { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .fnslot { position:relative; border:4px solid #7fd3ff; border-radius:10px; background:#eef8ff; min-height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0; overflow:hidden; font-size:15px; font-weight:bold; color:#16303f; }
+  .fnslot img, .fnslot .brokenph { width:100%; height:110px; object-fit:cover; display:block; border-radius:0; border:0; }
+  .fnslot b { position:absolute; left:4px; top:4px; background:#16303f; color:#fff; border:2px solid #7fd3ff; border-radius:6px; padding:0 6px; font-size:13px; }
+  .fnslot.empty { border-style:solid; color:#1764b5; }
+  .fnslot.add { min-height:44px; font-size:14px; background:#fff; }
+  .arrowmk b.fn { border:3px solid #7fd3ff; font-weight:bold; }
+  .brokenph { height:120px; min-width:120px; padding:6px 10px; border-radius:8px; background:#e8eef3; color:#16303f; border:2px dashed #16303f; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; font-weight:bold; line-height:1.4; cursor:pointer; }
+  .brokenph.bad { background:#fff; border-color:#b00020; color:#b00020; }
+  .reccard .brokenph { width:72px; height:54px; min-width:0; padding:2px; font-size:9px; border-width:1px; }
   .minimap { height:220px; border-radius:10px; margin-top:8px; background:#dfe5e9; isolation:isolate; }   /* 地図のボタンが上の画面に重ならないように */
   #pickMap { isolation:isolate; }
   .posline { font-size:14px; margin-top:6px; }
@@ -243,6 +270,7 @@
   .sugg .lab { font-size:12px; color:var(--mute); width:100%; }
   .sugg button { border:1px solid #b9cfdc; background:#eef5f9; color:var(--fg); border-radius:16px; padding:7px 12px; font-size:15px; max-width:100%; text-align:left; }
   .sugg button.reg { background:#fff; border-style:dashed; }
+  .sugg button.hist { background:#fff; border-left:5px solid #16303f; font-weight:bold; }
   .sugg button.kp { background:#16303f; color:#fff; border-color:#16303f; }
   #kpad { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#d4dbe0; padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px)); box-shadow:0 -2px 8px rgba(0,0,0,.15); }
   .kpopts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
@@ -326,7 +354,9 @@
     <div class="nearbar hidden" id="nearList"></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">調査票（<span id="srvCount">0</span>件）</h2><button class="minibtn" id="srvBlank">＋ 写真なしで作る</button></div>
+      <div class="chips" id="srvDayF" style="margin-bottom:6px"></div>
       <div class="chips kinds" id="srvFilter" style="margin-bottom:8px"></div>
+      <div class="chips" id="srvCatF" style="margin-bottom:8px"></div>
       <div class="reclist" id="srvItems"></div>
     </div>
     </div>
@@ -339,14 +369,18 @@
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 id="recTitle" style="margin:0">写真番号</h2><span id="recTime" style="font-size:12px;color:var(--mute)"></span></div>
       <div class="photos" id="recPhotos" style="margin-top:8px"></div>
       <button class="btn sub wide" id="recAddPhoto">＋ 写真を追加</button>
-      <label class="crossrow" id="fCross"><input type="checkbox" id="recCross"> 📏 ポール横断（ここで横断を取った）</label>
+      <div class="xrow"><label class="crossrow" id="fCross"><input type="checkbox" id="recCross"> 📏 ポール横断</label><label class="crossrow" id="fFN"><input type="checkbox" id="recFN"> 🔭 遠景近景</label></div>
+      <div class="fnslots hidden" id="recFNSlots"></div>
+      <input type="file" id="fnFile" accept="image/*" capture="environment" class="hidden">
       <input type="file" id="recFile" accept="image/*" capture="environment" class="hidden"><input type="file" id="recLib" accept="image/*" class="hidden">
     </div>
     <div class="card" style="display:flex;flex-direction:column">
       <div id="fNear"><div class="nearbar hidden" id="nearRec" style="margin:0 0 10px"></div></div>
-      <div class="field" id="fTarget"><label>対象（水路名など。空でもよい）</label><div style="display:flex;gap:6px"><input type="text" id="recTarget" list="tgtNames" autocomplete="off" style="flex:1;min-width:0"><button class="minibtn hidden" id="recNear"></button></div><datalist id="tgtNames"></datalist></div>
-      <div class="field" id="fKind"><label>工種（選ばなくてもよい・次の調査票に引き継ぎ）</label><div class="chips kinds" id="recKind"></div></div>
-      <div class="field" id="fPlot"><label>区画（空でもよい）</label><input type="text" id="recPlot" list="plotNames" autocomplete="off"><datalist id="plotNames"></datalist></div>
+      <div class="field" id="fKind"><label>工種（空でもよい・次の調査票に引き継ぎ）</label><div class="chips kinds" id="recKind"></div></div>
+      <div class="field" id="fRoute"><label>路線・区画名（空でもよい）</label><div style="display:flex;gap:6px"><input type="text" id="recRoute" list="routeNames" autocomplete="off" style="flex:1;min-width:0" placeholder="例：第2号排水路・19"><button class="minibtn hidden" id="recNear"></button></div><datalist id="routeNames"></datalist><div class="chips" id="routeChips"></div></div>
+      <div class="field" id="fCat"><label>対象物の分類（空でもよい）</label><div class="chips" id="recCat"></div></div>
+      <div class="field hidden" id="fTarget"><input type="text" id="recTarget" list="tgtNames" autocomplete="off"><datalist id="tgtNames"></datalist></div>
+      <div class="field hidden" id="fPlot"><input type="text" id="recPlot" list="plotNames" autocomplete="off"><datalist id="plotNames"></datalist></div>
       <div class="field" id="fText">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label style="margin:0">調査内容（1〜3行目が台帳へ。4行目からは特記）</label><span style="display:flex;gap:6px"><button class="minibtn" id="recMic">🎤 話す</button><button class="minibtn" id="recSame">前と同じ</button></span></div>
         <div class="tawrap" style="margin-top:4px"><div class="tabg" id="recBg" aria-hidden="true"></div><textarea id="recText" rows="3" spellcheck="false" autocomplete="off" placeholder="例）始点から下流の状況&#10;F-400B×400H&#10;両岸張ブロック"></textarea></div>
@@ -374,7 +408,8 @@
     <div id="gkBar" class="hidden"><div id="gkHint"></div><div id="gkBtns"></div></div>
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
-      <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・歩いて区間</small></button></div>
+      <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
+      <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
       <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
       <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab">航空写真</span><input type="range" id="mapPhotoOp" min="0" max="100" step="5" value="50"><b id="mapPhotoPct">50%</b></div>
       <div id="mapDocList" class="hidden"></div>
@@ -458,15 +493,17 @@
 <div id="kpad" class="hidden">
   <div class="kpopts" id="kpOpts"></div>
   <div class="kpgrid">
-    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="BS" class="fn">⌫</button><button data-k="×" class="sym">×</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="H" class="sym">H</button><button data-k="BS" class="fn">⌫</button>
     <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="NEXT" class="go">次へ</button><button data-k="B" class="sym">B</button>
-    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="NL" class="fn">改行</button><button data-k="H" class="sym">H</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="NL" class="fn">改行</button><button data-k="×" class="sym">×</button>
     <button data-k="0">0</button><button data-k=".">.</button><button data-k="～" class="sym">～</button><button data-k="=" class="sym">=</button><button data-k="t" class="sym">t</button>
     <button data-k="ABC" class="fn wide2">あ　キーボード</button><button data-k="mm" class="sym">mm</button><button data-k="φ" class="sym">φ</button><button data-k="HIDE" class="fn">⌄ 閉じる</button>
   </div>
 </div>
 <div id="picker" class="hidden"><div id="pickWrap"><div id="pickMap"></div><div class="cross"></div><div id="pickArrow" class="hidden"><div class="arr"></div><div class="knob" id="pickKnob"></div></div><div id="pickDir" class="hidden"></div></div>
-  <div id="pickBar"><div id="pickHint"></div><div class="btnrow"><button class="btn sub" id="pickLayer">地形図にする</button><button class="btn sub" id="pickGps">GPSの位置へ</button></div>
+  <div id="pickBar"><div id="pickHint"></div>
+  <div id="pickOpRow" class="hidden"><span>航空写真</span><input type="range" id="pickOp" min="0" max="100" step="5"><b id="pickOpPct"></b></div>
+  <div class="btnrow"><button class="btn sub" id="pickLayer">地形図にする</button><button class="btn sub" id="pickGps">GPSの位置へ</button><button class="btn sub hidden" id="pickMove">📍 位置も動かす</button></div>
   <div class="btnrow"><button class="btn sub" id="pickCancel">やめる</button><button class="btn go" id="pickOk">この位置で決定</button></div></div></div>
 <div id="area" class="hidden">
   <!-- 例の「砺波市五郎丸」は、このアプリを最初に作って使った現場。作った人のしるしとして残しているので消さないこと -->
@@ -491,12 +528,14 @@
   <div id="docBar">
     <div id="docInfo"></div>
     <div class="btnrow"><button class="btn sub" id="docLoad">📄 図面を読み込む</button><button class="btn sub" id="docPick">図面の一覧</button><button class="btn sub" id="docUndo">1つ戻す</button></div>
+    <div class="btnrow"><button class="btn sub" id="docRot">⟳ 図面を回す（90°）</button><button class="btn sub" id="docMe">📍 今いる所へ</button><button class="btn go" id="docHere">📍 今いる所を合わせ点に</button></div>
     <div class="btnrow"><button class="btn sub" id="docView">重ねて見る</button><button class="btn go" id="docSave">この位置で保存</button></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:14px">図面の濃さ <input type="range" id="docOp" min="10" max="100" value="55" style="flex:1"></label>
     <div class="btnrow"><button class="btn sub" id="docExtract">極太線を抜き出す（試作）</button><button class="btn dangerline" id="docDel">この図面を消す…</button></div>
     <input type="file" id="docFile" accept="application/pdf,image/*" class="hidden">
   </div>
 </div>
+<div id="micBox" class="hidden"><div class="box"><div style="font-size:20px;font-weight:bold">🎤 マイクに向かって話してください</div><div id="micText"></div><button class="btn acc wide" id="micStop">話し終わった</button></div></div>
 <div id="wait" class="hidden"><div class="box"><div id="waitText" style="font-size:16px;margin-bottom:12px">位置を取得中…</div><button class="btn sub wide" id="waitSkip">待たずに保存</button></div></div>
 <div class="sheet hidden" id="sheet"><div class="sheetbox" id="sheetBox"></div></div>
 <div class="undo hidden" id="undo"><span id="undoText"></span><button id="undoBtn">元に戻す</button></div>
@@ -543,8 +582,8 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.6.1β';
-const NEED_SERVER = '0.6.1';              // この版の画面が前提とする受け付け側（Apps Script）の版
+const VERSION = 'v0.7β';
+const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
 let keyBad = false;                      // 合言葉が止められた・間違っている
@@ -692,11 +731,20 @@ function record(op) {
   return op;
 }
 
+/* 開いている調査票の記録と写真は、その画面を離れたとき（一覧・下のボタン・削除・アプリを閉じる）にまとめて送る。
+   スマホにはその時点で保存済み。v0.7〜 */
+var holdNew = null;     // 撮って作ったばかりの調査票（このあと画面が開く）も、作った記録から送らずに待つ
+function holdRec() { return (typeof curRec !== 'undefined' && curRec && !document.hidden && (!$('srvRec').classList.contains('hidden') || holdNew === curRec)) ? curRec : null; }
+function sendable() { const h = holdRec(); return h ? queue.filter(o => !(o.kind === 'srv' && o.rec === h)) : queue; }
+let holdWas = null;
+setInterval(() => { const h = holdRec(); if (h !== holdWas) { holdWas = h; flush(); if (typeof uploadPhotos === 'function') uploadPhotos(); } }, 700);
+document.addEventListener('visibilitychange', () => { if (document.hidden) { holdWas = null; flush(); if (typeof uploadPhotos === 'function') uploadPhotos(); } });
 async function flush() {
   updateSync();
-  if (sending || !queue.length) return;
+  const ready = sendable();
+  if (sending || !ready.length) return;
   sending = true; updateSync();
-  const batch = queue.slice(0, 50);
+  const batch = ready.slice(0, 50);
   try {
     const res = await call('api_submit', batch);
     const done = new Set(res.accepted.concat(res.rejected.map(r => r.id)));
@@ -717,7 +765,7 @@ async function flush() {
     else { online = false; lastError = ''; }
   } finally {
     sending = false; updateSync();
-    if (queue.length) setTimeout(flush, keyBad ? 60000 : lastError ? 30000 : online ? 300 : 8000);
+    if (sendable().length) setTimeout(flush, keyBad ? 60000 : lastError ? 30000 : online ? 300 : 8000);
   }
 }
 /* 受け付け側（Apps Script）の版を確かめる。古ければ帯で知らせる（記録と写真はスマホに残っている） */
@@ -750,6 +798,7 @@ function updateSync() {
   if (!keyBad && !queue.length && ph && typeof photoError === 'string' && photoError) { s.className = 'err'; s.textContent = '写真を送れません（スマホに残っています）：' + photoError + ' ' + ph.slice(1); return; }
   if (!keyBad && !queue.length && ph) { s.className = 'wait'; s.textContent = (online ? '送信中… ' : '送信待ち（スマホに保存済み）') + ph.slice(1); return; }
   if (keyBad) { s.className = 'err'; s.textContent = 'このスマホの合言葉が使えません（止められたか、変わりました）。入力はスマホに残っています。管理する人に連絡してください'; }
+  else if (queue.length && typeof sendable === 'function' && !sendable().length) { s.className = 'hold'; s.textContent = '✎ 編集中の調査票はスマホに保存済み（画面を離れたときにまとめて送ります）'; }
   else if (queue.length && !online) { s.className = 'wait'; s.textContent = '送信待ち ' + queue.length + '件' + ph + '（スマホに保存済み・電波が戻ると自動で送ります）'; }
   else if (queue.length) { s.className = 'wait'; s.textContent = '送信中… ' + queue.length + '件' + ph; }
   else if (lastError) { s.className = 'err'; s.textContent = '一部保存できませんでした'; }
@@ -767,7 +816,9 @@ function devNo() { return LS.get('devNo', ''); }
 function fmtDevNo(v) { v = String(v || '').trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)); return /^\d+$/.test(v) ? v.padStart(2, '0') : v.slice(0, 3); }
 function worker() { const t = LS.get('today', null); return t && t.d === today() ? t.name : ''; }
 function recNo(s) { return (s.devNo ? s.devNo + '-' : '') + s.no; }
-function photoName(no, pid) { const d = devNo(); return (d ? d + '-' : 'No') + String(no).padStart(4, '0') + '_' + pid + '.jpg'; }
+/* 写真の名前（v0.7〜）：帳票番号＋枝番。1枚目は枝番なし（01-3.jpg）、2枚目から 01-3-1.jpg…。遠景近景の枠で撮った写真は 01-3-1_遠景.jpg。
+   見分け用の長いIDは名前に入れない（受け付け側の「写真」シートにだけ残る） */
+function photoName(no, pid, br, tag) { const d = devNo(); return (d ? d + '-' : 'No') + no + (br ? '-' + br : '') + (tag ? '_' + tag : '') + '.jpg'; }
 let devSent = false;
 function sendDev() { if (!devNo()) return; queue.push({ id: uuid(), at: nowIso(), kind: 'dev', devNo: devNo(), dev: devId(), who: worker() }); LS.set('queue', queue); flush(); devSent = true; }
 function renderDevBar() {
@@ -1401,11 +1452,14 @@ const idb = (() => {
   const txs = async (store, mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); };
   const tx = (mode, fn) => txs('photos', mode, fn);
   window.idbTx = txs;
+  /* iPhoneで、しまった写真（Blob）が時間がたつと読めなくなることがある → 写真はバイト列（ArrayBuffer）でしまい、読むときに写真に戻す */
+  const pack = async v => { v = Object.assign({ biz: BIZ }, v); if (v.blob instanceof Blob) { try { v.buf = await v.blob.arrayBuffer(); v.mime = v.blob.type || 'image/jpeg'; delete v.blob; } catch (e) {} } return v; };
+  const unpack = p => { if (p && p.buf && !p.blob) p.blob = new Blob([p.buf], { type: p.mime || 'image/jpeg' }); return p; };
   return {
-    put: v => tx('readwrite', st => st.put(Object.assign({ biz: BIZ }, v))),
-    get: k => tx('readonly', st => st.get(k)),
-    all: () => tx('readonly', st => st.getAll()).then(l => l.filter(p => (p.biz || '') === BIZ)),       // 今の業務の写真だけ
-    every: () => tx('readonly', st => st.getAll()),
+    put: async v => { const x = await pack(v); return tx('readwrite', st => st.put(x)); },
+    get: k => tx('readonly', st => st.get(k)).then(unpack),
+    all: () => tx('readonly', st => st.getAll()).then(l => l.filter(p => (p.biz || '') === BIZ).map(unpack)),       // 今の業務の写真だけ
+    every: () => tx('readonly', st => st.getAll()).then(l => l.map(unpack)),
     del: k => tx('readwrite', st => st.delete(k)),
     clear: async () => { for (const p of await idb.all()) await idb.del(p.pid); }
   };
@@ -1417,7 +1471,21 @@ async function clearPhotos() {
 }
 async function refreshPending() { try { photoPending = (await idb.all()).filter(p => !p.sent).length; } catch (e) { photoPending = 0; } updateSync(); if (typeof renderSendLines === 'function' && CONN) renderSendLines(); }
 const urlCache = {};
-async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p) return ''; return (urlCache[pid] = URL.createObjectURL(p.blob)); }
+async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p || !p.blob) return ''; return (urlCache[pid] = URL.createObjectURL(p.blob)); }
+/* 写真の表示：スマホの中の写真が読めないとき（iPhoneでまれに起きる）は「?」にせず、
+   送れていればドライブの写真を開けるようにし、送れていなければ撮り直しが要ると知らせる */
+function phFail(box, pid) {
+  idb.get(pid).catch(() => null).then(p => {
+    const d = el('div', 'brokenph');
+    if (p && p.sent && p.url) { d.innerHTML = '☁ ドライブに保存済み<br><small>タップで開く</small>'; d.onclick = e => { e.stopPropagation(); window.open(p.url, '_blank', 'noopener'); }; }
+    else if (p && p.sent) d.innerHTML = '☁ ドライブに保存済み<br><small>（スマホでは表示できません）</small>';
+    else { d.classList.add('bad'); d.innerHTML = '⚠ 写真が読めません<br><small>まだ送れていません。撮り直してください</small>'; }
+    box.replaceWith(d);
+  });
+}
+function phImg(pid, url, cls) { const im = el('img', cls || ''); im.alt = '写真'; im.onerror = () => phFail(im, pid); if (url) im.src = url; else setTimeout(() => phFail(im, pid), 0); return im; }
+const brokenSeen = new Set();
+function brokenNote(p) { if (brokenSeen.has(p.pid)) return; brokenSeen.add(p.pid); showMsg('⚠ スマホの中で読めなくなった写真があります（' + (p.name || p.pid) + '）。まだ送れていないので、その調査票で撮り直してください'); }
 
 /* ---------- 写真を写真台帳と同じ規格にする（4:3・1280×960、向きを直してJPEG） ----------
  *  台帳（現況調査写真）に貼っている写真と同じ 1280×960。4:3 でない写真は真ん中を 4:3 に切り出す。
@@ -1458,12 +1526,13 @@ function reduceSurvey(rows) {     // コード.gs の reduceSurvey と同じ決�
       if (s) return;
       s = out[r.rec] = { id: r.rec, no: d.no, created: r.at, photos: (d.photos || []).slice(), removed: [], plot: d.plot || '', kind: d.kind || '', target: d.target || '', situ: !!d.situ, text: '', gps: d.gps || null,
         heading: d.heading ?? null, headingSrc: d.heading == null ? '' : '方位センサー', cands: [], suspect: false, deleted: false,
-        devNo: d.devNo || '', dev: d.dev || '', name: d.name || '', src: d.src || '', ktype: d.ktype || '', pos: d.pos ?? '', line2: d.line2 || '', nocho: !!d.nocho, cross: false };
+        devNo: d.devNo || '', dev: d.dev || '', name: d.name || '', src: d.src || '', ktype: d.ktype || '', pos: d.pos ?? '', line2: d.line2 || '', nocho: !!d.nocho, cross: false, fn: false, pk: {}, cat: '' };
       if (d.mark) s.cands.push({ src: 'mark', lat: d.mark.lat, lon: d.mark.lon, at: r.at }); return;
     }
     if (!s) return;
-    if (r.action === '内容') { if (d.field === '区画') s.plot = d.value || ''; else if (d.field === '内容') s.text = d.value || ''; else if (d.field === '工種') s.kind = d.value || ''; else if (d.field === '対象') s.target = d.value || ''; else if (d.field === 'ポール横断') s.cross = !!d.value; else if (d.field === '種類') s.ktype = d.value || ''; else if (d.field === '撮影日時') s.shotAt = d.value || ''; }
-    else if (r.action === '写真追加') { if (!s.photos.includes(d.pid)) s.photos.push(d.pid); s.removed = s.removed.filter(x => x !== d.pid); }
+    if (r.action === '内容') { if (d.field === '区画') s.plot = d.value || ''; else if (d.field === '内容') s.text = d.value || ''; else if (d.field === '工種') s.kind = d.value || ''; else if (d.field === '対象') s.target = d.value || ''; else if (d.field === 'ポール横断') s.cross = !!d.value; else if (d.field === '種類') s.ktype = d.value || ''; else if (d.field === '撮影日時') s.shotAt = d.value || ''; else if (d.field === '遠景近景') s.fn = !!d.value; else if (d.field === '分類') s.cat = d.value || ''; }
+    else if (r.action === '写真追加') { if (!s.photos.includes(d.pid)) s.photos.push(d.pid); s.removed = s.removed.filter(x => x !== d.pid); if (d.kind || d.gps) s.pk[d.pid] = { kind: d.kind || '', gps: d.gps || null, heading: d.heading ?? null, at: r.at }; }
+    else if (r.action === '写真位置') { const k = s.pk[d.pid] || (s.pk[d.pid] = { kind: '', gps: null, heading: null }); if (d.lat != null) k.pos = { lat: d.lat, lon: d.lon }; if (d.heading !== undefined) k.heading = d.heading; }
     else if (r.action === '写真外す') { if (s.photos.includes(d.pid)) { s.photos = s.photos.filter(x => x !== d.pid); s.removed.push(d.pid); } }
     else if (r.action === '写真戻す') { if (s.removed.includes(d.pid)) { s.removed = s.removed.filter(x => x !== d.pid); s.photos.push(d.pid); } }
     else if (r.action === '位置') { s.cands.push({ src: d.src, lat: d.lat, lon: d.lon, at: r.at }); if (d.src === 'here' || d.src === 'pc') s.suspect = false; }
@@ -1502,6 +1571,21 @@ document.addEventListener('visibilitychange', () => {
   else if (geoPaused) { geoPaused = false; startGeo(); }
 });
 function freshFix(sec = 15) { return lastFix && Date.now() - lastFix.t < sec * 1000 ? lastFix : null; }
+/* 押したときに今の位置を取りに行く（立ち止まっているとスマホが位置を送ってこないので、待っていても新しくならない）。
+   取れなければ最後の位置を返す（old:true と何秒前か）。位置が全くなければ null */
+function getFixNow(sec = 8) {
+  return new Promise(res => {
+    const f0 = freshFix(5); if (f0) return res(f0);
+    const f1 = freshFix(60); if (f1) return res(Object.assign({ old: true, age: Math.round((Date.now() - f1.t) / 1000) }, f1));     // 1分以内の位置（立ち止まっている間は新しい位置が来ない）
+    if (!navigator.geolocation) return res(lastFix ? Object.assign({ old: true, age: Math.round((Date.now() - lastFix.t) / 1000) }, lastFix) : null);
+    let done = false;
+    const fin = f => { if (done) return; done = true; res(f); };
+    navigator.geolocation.getCurrentPosition(p => {
+      lastFix = { lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy * 10) / 10, t: Date.now() }; showGps(); fin(lastFix);
+    }, () => fin(lastFix ? Object.assign({ old: true, age: Math.round((Date.now() - lastFix.t) / 1000) }, lastFix) : null), { enableHighAccuracy: true, maximumAge: 3000, timeout: sec * 1000 });
+    setTimeout(() => fin(lastFix ? Object.assign({ old: true, age: Math.round((Date.now() - lastFix.t) / 1000) }, lastFix) : null), sec * 1000 + 500);
+  });
+}
 function showGps() {
   const f = freshFix(30);
   $('gpsState').innerHTML = f ? '位置：<b>±' + Math.round(f.acc) + 'm</b>' + (f.acc > 10 ? '（ずれが大きめ。少し待つか、撮ったあと「今ここ」で直す）' : '') : '位置：取得中…';
@@ -1574,12 +1658,13 @@ function showSurvey() {
   $('srvList').classList.remove('hidden'); $('back').classList.add('hidden'); setModeBar('srv'); dockOn('dockHome');
   $('title').textContent = '調査票'; showMsg('');
   startGeo(); startHeading(); showGps(); renderList(); applySurveyLayout(); startProgress();
+  setTimeout(() => { holdWas = holdRec(); flush(); uploadPhotos(); }, 0);      // 調査票の画面から戻ったら、すぐまとめて送る
 }
 /* 一覧：カードはすぐ作り、写真は画面に見えてから読む。中身が変わっていなければ作り直さない（HOMEを押したときのもたつき対策） */
 let listSig = '', listObs = null;
 function listThumbs(box) {
   if (listObs) listObs.disconnect();
-  const load = async im => { const u = await photoUrl(im.dataset.pid); if (u) im.src = u; };
+  const load = async im => { const u = await photoUrl(im.dataset.pid); im.onerror = () => phFail(im, im.dataset.pid); if (u) im.src = u; else phFail(im, im.dataset.pid); };
   if (!('IntersectionObserver' in window)) { box.querySelectorAll('img[data-pid]').forEach(load); return; }
   listObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { listObs.unobserve(e.target); load(e.target); } }), { rootMargin: '300px' });
   box.querySelectorAll('img[data-pid]').forEach(im => { if (!im.src) listObs.observe(im); });
@@ -1587,12 +1672,14 @@ function listThumbs(box) {
 async function renderList() {
   if (typeof renderSendLines === 'function') renderSendLines();
   const every = Object.values(recs()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
-  renderKindFilter(every);
-  const fk = LS.get('srv:filter', ''), all = fk ? every.filter(s => (s.kind || '工種なし') === fk) : every;
-  $('srvCount').textContent = fk ? all.length + '／' + every.length : all.length;
+  renderDayFilter(every);
+  const ofDay = every.filter(dayOK);
+  renderKindFilter(ofDay); renderCatFilter(ofDay);
+  const all = every.filter(recShown);
+  $('srvCount').textContent = all.length !== every.length ? all.length + '／' + every.length : all.length;
   const box = $('srvItems');
-  if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。</span>'; return; }
-  const me = worker(), sig = fk + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name]; }));
+  if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">' + (every.length ? 'この絞り込みでは調査票がありません（上のボタンで日付・工種を切り替え）。' : 'まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。') + '</span>'; return; }
+  const me = worker(), sig = JSON.stringify([dayF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s)]; }));
   if (sig !== listSig || !box.querySelector('.reccard')) {
     listSig = sig; box.innerHTML = '';
     for (const s of all) {
@@ -1607,7 +1694,9 @@ async function renderList() {
       if (s.suspect) add('⚠ 今ここ怪しい', 'warn');
       if ((s.text || '').split('\n').slice(3).join('').trim()) add('特記あり', 'mark');
       if (s.situ) add('状況写真', 'gps');
-      if (s.cross) add('📏 ポール横断', 'cross');
+      if (s.cat) add('分類：' + s.cat, 'gps');
+      if (s.photos.some(p => s.pk && s.pk[p] && s.pk[p].kind)) add('🔭 遠景近景', 'gps');
+      if (s.cross) add('📏 ポール横断', 'xbdg');
       if (!s.photos.length) add('写真なし', 'warn');
       if (s.nocho) add('野帳・控え（台帳に出さない）', 'gps');
       if (s.src === 'koudo') add('耕土厚 ' + (s.ktype || ''), 'gps');
@@ -1636,8 +1725,8 @@ $('srvNew').onclick = () => {
 };
 $('srvFile').onchange = async () => {
   const file = $('srvFile').files[0]; if (!file) return;
-  const r = await newRec(file, pending, {});
-  if (r) openRec(r.rec, true);
+  const r = await newRec(file, pending, { hold: true });
+  if (r) openRec(r.rec, true); else { holdNew = null; curRec = null; }
 };
 /* 写真1枚から調査票を作る（調査票・状況写真・耕土厚の作業写真・野帳で共通）
    写真番号はこのスマホの通し番号（業務ごと）。機種番号・作業者・端末IDも一緒に記録する */
@@ -1649,6 +1738,7 @@ async function newRec(file, pend, extra) {
   if (!fix && !extra.quick) fix = await waitFix(20);                     // 位置がまだなら少し待つ（待たずに保存もできる）
   const no = LS.get('srv:no', 0) + 1; LS.set('srv:no', no);
   const rec = 'r' + uuid().slice(3), pid = 'p' + uuid().slice(3);
+  if (extra.hold) { holdNew = rec; curRec = rec; }
   if (blob) await idb.put({ pid, rec, blob, sent: false, at: nowIso(), name: photoName(no, pid) });
   const gps = fix ? { lat: fix.lat, lon: fix.lon, acc: fix.acc } : null;
   const h = pend && pend.heading != null ? Math.round(pend.heading) : null;
@@ -1656,7 +1746,7 @@ async function newRec(file, pend, extra) {
   if (hit && hit.kind && !extra.nocho) LS.set('srv:lastKind', hit.kind);
   const data = Object.assign({ no, photos: blob ? [pid] : [], gps, heading: h, mark: applyOffset(fix), plot: LS.get('srv:lastPlot', ''),
     kind: hit && hit.kind ? hit.kind : LS.get('srv:lastKind', ''), target: hit ? hit.name : '', devNo: devNo(), dev: devId(), name: worker() }, extra);
-  delete data.quick; delete data.text;
+  delete data.quick; delete data.text; delete data.hold;
   recordSrv('作成', rec, data);
   if (extra.text) recordSrv('内容', rec, { field: '内容', value: extra.text });
   await refreshPending(); uploadPhotos();
@@ -1685,7 +1775,7 @@ async function openRec(id, fresh, from) {
   if (from !== undefined) recFrom = from;
   if (PLOT && from === undefined && !curRec) recFrom = { plot: PLOT };
   PLOT = null;
-  curRec = id;
+  curRec = id; holdNew = null;
   ['home', 'plotView', 'srvList', 'mapView', 'drawView'].forEach(x => $(x).classList.add('hidden')); $('modebar').classList.add('hidden'); dockOn('');
   $('srvRec').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = '← 一覧';
   $('title').textContent = '調査票 No.' + recNo(s); window.scrollTo(0, 0);
@@ -1693,8 +1783,9 @@ async function openRec(id, fresh, from) {
   $('recPlot').value = s.plot; $('recTarget').value = s.target || ''; renderTargetField(); openInput(s);
   const dl = $('plotNames'); dl.innerHTML = ''; try { currentPlots().forEach(e => { const o = document.createElement('option'); o.value = e.plot; dl.append(o); }); } catch (e) {}
   const ph = $('recPhotos'); ph.innerHTML = '';
-  for (const pid of s.photos) { const u = await photoUrl(pid); if (u) { const im = document.createElement('img'); im.src = u; im.alt = '写真'; im.onclick = () => photoSheet(id, pid, u); ph.append(im); } }
+  for (const pid of recMainPhotos(s)) { const u = await photoUrl(pid); const im = phImg(pid, u); im.onclick = () => photoSheet(id, pid, u); ph.append(im); }
   $('recCross').checked = !!s.cross;
+  renderFN(s);
   renderPos();
   if (fresh) setTimeout(() => $('recText').focus(), 300);
 }
@@ -1815,10 +1906,64 @@ $('recAddPhoto').onclick = () => sheet(box => {
 });
 /* 写真なしの調査票：番号と位置（GPS）だけ先に作り、写真はあとから入れる */
 $('srvBlank').onclick = async () => {
-  const r = await newRec(null, { heading, fix: freshFix(15), at: Date.now() }, { quick: true });
+  const r = await newRec(null, { heading, fix: freshFix(15), at: Date.now() }, { quick: true, hold: true });
   if (r) { openRec(r.rec, true); toast('写真なしの調査票 No.' + r.label + ' を作りました（写真は「＋ 写真を追加」から）'); }
 };
 $('recCross').onchange = () => { const v = $('recCross').checked; recordSrv('内容', curRec, { field: 'ポール横断', value: v }); toast(v ? 'ポール横断の印を付けました' : 'ポール横断の印を外しました'); };
+/* ---- 遠景近景の枠（v0.7〜）：耕土厚の作業写真と同じ形。「🔭 遠景近景」を入れると枠が出て、枠をタップしてその写真を撮る（順番は自由）。
+   写真ごとに撮った位置・向きを残し、位置図には水色の縁と「遠」「近」の字で出す ---- */
+function fnKinds(s) { const used = s.photos.map(p => s.pk[p] && s.pk[p].kind).filter(Boolean); let n = 1; while (used.includes('近景' + (n + 1))) n++; const l = ['遠景', '近景']; for (let i = 2; i <= n; i++) l.push('近景' + i); return l; }
+function fnPhoto(s, kind) { return s.photos.find(pid => s.pk[pid] && s.pk[pid].kind === kind) || null; }
+async function renderFN(s) {
+  $('recFN').checked = !!s.fn || s.photos.some(p => s.pk[p] && s.pk[p].kind);
+  const box = $('recFNSlots'); box.classList.toggle('hidden', !$('recFN').checked); box.innerHTML = '';
+  if (!$('recFN').checked) return;
+  const kinds = fnKinds(s);
+  for (const k of kinds) {
+    const pid = fnPhoto(s, k), b = el('button', 'fnslot' + (pid ? '' : ' empty')); b.dataset.k = k;
+    if (pid) { const u = await photoUrl(pid); b.append(phImg(pid, u)); const t = el('b', '', k.replace('景', '')); b.append(t); b.onclick = () => fnMenu(s.id, k, pid, u); }
+    else { b.textContent = '📷 ' + k + 'を撮る'; b.onclick = () => fnShoot(k); }
+    box.append(b);
+  }
+  if (fnPhoto(s, kinds[kinds.length - 1])) { const a = el('button', 'fnslot add', '＋ 近景を足す'); a.id = 'fnAdd'; a.onclick = () => fnShoot('近景' + (kinds.filter(k => k.startsWith('近景')).length + 1)); box.append(a); }
+}
+let fnPend = null;
+function fnShoot(kind) { fnPend = { kind, heading, fix: freshFix(15) }; $('fnFile').value = ''; $('fnFile').click(); }
+$('fnFile').onchange = async () => {
+  const file = $('fnFile').files[0]; if (!file || !curRec || !fnPend) return;
+  const p = fnPend; fnPend = null;
+  const old = fnPhoto(recs()[curRec], p.kind);
+  const pid = await addPhotoTo(curRec, file, { kind: p.kind, fix: p.fix || freshFix(15), heading: p.heading });
+  if (!pid) return;
+  if (old) recordSrv('写真外す', curRec, { pid: old });
+  if (!recs()[curRec].fn) recordSrv('内容', curRec, { field: '遠景近景', value: true });
+  openRec(curRec); toast(p.kind + 'を撮りました' + (p.fix ? '（位置 ±' + Math.round(p.fix.acc) + 'm）' : '（位置なし）'));
+};
+$('recFN').onchange = () => {
+  const v = $('recFN').checked, s = recs()[curRec];
+  if (!v && s.photos.some(p => s.pk[p] && s.pk[p].kind)) { $('recFN').checked = true; toast('遠景・近景の写真があるので外せません（写真を外してから）'); return; }
+  recordSrv('内容', curRec, { field: '遠景近景', value: v }); renderFN(recs()[curRec]);
+};
+function fnMenu(id, kind, pid, url) {
+  sheet(box => {
+    const s = recs()[id], k = s.pk[pid] || {};
+    box.append(el('h3', '', kind + 'の写真'));
+    const im = el('img', 'bigph'); im.src = url; im.alt = '写真'; im.onerror = () => phFail(im, pid); box.append(im);
+    const pos = k.pos || k.gps;
+    box.append(el('p', '', (pos ? 'この写真の位置：' + (k.pos ? '今ここで直した位置' : 'GPS ±' + Math.round((k.gps || {}).acc || 0) + 'm') : 'この写真の位置：なし') + '　向き：' + (k.heading == null ? 'なし' : dirName(k.heading) + '（' + k.heading + '°）')));
+    const a = el('button', 'btn go', '📍 この写真の位置・向きを直す'); a.id = 'fnFix';
+    a.onclick = () => { sheet(null); const c = pos ? [pos.lat, pos.lon] : (freshFix(30) ? [lastFix.lat, lastFix.lon] : null);
+      openPicker({ mode: 'here', lockPos: false, center: c, arrow: true, heading: k.heading, okText: '決定', hint: kind + 'を撮った場所へ十字を合わせ、向きは矢印の先の○を回す' }, (ll, o) => {
+        const d = { pid }; if (o && o.moved) { d.lat = r7(ll.lat); d.lon = r7(ll.lng); } if (o && o.hChanged) d.heading = o.heading;
+        if (d.lat == null && d.heading === undefined) { toast('変えていません'); return; }
+        recordSrv('写真位置', id, d); openRec(id); toast(kind + 'の位置・向きを直しました');
+      }); };
+    const r = el('button', 'btn sub', '📷 撮り直す'); r.onclick = () => { sheet(null); fnShoot(kind); };
+    const x = el('button', 'btn dangerline', '外す'); x.onclick = () => { sheet(null); recordSrv('写真外す', id, { pid }); openRec(id); showUndo(kind + 'の写真を外しました', () => { recordSrv('写真戻す', id, { pid }); openRec(id); }); };
+    const c = el('button', 'btn sub', '閉じる'); c.onclick = () => sheet(null);
+    box.append(a, r, x, c);
+  });
+}
 /* 写真を押す → 大きく表示。「この写真を外す」（ドライブ・スマホからは消さず、調査票から外すだけ。元に戻せる） */
 function photoSheet(id, pid, url) {
   sheet(box => {
@@ -1904,13 +2049,18 @@ function kdShoot(ktype, line2, lib) {
   const inp = $(lib ? 'kdLib' : 'kdFile'); inp.value = ''; inp.click();
 }
 /* 写真を今の調査票に入れる（写真番号はそのまま）。撮り直し・写真を外した枠に撮るときに使う */
-async function addPhotoTo(recId, file) {
+async function addPhotoTo(recId, file, meta) {
   let blob; try { ({ blob } = await shrink(file)); } catch (e) { toast(e.message); return null; }
-  const s = recs()[recId], pid = 'p' + uuid().slice(3);
-  await idb.put({ pid, rec: recId, blob, sent: false, at: nowIso(), name: photoName(s.no, pid) });
-  recordSrv('写真追加', recId, { pid }); await refreshPending(); uploadPhotos();
+  const s = recs()[recId], pid = 'p' + uuid().slice(3), br = s.photos.length + s.removed.length;
+  meta = meta || {};
+  await idb.put({ pid, rec: recId, blob, sent: false, at: nowIso(), name: photoName(s.no, pid, br, meta.kind) });
+  // 写真ごとの位置・向き（v0.7〜）：遠景近景の枠で撮った写真は、その写真を撮った所を残す（調査票の位置とは別）
+  const d = { pid }; if (meta.kind) d.kind = meta.kind; if (meta.fix) d.gps = { lat: r7(meta.fix.lat), lon: r7(meta.fix.lon), acc: meta.fix.acc }; if (meta.heading != null) d.heading = Math.round(meta.heading);
+  recordSrv('写真追加', recId, d); await refreshPending(); uploadPhotos();
   return pid;
 }
+/* 調査票の写真のうち、遠景近景の枠の写真を除いたもの（枠の写真は枠に出す） */
+function recMainPhotos(s) { return s.photos.filter(pid => !(s.pk && s.pk[pid] && s.pk[pid].kind)); }
 $('kdLib').onchange = () => kdFromInput($('kdLib'));
 $('kdFile').onchange = () => kdFromInput($('kdFile'));
 async function kdFromInput(input) {
@@ -2221,9 +2371,40 @@ function curToken() {
   const before = v.slice(ls, end), m = before.match(/[^\s　＋+、,，（(）)／/]*$/);
   return { text: m ? m[0] : '', start: end - (m ? m[0].length : 0), end };
 }
+/* この現場で前に書いた行（履歴）。分類が同じ調査票の1行目を先に。多く書いた形・新しい順（v0.7〜） */
+function histLines(prefix, lineIdx) {
+  const cur = recs()[curRec], cat = cur && cur.cat, f = fold(prefix), cnt = {}, last = {}, sameCat = {};
+  Object.values(recs()).forEach(s => {
+    if (s.deleted || s.id === curRec || !s.text) return;
+    s.text.split('\n').slice(0, 3).forEach((l, i) => {
+      l = l.trim(); if (!l || MARK.test(l)) return;
+      if (!f && !(cat && s.cat === cat && i === 0)) return;          // 何も打っていないとき：同じ分類の1行目だけ
+      if (f && !fold(l).startsWith(f)) return;
+      if (f && fold(l) === f) return;
+      cnt[l] = (cnt[l] || 0) + 1 + (i === lineIdx ? 0.5 : 0); if (!last[l] || s.created > last[l]) last[l] = s.created;
+      if (cat && s.cat === cat) sameCat[l] = true;
+    });
+  });
+  return Object.keys(cnt).sort((a, b) => (sameCat[b] ? 1 : 0) - (sameCat[a] ? 1 : 0) || cnt[b] - cnt[a] || (last[b] > last[a] ? 1 : -1)).slice(0, 5);
+}
+function useHist(line) {
+  const el = ta(), v = el.value, end = el.selectionEnd, ls = v.lastIndexOf('\n', end - 1) + 1; let le = v.indexOf('\n', end); if (le < 0) le = v.length;
+  el.focus(); el.setRangeText(line, ls, le, 'end'); textChanged();
+}
 function renderSugg() {
   const box = $('sugg'); box.innerHTML = '';
   if (!curRec || !SET().sugg) return;
+  { // 履歴（その現場で前に書いた形）
+    const el = ta(), v = el.value, end = el.selectionEnd, ls = v.lastIndexOf('\n', end - 1) + 1, idx = v.slice(0, ls).split('\n').length - 1;
+    const pre = v.slice(ls, end);
+    if (idx < 3 && !kpOn && (pre.trim().length >= 1 || (idx === 0 && recs()[curRec] && recs()[curRec].cat))) {
+      const h = histLines(pre.trim(), idx);
+      if (h.length) {
+        const lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = pre.trim() ? 'この現場で書いた形' : '同じ分類（' + recs()[curRec].cat + '）で書いた1行目'; box.append(lab);
+        h.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'hist'; b.textContent = l; b.addEventListener('pointerdown', e => e.preventDefault()); b.onclick = () => useHist(l); box.append(b); });
+      }
+    }
+  }
   const tk = curToken(), numeric = /[0-9○◇×]/.test(tk.text);
   const list = kpOn || numeric ? [] : suggest(tk.text);          // 数字を打っている間は候補を出さない
   if (list.length) { const lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = tk.text ? '「' + tk.text + '」の候補' : 'よく使う'; box.append(lab); }
@@ -2332,7 +2513,48 @@ $('recSame').onclick = () => {
 /* ---- 工種 ---- */
 const KIND_DEF = ['区画', '用水路', '排水路', '農道', '管水路・暗渠', 'ため池', 'その他'];
 function kindList() { return KIND_DEF.concat(LS.get('kinds', []).filter(k => !KIND_DEF.includes(k))); }
-function setKind(k) { recordSrv('内容', curRec, { field: '工種', value: k }); LS.set('srv:lastKind', k); renderKinds(); }
+function setKind(k) { recordSrv('内容', curRec, { field: '工種', value: k }); LS.set('srv:lastKind', k); renderKinds(); renderRoute(); }
+/* ---- 路線・区画名（v0.7〜）：工種が「区画」なら区画番号として、ほかは路線名（対象）として残す。一度入れた名前は最近使った順に候補 ---- */
+function routeOf(s) { return s.kind === '区画' ? (s.plot || '') : (s.target || s.plot || ''); }
+function routeCands() {
+  const seen = new Set(), out = [];
+  Object.values(recs()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1).forEach(s => [s.target, s.plot].forEach(v => { v = String(v || '').trim(); if (v && !seen.has(v)) { seen.add(v); out.push(v); } }));
+  tgts().forEach(t => { if (t.name && !seen.has(t.name)) { seen.add(t.name); out.push(t.name); } });
+  try { currentPlots().forEach(e => { if (e.plot && !seen.has(e.plot)) { seen.add(e.plot); out.push(e.plot); } }); } catch (e) {}
+  return out;
+}
+function renderRoute() {
+  const s = recs()[curRec]; if (!s) return;
+  $('recRoute').value = routeOf(s);
+  const dl = $('routeNames'); dl.innerHTML = ''; const c = routeCands(); c.forEach(v => { const o = document.createElement('option'); o.value = v; dl.append(o); });
+  const box = $('routeChips'); box.innerHTML = '';
+  c.slice(0, 5).filter(v => v !== routeOf(s)).forEach(v => { const b = el('button', 'chip', v); b.type = 'button'; b.onclick = () => setRoute(v); box.append(b); });
+}
+function setRoute(v) {
+  v = String(v || '').trim(); const s = recs()[curRec]; if (!s) return;
+  if (s.kind === '区画' || (!s.kind && /^[0-9０-９][0-9０-９\-－ー‐]*$/.test(v))) { const n = norm(v); $('recPlot').value = n; LS.set('srv:lastPlot', n); if (s.plot !== n) recordSrv('内容', curRec, { field: '区画', value: n }); if (s.kind !== '区画' && s.target) { recordSrv('内容', curRec, { field: '対象', value: '' }); $('recTarget').value = ''; } }
+  else setTarget(v);
+  renderRoute();
+}
+$('recRoute').onchange = () => setRoute($('recRoute').value);
+/* ---- 対象物の分類（v0.7〜）：ボタンで選ぶ。「＋追加」で書いたものは次からこの現場のボタン ---- */
+const CAT_DEF = ['吐口', '水口', '取水桝', '分水', '搬入路', '横断暗渠'];
+function catList() { return CAT_DEF.concat((LS.get('cats', []) || []).filter(k => !CAT_DEF.includes(k))); }
+function setCat(k) { recordSrv('内容', curRec, { field: '分類', value: k }); renderCats(); renderSugg(); }
+function renderCats() {
+  const box = $('recCat'); box.innerHTML = ''; const s = recs()[curRec]; if (!s) return;
+  catList().forEach(k => { const c = el('button', 'chip' + (s.cat === k ? ' on' : ''), k); c.type = 'button'; c.onclick = () => setCat(s.cat === k ? '' : k); box.append(c); });
+  const add = el('button', 'chip', '＋追加'); add.type = 'button';
+  add.onclick = () => sheet(bx => {
+    bx.append(el('h3', '', '分類を追加'));
+    const inp = el('input'); inp.type = 'text'; inp.placeholder = '例：落差工'; bx.append(inp);
+    const ok = el('button', 'btn acc', '追加して選ぶ');
+    ok.onclick = () => { const v = inp.value.trim(); if (!v) return; const l = LS.get('cats', []) || []; if (!l.includes(v) && !CAT_DEF.includes(v)) { l.push(v); LS.set('cats', l); } sheet(null); setCat(v); };
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null);
+    bx.append(ok, no); setTimeout(() => inp.focus(), 100);
+  });
+  box.append(add);
+}
 function renderKinds() {
   const box = $('recKind'); box.innerHTML = ''; const s = recs()[curRec]; if (!s) return;
   kindList().forEach(k => {
@@ -2353,7 +2575,7 @@ function renderKinds() {
 function openInput(s) {
   ta().value = s.text || ''; curOpts = null; kpOn = false; $('kpad').classList.add('hidden'); document.body.classList.remove('kpon'); ta().setAttribute('inputmode', 'text');
   $('recSame').classList.toggle('hidden', !SET().same);
-  renderKinds(); paintText(); renderSugg();
+  renderKinds(); renderRoute(); renderCats(); paintText(); renderSugg();
 }
 /* ---- ⚙ 設定 ---- */
 $('gear').onclick = () => sheet(box => {
@@ -2385,6 +2607,7 @@ $('gear').onclick = () => sheet(box => {
   row('打った文字で候補を出す', 'sugg', 'checkbox');
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
   row('写真もWi-Fiのときに手で送る（通信量の節約。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
+  row('「今ここ」の窓で位置も動かす（ふつうは向きだけ直す）', 'hereMove', 'checkbox');
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
   box.append(el('h3', '', '試験中'));
   const dr = el('button', 'btn sub', '📄 図面の下敷き・位置合わせ（PCで使うのがおすすめ）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
@@ -2399,7 +2622,9 @@ let pick = null, pickMap = null, pickLayers = null, pickCb = null;
 function openPicker(opt, cb) {
   if (typeof L === 'undefined') { toast('地図を読み込めませんでした'); return; }
   pick = opt; pickCb = cb;
-  $('picker').classList.remove('hidden'); $('pickHint').textContent = opt.hint;
+  // 今ここの窓：標準は向きだけ直す（地図は動かない）。⚙「今ここの窓で位置も動かせる」か「📍 位置も動かす」で位置も直せる
+  pick.lockPos = opt.lockPos !== undefined ? opt.lockPos : (opt.mode === 'here' && opt.arrow && !!opt.center && !SET().hereMove);
+  $('picker').classList.remove('hidden'); $('pickHint').textContent = pick.lockPos ? '向きは矢印の先の○を指で回す（位置は動きません。位置も直すときは「📍 位置も動かす」）' : opt.hint;
   $('pickOk').textContent = opt.okText || 'この位置で決定';
   pick.h = opt.heading == null ? null : Math.round(opt.heading); pick.hChanged = false;
   $('pickArrow').classList.toggle('hidden', !opt.arrow); $('pickDir').classList.toggle('hidden', !opt.arrow); pickArrowDraw();
@@ -2412,9 +2637,23 @@ function openPicker(opt, cb) {
   if (opt.gps) { L.circle([opt.gps.lat, opt.gps.lon], { radius: opt.gps.acc, color: '#4aa3ff', weight: 1, fillOpacity: .08 }).addTo(g); L.circleMarker([opt.gps.lat, opt.gps.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#1764b5', fillOpacity: .4 }).addTo(g); }
   if (opt.from) ptMark('撮', opt.from, true).addTo(g);
   setTimeout(() => { pickMap.invalidateSize(); pickMap.setView(opt.center || [36.7, 137.0], opt.center ? 19 : 10); }, 30);
+  if (pick.lockPos) { pickMap.dragging.disable(); ['touchZoom', 'doubleClickZoom', 'scrollWheelZoom'].forEach(k => pickMap.options[k] = 'center'); } else pickUnlock();
+  $('pickMove').classList.toggle('hidden', !pick.lockPos);
+  // 図面を重ねているときは、窓の中で航空写真の濃さを変えられる
+  const docOn = uls().some(u => u.A) && LS.get('mapDocOn', true);
+  $('pickOpRow').classList.toggle('hidden', !docOn); $('pickOp').value = LS.get('mapPhotoOp', 50); $('pickOpPct').textContent = $('pickOp').value + '%';
 }
-$('pickCancel').onclick = () => { $('picker').classList.add('hidden'); pick = null; };
-$('pickOk').onclick = () => { const c = pickMap.getCenter(), o = pick ? { heading: pick.h, hChanged: !!pick.hChanged } : {}; $('picker').classList.add('hidden'); const cb = pickCb; pick = null; if (cb) cb(c, o); };
+function pickUnlock() { if (!pickMap) return; pickMap.dragging.enable(); pickMap.options.touchZoom = true; pickMap.options.doubleClickZoom = true; pickMap.options.scrollWheelZoom = true; }
+$('pickMove').onclick = () => { if (!pick) return; pick.lockPos = false; pickUnlock(); $('pickMove').classList.add('hidden'); $('pickHint').textContent = '地図をずらして十字を撮影した場所へ。向きは矢印の先の○を回す'; toast('位置も動かせます'); };
+$('pickOp').oninput = () => { const v = Number($('pickOp').value); LS.set('mapPhotoOp', v); $('pickOpPct').textContent = v + '%'; if ($('mapPhotoOp')) $('mapPhotoOp').value = v; if (typeof mapPhotoApply === 'function') mapPhotoApply(); else syncDocs(pickMap); };
+$('pickCancel').onclick = () => { $('picker').classList.add('hidden'); pickUnlock(); pick = null; };
+$('pickOk').onclick = () => {
+  let c = pickMap.getCenter();
+  const o = pick ? { heading: pick.h, hChanged: !!pick.hChanged } : {};
+  if (pick && pick.lockPos && pick.center) c = L.latLng(pick.center[0], pick.center[1]);      // 位置を動かさない設定：位置はそのまま（向きだけ）
+  o.moved = !!(pick && (!pick.center || distM(pick.center[0], pick.center[1], c.lat, c.lng) > 0.3));
+  $('picker').classList.add('hidden'); const cb = pickCb; pickUnlock(); pick = null; if (cb) cb(c, o);
+};
 /* 矢印：向きなしは薄く（回すと向きが付く）。○を指で回すと、真ん中から指への向きがそのまま撮影方向（地図は北が上） */
 function pickArrowDraw() {
   if (!pick || !pick.arrow) return;
@@ -3067,7 +3306,7 @@ function renderTargetField() {
   else b.classList.add('hidden');
 }
 function setTarget(name) {
-  name = String(name || '').trim(); $('recTarget').value = name;
+  name = String(name || '').trim(); $('recTarget').value = name; if (recs()[curRec] && recs()[curRec].kind !== '区画') $('recRoute').value = name;
   const s = recs()[curRec]; if (!s || (s.target || '') === name) return;
   recordSrv('内容', curRec, { field: '対象', value: name });
   const t = tgts().find(x => x.name === name);
@@ -3133,11 +3372,37 @@ function bizSection(box) {
 function surveyKind() { return (CFG && CFG.biz && CFG.biz.survey) || '現況調査'; }
 function applySurveyLayout() {
   const fac = surveyKind() === '施設調査';
-  const order = fac ? ['fNear', 'fTarget', 'fKind', 'fPlot', 'fText'] : ['fNear', 'fPlot', 'fTarget', 'fKind', 'fText'];
+  const order = ['fNear', 'fKind', 'fRoute', 'fCat', 'fText', 'fTarget', 'fPlot'];       // v0.7〜：工種 → 路線・区画名 → 分類 → 調査内容（整理の本棚）
   order.forEach((id, i) => { const e = $(id); if (e) e.style.order = i; });
   $('bizLine').textContent = '業務：' + ((CFG && CFG.biz && CFG.biz.name) || (CONN && CONN.name) || '') + '（' + surveyKind() + '）';
 }
 /* 一覧を工種で絞る（件数付き） */
+/* ---- 日付・工種・分類で絞る（v0.7〜）。写真番号は通しのまま。開いた日は「今日」だけ。位置図の矢印も同じ絞り込み ---- */
+const isoDay = () => nowIso().slice(0, 10);
+function recDay(s) { return String(s.created || '').slice(0, 10); }
+function dayF() { const d = LS.get('srv:day', null); if (!d || d.set !== isoDay()) { const n = { set: isoDay(), v: 'today' }; LS.set('srv:day', n); return n; } return d; }
+function dayOK(s) { const v = dayF().v; return v === 'all' || (v === 'today' ? recDay(s) === isoDay() : recDay(s) === v); }
+function recShown(s) {
+  const fk = LS.get('srv:filter', ''), fc = LS.get('srv:cat', '');
+  return dayOK(s) && (!fk || (s.kind || '工種なし') === fk) && (!fc || (s.cat || '分類なし') === fc);
+}
+function renderDayFilter(every) {
+  const box = $('srvDayF'); box.innerHTML = '';
+  const cnt = {}; every.forEach(s => { const d = recDay(s); cnt[d] = (cnt[d] || 0) + 1; });
+  const days = Object.keys(cnt).sort().reverse(), td = isoDay(), cur = dayF().v;
+  if (!days.some(d => d !== td)) return;        // 今日の分しかなければ出さない
+  const mk = (v, label) => { const c = el('button', 'chip' + (cur === v ? ' on' : ''), (cur === v ? '▶ ' : '') + label); c.dataset.day = v; c.onclick = () => { LS.set('srv:day', { set: td, v }); renderList(); if (typeof mainMap !== 'undefined' && mainMap) drawRecArrows(mainMap); }; box.append(c); };
+  mk('today', '今日 ' + (cnt[td] || 0));
+  days.filter(d => d !== td).forEach(d => mk(d, d.slice(5).replace('-', '/') + ' ' + cnt[d]));
+  mk('all', 'すべての日 ' + every.length);
+}
+function renderCatFilter(all) {
+  const box = $('srvCatF'); box.innerHTML = '';
+  const cnt = {}; all.forEach(s => { if (s.cat) cnt[s.cat] = (cnt[s.cat] || 0) + 1; });
+  const keys = Object.keys(cnt), cur = LS.get('srv:cat', ''); if (!keys.length && !cur) return;
+  const mk = (k, label) => { const c = el('button', 'chip' + (cur === k ? ' on' : ''), (cur === k && k ? '▶ ' : '') + label); c.onclick = () => { LS.set('srv:cat', cur === k ? '' : k); renderList(); if (typeof mainMap !== 'undefined' && mainMap) drawRecArrows(mainMap); }; box.append(c); };
+  mk('', '分類：すべて'); keys.forEach(k => mk(k, k + ' ' + cnt[k]));
+}
 function renderKindFilter(all) {
   const box = $('srvFilter'); box.innerHTML = '';
   const cnt = {}; all.forEach(s => { const k = s.kind || '工種なし'; cnt[k] = (cnt[k] || 0) + 1; });
@@ -3362,26 +3627,48 @@ async function openDoc() {
     DOC.imgMap.on('click', e => docClickImg(e)); DOC.geoMap.on('click', e => docClickGeo(e));
     drawTargets(DOC.geoMap);
   }
+  if (!DOC.me) DOC.me = L.layerGroup().addTo(DOC.geoMap);
+  startGeo(); clearInterval(DOC.meT); docDrawMe(); DOC.meT = setInterval(() => { if ($('doc').classList.contains('hidden')) { clearInterval(DOC.meT); return; } docDrawMe(); }, 2000);
   const f = freshFix(600), l = uls(), c = l.length && l[l.length - 1].pairs[0] ? l[l.length - 1].pairs[0].geo : f ? [f.lat, f.lon] : [36.7, 137.0];
   setTimeout(() => { DOC.imgMap.invalidateSize(); DOC.geoMap.invalidateSize(); DOC.geoMap.setView(c, 16); }, 30);
   const last = l[l.length - 1];
   if (last && !DOC.cur) await docSelect(last.id); else docUi();
 }
+/* 図面を90°ずつ回して見る（v0.7〜）：見た目だけ回す。合わせ点は元の図面の画素で持つ */
+function docRot() { return DOC.cur ? ((DOC.cur.rot || 0) % 4 + 4) % 4 : 0; }
+function docDims() { const u = DOC.cur, r = docRot(); return r % 2 ? [u.h, u.w] : [u.w, u.h]; }
+function toDisp(p) { const u = DOC.cur, r = docRot(), x = p[0], y = p[1]; return r === 1 ? [u.h - y, x] : r === 2 ? [u.w - x, u.h - y] : r === 3 ? [y, u.w - x] : [x, y]; }
+function fromDisp(p) { const u = DOC.cur, r = docRot(), x = p[0], y = p[1]; return r === 1 ? [y, u.h - x] : r === 2 ? [u.w - x, u.h - y] : r === 3 ? [u.w - y, x] : [x, y]; }
+function dispLL(p) { const d = toDisp(p); return [docDims()[1] - d[1], d[0]]; }
+const rotUrls = {};
+async function docRotUrl(id, url) {
+  const r = docRot(); if (!r) return url; const k = id + ':' + r; if (rotUrls[k]) return rotUrls[k];
+  const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  const [dw, dh] = docDims(), c = document.createElement('canvas'); c.width = dw; c.height = dh; const g = c.getContext('2d');
+  g.translate(dw / 2, dh / 2); g.rotate(r * Math.PI / 2); g.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
+  const b = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85)); return (rotUrls[k] = URL.createObjectURL(b));
+}
+async function docShowImg() {
+  const u = DOC.cur; if (!u) return; const [dw, dh] = docDims();
+  const url = await docRotUrl(u.id, await docUrl(u.id));
+  if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer);
+  DOC.imgLayer = L.imageOverlay(url, [[0, 0], [dh, dw]]).addTo(DOC.imgMap);
+  setTimeout(() => { DOC.imgMap.invalidateSize(); DOC.imgMap.fitBounds([[0, 0], [dh, dw]]); }, 40);
+}
 async function docSelect(id) {
   const u = uls().find(x => x.id === id); if (!u) return;
   DOC.cur = u; DOC.pairs = u.pairs.map(p => ({ img: p.img.slice(), geo: p.geo ? p.geo.slice() : null })); DOC.view = false; DOC.cands = [];
   const url = await docUrl(id);
-  if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer);
-  DOC.imgLayer = L.imageOverlay(url, [[0, 0], [u.h, u.w]]).addTo(DOC.imgMap);
-  setTimeout(() => { DOC.imgMap.invalidateSize(); DOC.imgMap.fitBounds([[0, 0], [u.h, u.w]]); }, 40);
+  await docShowImg();
   if (DOC.ov) { DOC.geoMap.removeLayer(DOC.ov); DOC.ov = null; }
   if (u.A) { DOC.ov = new DocLayer(url, u.w, u.h, u.A, u.op).addTo(DOC.geoMap); }
   docUi();
 }
 function docClickImg(e) {
   if (!DOC.cur || DOC.view) return;
-  const u = e.latlng.lng, v = DOC.cur.h - e.latlng.lat;
-  if (u < 0 || v < 0 || u > DOC.cur.w || v > DOC.cur.h) return;
+  const [dw, dh] = docDims(), du = e.latlng.lng, dv = dh - e.latlng.lat;
+  if (du < 0 || dv < 0 || du > dw || dv > dh) return;
+  const [u, v] = fromDisp([du, dv]);
   if (DOC.pickColor) { DOC.pickColor = false; docExtractAt(u, v); return; }
   const last = DOC.pairs[DOC.pairs.length - 1];
   if (last && !last.geo) last.img = [u, v]; else DOC.pairs.push({ img: [u, v], geo: null });
@@ -3397,18 +3684,18 @@ function docFit() { const ok = DOC.pairs.filter(p => p.geo); return ok.length >=
 function docUi() {
   const has = !!DOC.cur, done = DOC.pairs.filter(p => p.geo).length, last = DOC.pairs[DOC.pairs.length - 1];
   $('docPanes').classList.toggle('viewing', DOC.view);
-  ['docUndo', 'docView', 'docSave', 'docExtract', 'docDel'].forEach(id => $(id).disabled = !has);
+  ['docUndo', 'docView', 'docSave', 'docExtract', 'docDel', 'docRot', 'docHere'].forEach(id => $(id).disabled = !has);
   $('docName').textContent = has ? DOC.cur.name : 'まだ図面がありません';
   DOC.mk.img.clearLayers(); DOC.mk.geo.clearLayers();
   DOC.pairs.forEach((p, i) => {
-    L.marker([DOC.cur.h - p.img[1], p.img[0]], { icon: docNum(i), interactive: false }).addTo(DOC.mk.img);
+    L.marker(dispLL(p.img), { icon: docNum(i), interactive: false }).addTo(DOC.mk.img);
     if (p.geo) L.marker(p.geo, { icon: docNum(i), interactive: false }).addTo(DOC.mk.geo);
   });
   const fit = docFit();
   let t;
   if (!has) t = '「図面を読み込む」でPDFか画像を選んでください。';
   else if (DOC.pickColor) t = '抜き出したい極太線の上を、上の図面でタップしてください（その色を拾います）。';
-  else if (last && !last.geo) t = '点' + DOC.pairs.length + '：同じ場所を下の航空写真でタップしてください。';
+  else if (last && !last.geo) t = '点' + DOC.pairs.length + '：同じ場所を下の航空写真でタップしてください（その点に立っているなら「📍 今いる所を合わせ点に」）。';
   else if (done < 2) t = '図面と航空写真の同じ場所（交差点・幹線水路の角など、今も変わらない所）を、上→下の順にタップ。あと' + (2 - done) + '点。';
   else t = '合わせた点 ' + done + (done < 3 ? '（3点目を入れると、ずれを確かめられます）' : done < 4 ? '（4点以上でゆがみも合わせます）' : '（ゆがみも合わせています）') + '。ずれ：平均 ' + fit.rms.toFixed(1) + 'm／最大 ' + Math.max(...fit.res).toFixed(1) + 'm。図面1画素＝' + fit.scale.toFixed(2) + 'm';
   $('docInfo').textContent = t;
@@ -3461,6 +3748,27 @@ $('docPick').onclick = () => sheet(box => {
   l.forEach(u => { const b = el('button', 'btn sub', (DOC.cur && DOC.cur.id === u.id ? '● ' : '') + u.name + (u.A ? '（位置合わせ済み）' : '（未）')); b.onclick = () => { sheet(null); docSelect(u.id); }; box.append(b); });
   const c = el('button', 'btn acc', '閉じる'); c.onclick = () => sheet(null); box.append(c);
 });
+/* 位置合わせの画面にも今いる所（青い点・精度の円）を出す。図面で分かる点に立って「今いる所を合わせ点に」 */
+function docDrawMe() {
+  if (!DOC.me) return; DOC.me.clearLayers(); const f = freshFix(120); if (!f) return;
+  L.circle([f.lat, f.lon], { radius: f.acc, color: '#4aa3ff', weight: 1, fillOpacity: .1, interactive: false }).addTo(DOC.me);
+  L.circleMarker([f.lat, f.lon], { radius: 8, color: '#fff', weight: 3, fillColor: '#1764b5', fillOpacity: 1, interactive: false }).addTo(DOC.me);
+}
+$('docMe').onclick = async () => { const f = await getFixNow(8); if (!f) { toast('今の位置が取れません'); return; } docDrawMe(); DOC.geoMap.setView([f.lat, f.lon], Math.max(DOC.geoMap.getZoom(), 18)); };
+$('docHere').onclick = async () => {
+  if (!DOC.cur || DOC.view) return;
+  const last = DOC.pairs[DOC.pairs.length - 1];
+  if (!last || last.geo) { toast('先に上の図面で、今立っている所をタップしてください'); return; }
+  toast('今の位置を取っています…');
+  const f = await getFixNow(10); if (!f) { toast('今の位置が取れません（空が見える所で、もう一度）'); return; }
+  last.geo = [f.lat, f.lon]; docDrawMe(); docUi(); DOC.geoMap.setView(last.geo, Math.max(DOC.geoMap.getZoom(), 18));
+  toast('点' + DOC.pairs.length + 'を今いる所（±' + Math.round(f.acc) + 'm' + (f.old ? '・' + f.age + '秒前の位置' : '') + '）に合わせました');
+};
+$('docRot').onclick = async () => {
+  if (!DOC.cur) return;
+  const l = uls(), u = l.find(x => x.id === DOC.cur.id); u.rot = ((u.rot || 0) + 1) % 4; ulsSet(l); DOC.cur.rot = u.rot;
+  await docShowImg(); docUi(); toast('図面を回しました（見た目だけ。合わせた点はそのまま）');
+};
 $('docUndo').onclick = () => { if (DOC.pickColor) DOC.pickColor = false; else { const last = DOC.pairs[DOC.pairs.length - 1]; if (last && last.geo) last.geo = null; else DOC.pairs.pop(); } docUi(); };
 $('docView').onclick = () => { DOC.view = !DOC.view; docUi(); };
 $('docOp').oninput = () => { if (DOC.ov) DOC.ov.setOpacity(Number($('docOp').value) / 100); };
@@ -3500,7 +3808,7 @@ async function docExtractAt(u, v) {
     L.polyline(pts, { color: '#fff', weight: 6, opacity: .9, interactive: false }).addTo(DOC.mk.cand);
     L.polyline(pts, { color: '#16303f', weight: 3, interactive: false }).addTo(DOC.mk.cand);
     L.marker(pts[Math.floor(pts.length / 2)], { interactive: false, icon: L.divIcon({ className: 'docpt cand', html: '<span>候' + (i + 1) + '</span>', iconSize: null }) }).addTo(DOC.mk.cand);
-    L.polyline(lines[i].map(p => [DOC.cur.h - p[1], p[0]]), { color: '#16303f', weight: 3, interactive: false }).addTo(DOC.mk.candImg);
+    L.polyline(lines[i].map(p => dispLL(p)), { color: '#16303f', weight: 3, interactive: false }).addTo(DOC.mk.candImg);
   });
   DOC.view = true; docUi();
   $('docInfo').textContent = '候補の線が ' + DOC.cands.length + ' 本見つかりました（白い縁の紺の線）。';
@@ -3534,12 +3842,35 @@ $('areaDocOn').onchange = () => areaUnderlays($('areaDocOn').checked);
 $('areaDocOp').oninput = () => areaDocs.forEach(o => o.setOpacity(Number($('areaDocOp').value) / 100));
 /* ====================== 音声入力・状況写真・撮影方向の矢印・今日のまとめ ====================== */
 /* ---- 🎤 話す：普通のキーボードに切り替えて、マイクを押すだけの状態にする ---- */
-$('recMic').onclick = () => {
+/* v0.7〜：押すとその場で聞き取る（iPhoneのホーム画面アプリで聞き取りが使えないときは、今までどおりキーボードのマイク） */
+function micKeyboard() {
   const el = ta(); kpOn = false; $('kpad').classList.add('hidden'); document.body.classList.remove('kpon');
   el.setAttribute('inputmode', 'text'); el.blur(); el.focus();
   const e = el.value.length; el.setSelectionRange(e, e);
   toast('キーボードのマイク🎤を押して話してください（「480かける450」→ 480×450 に直します）');
+}
+let micRec = null;
+$('recMic').onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { micKeyboard(); return; }
+  if (micRec) { try { micRec.stop(); } catch (e) {} return; }
+  let r; try { r = new SR(); } catch (e) { micKeyboard(); return; }
+  r.lang = 'ja-JP'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  const el = ta(), pos = el.selectionEnd != null ? el.selectionEnd : el.value.length; let got = false;
+  $('micBox').classList.remove('hidden'); $('micText').textContent = '';
+  r.onresult = e => {
+    let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+    $('micText').textContent = t;
+    if (e.results[e.results.length - 1].isFinal) {
+      got = true; const v = tidySpeech(t.trim()); el.focus(); el.setRangeText(v, pos, pos, 'end'); textChanged();
+    }
+  };
+  r.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { micEnd(); micKeyboard(); } else if (e.error === 'no-speech') toast('聞き取れませんでした。もう一度「🎤 話す」'); };
+  r.onend = () => { micEnd(); if (got) toast('入れました（寸法は × H φ に直しています）'); };
+  const micEnd = () => { micRec = null; $('micBox').classList.add('hidden'); $('recMic').classList.remove('on'); };
+  try { r.start(); micRec = r; $('recMic').classList.add('on'); } catch (e) { micEnd(); micKeyboard(); }
 };
+$('micStop').onclick = () => { if (micRec) try { micRec.stop(); } catch (e) {} };
 /* 話した寸法の書き方を整える（数字のそばだけ直す。ほかの文はそのまま） */
 function tidySpeech(t) {
   return t
@@ -3597,10 +3928,23 @@ function drawRecArrows(map) {
   if (!map._ra) map._ra = L.layerGroup().addTo(map);
   map._ra.clearLayers();
   Object.values(recs()).forEach(s => {
-    if (s.deleted || s.id === curRec) return;
+    if (s.deleted || s.id === curRec || !recShown(s)) return;
     const a = adopted(s); if (a.lat == null) return;
     if (s.heading == null) L.marker([a.lat, a.lon], { interactive: false, icon: s.cross ? L.divIcon({ className: 'arrowmk', html: '<svg width="44" height="44" viewBox="-22 -22 44 44"><circle r="5" fill="#fff" stroke="#111" stroke-width="2"/></svg><b class="x">📏 ' + esc(recNo(s)) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] }) : L.divIcon({ className: 'arrowmk', html: '<svg width="12" height="12" viewBox="-6 -6 12 12"><circle r="4" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>', iconSize: [12, 12], iconAnchor: [6, 6] }) }).addTo(map._ra);
     else L.marker([a.lat, a.lon], { interactive: false, icon: arrowIcon(s.heading, s.situ, recNo(s), s.cross) }).addTo(map._ra);
+  });
+  // 遠景近景の枠で撮った写真：その写真を撮った所に、水色の縁＋「遠」「近」の字（色だけに頼らない）
+  Object.values(recs()).forEach(s => {
+    if (s.deleted || !recShown(s)) return;
+    s.photos.forEach(pid => {
+      const k = s.pk && s.pk[pid]; if (!k || !k.kind) return;
+      const p = k.pos || k.gps; if (!p) return;
+      const lab = (k.kind.startsWith('遠') ? '遠 ' : '近' + k.kind.slice(2) + ' ') + recNo(s);
+      const h = k.heading == null ? null : k.heading;
+      const svg = h == null ? '<svg width="44" height="44" viewBox="-22 -22 44 44"><circle r="5" fill="#fff" stroke="#111" stroke-width="2"/><circle r="8" fill="none" stroke="#7fd3ff" stroke-width="3"/></svg>'
+        : '<svg width="44" height="44" viewBox="-22 -22 44 44" style="transform:rotate(' + h + 'deg)"><g stroke-linecap="round" stroke-linejoin="round"><path d="M0 0 L0 -18 M-5 -12 L0 -18 L5 -12" stroke="#111" stroke-width="5.5" fill="none"/><path d="M0 0 L0 -18 M-5 -12 L0 -18 L5 -12" stroke="#7fd3ff" stroke-width="3" fill="none"/><circle r="4" fill="#fff" stroke="#111" stroke-width="1.5"/></g></svg>';
+      L.marker([p.lat, p.lon], { interactive: false, icon: L.divIcon({ className: 'arrowmk', html: svg + '<b class="fn">' + esc(lab) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(map._ra);
+    });
   });
 }
 
@@ -3941,8 +4285,13 @@ async function uploadPhotos(force) {
   uploading = true;
   try {
     let list = (await idb.all()).filter(p => !p.sent).sort((a, b) => a.at < b.at ? -1 : 1);
+    const hold = typeof holdRec === 'function' ? holdRec() : null;      // 開いている調査票の写真は、画面を離れてからまとめて送る
+    list = list.filter(p => !p.broken && p.rec !== hold);
     for (const p of list) {
-      const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: await b64(p.blob) });
+      let data;
+      try { data = await b64(p.blob); if (!data) throw new Error('空'); }
+      catch (e) { p.broken = true; await idb.put(p); photoError = ''; brokenNote(p); continue; }    // スマホの中で読めなくなった写真（iPhone）：飛ばして知らせる
+      const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: data });
       p.sent = true; p.url = res && res.url || ''; await idb.put(p); photoError = '';
       await refreshPending(); online = true;
     }
@@ -3973,7 +4322,7 @@ function dockMode() {
   lab.textContent = t; lab.classList.toggle('hidden', !t);
 }
 function kdNextOf(plot, pos) { const here = kdRecs(plot).filter(s => s.pos === pos); return KD_SEQ.find(q => !here.some(s => s.ktype === q.k && s.photos.length)) || null; }
-function hideMain() { if (typeof GK !== 'undefined' && GK.mode) { GK.mode = ''; GK.pts = []; $('gkBar').classList.add('hidden'); if (mainMap) mainMap.doubleClickZoom.enable(); } ['home', 'plotView', 'srvList', 'srvRec', 'mapView', 'drawView'].forEach(x => $(x).classList.add('hidden')); $('modebar').classList.add('hidden'); $('back').classList.add('hidden'); curRec = null; showMsg(''); }
+function hideMain() { if (typeof GK !== 'undefined' && GK.mode) gkMode(''); ['home', 'plotView', 'srvList', 'srvRec', 'mapView', 'drawView'].forEach(x => $(x).classList.add('hidden')); $('modebar').classList.add('hidden'); $('back').classList.add('hidden'); curRec = null; showMsg(''); }
 /* 一覧を速くフリックした指がドックの上から始まると、タップと判定されてHOMEなどに飛ぶことがある。
    指が動いたとき・スクロールの勢いが残っているときは、ドックのタップを受け付けない */
 (function () {
@@ -4031,21 +4380,56 @@ $('mapHere').onclick = () => { const f = freshFix(120); if (f) { mainMap.setView
      文字のない所でも同じ（その場所に✓・✎）。付けた印をタップすると取り消し・書き直し
    ・作図：地図をタップして点を打つ（📍今の場所 で歩いて区間を取る）→ 完了で名前。長さが出る。線をタップで消す・名前を直す
    ・受け付け側の「図面チェック」シートで共有（誰でも書ける・みんなに出る）。図面そのものは書き換えない */
-function gkMarks() { let l = (LS.get('marks', []) || []).map(x => Object.assign({}, x)); (LS.get('markPend', []) || []).forEach(o => { l = gkOne(l, o); }); return l; }
+/* ---- 記録：受け付け側の一覧（marks）＋送信待ち（markPend）＋この回の作業（gkSess：まだ送らない） ---- */
+const GK_COL = { pu: ['#4a148c', '紫'], bk: ['#111111', '黒'], nv: ['#0d2a6b', '紺'], mg: ['#c2185b', '桃'], wh: ['#ffffff', '白'] };
+const GK_W = { s: [2, '細'], m: [4, '中'], l: [7, '太'] }, GK_F = { n: [0, 'なし'], l: [.15, '薄い'], m: [.35, '中くらい'] };
+function gkStyle() { return Object.assign({ c: 'pu', w: 'm', f: 'n' }, LS.get('gkStyle', {}) || {}); }
+function gkSess() { return Object.assign({ groups: [], redo: [] }, LS.get('gkSess', {}) || {}); }
+function gkSessSet(x) { LS.set('gkSess', x); }
+function gkMarks() {
+  let l = (LS.get('marks', []) || []).map(x => Object.assign({}, x));
+  (LS.get('markPend', []) || []).forEach(o => { l = gkOne(l, o); });
+  gkSess().groups.forEach(g => g.forEach(o => { l = gkOne(l, o); }));
+  return l;
+}
 function gkOne(l, op) {
   const d = op.data || {}, t = l.find(x => x.id === d.id);
   if (op.action === '追加') { if (!t) l.push(Object.assign({ by: d.name || '', at: op.at }, d)); }
-  else if (t && op.action === '直す') t.text = d.text || '';
+  else if (t && op.action === '直す') { ['text', 'pts', 'len', 'st', 'lat', 'lon'].forEach(k => { if (d[k] !== undefined) t[k] = d[k]; }); }
   else if (t && op.action === '取消') l.splice(l.indexOf(t), 1);
+  else if (!t && op.action === '戻す' && d.kind) l.push(Object.assign({}, d));
   return l;
 }
 function setServerMarks(l) { if (!Array.isArray(l)) return; LS.set('marks', l); const q = new Set(queue.map(o => o.id)); LS.set('markPend', (LS.get('markPend', []) || []).filter(o => q.has(o.id))); gkDrawAll(); }
-function gkSend(action, data) {
-  const op = { id: uuid(), at: nowIso(), kind: 'mark', action, data: Object.assign({ name: worker() }, data), who: worker() };
-  LS.set('markPend', (LS.get('markPend', []) || []).concat([op])); queue.push(op); LS.set('queue', queue); flush(); gkDrawAll();
-  return op;
+function gkOp(action, data) {
+  data = Object.assign({}, data); Object.keys(data).forEach(k => { if (data[k] === undefined) delete data[k]; });
+  if (action === '直す') data.set = Object.keys(data).filter(k => k !== 'id' && k !== 'name' && k !== 'set');      // 直した項目（受け付け側はこれだけ書き換える）
+  return { id: uuid(), at: nowIso(), kind: 'mark', action, data: Object.assign({ name: worker() }, data), who: worker() };
 }
-var GK = { mode: '', pts: [], shape: 'line', texts: {} };
+/* すぐ送る（モードの外で、印をタップして消したときなど） */
+function gkSendNow(ops) { LS.set('markPend', (LS.get('markPend', []) || []).concat(ops)); ops.forEach(o => queue.push(o)); LS.set('queue', queue); flush(); gkDrawAll(); }
+function gkSend(action, data) { const op = gkOp(action, data); if (GK.mode) gkPush([op]); else gkSendNow([op]); return op; }
+/* この回の作業に足す（1回の操作＝1まとまり。戻す・やり直すはまとまりごと） */
+function gkPush(ops) { const x = gkSess(); x.groups.push(ops); x.redo = []; gkSessSet(x); gkBar(); gkDrawAll(); }
+function gkUndo() {
+  if (GK.pts.length) { GK.ptRedo.push(GK.pts.pop()); gkBar(); gkDrawAll(); return; }
+  const x = gkSess(); const g = x.groups.pop(); if (!g) { toast('この回の作業はもうありません'); return; }
+  x.redo.push(g); gkSessSet(x); gkBar(); gkDrawAll(); toast('1つ戻しました');
+}
+function gkRedo() {
+  if (GK.ptRedo.length) { GK.pts.push(GK.ptRedo.pop()); gkBar(); gkDrawAll(); return; }
+  const x = gkSess(); const g = x.redo.pop(); if (!g) { toast('やり直す作業はありません'); return; }
+  x.groups.push(g); gkSessSet(x); gkBar(); gkDrawAll(); toast('やり直しました');
+}
+function gkUndoAll() { const x = gkSess(); while (x.groups.length) x.redo.push(x.groups.pop()); gkSessSet(x); GK.pts = []; gkBar(); gkDrawAll(); toast('この回の作業を全部戻しました（やり直すで戻せます）'); }
+/* 「終わる」：この回の作業をまとめて送る。送ったあとは戻せない（消しゴム・修正で直す） */
+function gkCommit() {
+  const x = gkSess(), ops = [].concat(...x.groups);
+  gkSessSet({ groups: [], redo: [] });
+  if (ops.length) gkSendNow(ops);
+  return ops.length;
+}
+var GK = { mode: '', tool: 'pt', etool: 'tap', pts: [], ptRedo: [], texts: {}, moving: null, movePts: null };
 const r7 = v => Math.round(v * 1e7) / 1e7;
 /* 図面の文字を地図の上で探す：取り込んだ図面ごとに、文字の位置（画像の画素）を持っている */
 async function gkLoadTexts() { for (const u of docShown()) if (!GK.texts[u.id]) { const d = await docDb.get(u.id).catch(() => null); GK.texts[u.id] = d && d.texts || []; } }
@@ -4074,8 +4458,9 @@ function gkGeom(hit, ll) {
   const okp = P(mid[0] + c * (t.w + t.h * 0.9), mid[1] + s * (t.w + t.h * 0.9)), ngp = P(mid[0] + c * t.w * 0.5 + up[0] * t.h * 1.6, mid[1] + s * t.w * 0.5 + up[1] * t.h * 1.6);
   return { orig: t.s, lat: r7(okp[0]), lon: r7(okp[1]), tlat: r7(ngp[0]), tlon: r7(ngp[1]), pts: [[r7(a[0]), r7(a[1])], [r7(b[0]), r7(b[1])]], h: Math.round(distM(top[0], top[1], base[0], base[1]) * 100) / 100 };
 }
-function gkOk(g) { const id = 'mk' + uuid().slice(3, 15); gkSend('追加', { id, kind: 'ok', orig: g.orig, text: '', lat: g.lat, lon: g.lon, pts: g.pts, h: g.h }); showUndo('✓ を付けました' + (g.orig ? '（' + g.orig + '）' : ''), () => { gkSend('取消', { id }); toast('取り消しました'); }); }
-function gkNg(g, text) { const id = 'mk' + uuid().slice(3, 15); gkSend('追加', { id, kind: 'ng', orig: g.orig, text, lat: g.tlat, lon: g.tlon, pts: g.pts, h: g.h }); showUndo('✎ ' + text + ' と書きました', () => { gkSend('取消', { id }); toast('取り消しました'); }); }
+/* ---- ✓・✎ ---- */
+function gkOk(g) { gkSend('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'ok', orig: g.orig, text: '', lat: g.lat, lon: g.lon, pts: g.pts, h: g.h }); toast('✓ を付けました' + (g.orig ? '（' + g.orig + '）' : '')); }
+function gkNg(g, text) { gkSend('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'ng', orig: g.orig, text, lat: g.tlat, lon: g.tlon, pts: g.pts, h: g.h }); toast('✎ ' + text + ' と書きました'); }
 function gkEdit(g, mk) {
   sheet(box => {
     box.append(el('h3', '', mk ? '✎ 書き直す' : '✎ 違う（赤字で書く）'));
@@ -4098,18 +4483,21 @@ function gkAsk(g) {
     box.append(a, b, h, c);
   });
 }
+const GK_KIND = { ok: '✓ 図面どおり', ng: '✎ 違う', line: '線（作図）', area: '囲み（作図）', text: '文字（作図）' };
+/* モードの外で印をタップ：中身を見る。消す・直すは消しゴム・修正モードから */
 function gkMarkMenu(m) {
   sheet(box => {
-    const k = { ok: '✓ 図面どおり', ng: '✎ 違う', line: '線（作図）', area: '囲み（作図）' }[m.kind] || '';
-    box.append(el('h3', '', k + (m.text ? '：' + m.text : '')));
+    box.append(el('h3', '', (GK_KIND[m.kind] || '') + (m.text ? '：' + m.text : '')));
     const info = el('p', '', (m.orig ? '図面の文字：' + m.orig + '　' : '') + (m.len ? '長さ 約' + m.len + 'm　' : '') + (m.by ? m.by + 'さん' : '') + (m.at ? '（' + String(m.at).slice(5, 16).replace('T', ' ') + '）' : '')); info.style.cssText = 'font-size:13px;color:var(--mute)'; box.append(info);
-    if (m.kind !== 'ok') { const e = el('button', 'btn sub', m.kind === 'ng' ? '✎ 書き直す' : '名前を直す'); e.onclick = () => m.kind === 'ng' ? gkEdit({ orig: m.orig }, m) : gkName(null, m); box.append(e); }
-    const d = el('button', 'btn dangerline', '取り消す（消す）'); d.id = 'gkDel'; d.onclick = () => { sheet(null); gkSend('取消', { id: m.id }); showUndo('取り消しました', () => { gkSend('追加', m); }); };
+    const e = el('button', 'btn sub', '✎ 修正モードで直す'); e.onclick = async () => { sheet(null); await gkMode('edit'); gkEditMark(m); };
+    const d = el('button', 'btn dangerline', '🧽 消しゴムモードで消す'); d.id = 'gkDel'; d.onclick = async () => { sheet(null); await gkMode('erase'); gkErase([m.id]); };
     const c = el('button', 'btn sub', '閉じる'); c.onclick = () => sheet(null);
-    box.append(d, c);
+    box.append(e, d, c);
   });
 }
-/* 地図に描く */
+/* ---- 地図に描く ---- */
+function gkLineStyle(st, extra) { st = Object.assign({ c: 'pu', w: 'm', f: 'n' }, st || {}); const col = (GK_COL[st.c] || GK_COL.pu)[0], w = (GK_W[st.w] || GK_W.m)[0], f = (GK_F[st.f] || GK_F.n)[0]; return Object.assign({ color: col, weight: w, fillColor: col, fillOpacity: f, fill: f > 0 }, extra || {}); }
+function gkHalo(st) { st = st || {}; return st.c === 'wh' ? '#111' : '#fff'; }
 function gkDrawAll() {
   [typeof mainMap !== 'undefined' ? mainMap : null].forEach(map => {
     if (!map || typeof L === 'undefined') return;
@@ -4117,8 +4505,15 @@ function gkDrawAll() {
     map._gk.clearLayers();
     const list = gkMarks(); $('gkCount').textContent = list.length ? '（' + list.length + '件）' : '';
     if (!$('gkOn').checked && !GK.mode) return;
+    const hl = new Set(GK.hits || []);
     list.forEach(m => {
-      const tap = e => { if (e && e.originalEvent) L.DomEvent.stop(e.originalEvent); if (GK.mode === 'draw') { if (e && e.latlng) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); gkBar(); gkDrawAll(); } return; } gkMarkMenu(m); };      // 作図中は印の上でも点を打つ
+      if (GK.moving && GK.moving === m.id) return;        // 点を動かしている物は、動かしている形で描く
+      const tap = e => { if (e && e.originalEvent) L.DomEvent.stop(e.originalEvent); gkTapMark(m, e); };
+      if (hl.has(m.id)) {          // なぞって消す：当たった物を太い黒の帯で目立たせる（色だけに頼らない）
+        const at = m.pts && m.pts.length >= 2 && (m.kind === 'line' || m.kind === 'area') ? m.pts : [[m.lat, m.lon], [m.lat, m.lon]];
+        (m.kind === 'area' ? L.polygon : L.polyline)(at, { color: '#111', weight: 16, opacity: .45, fill: false, interactive: false }).addTo(map._gk);
+        if (!(m.pts && m.pts.length >= 2)) L.circleMarker([m.lat, m.lon], { radius: 16, color: '#111', weight: 3, fillOpacity: .15, interactive: false }).addTo(map._gk);
+      }
       if (m.kind === 'ok') L.marker([m.lat, m.lon], { icon: L.divIcon({ className: 'gkok', html: '<span>✓</span>', iconSize: null }) }).on('click', tap).addTo(map._gk);
       else if (m.kind === 'ng') {
         if (m.pts && m.pts.length === 2 && m.h) {        // 図面の文字は残して、赤の二重線
@@ -4127,78 +4522,282 @@ function gkDrawAll() {
           [1, -1].forEach(sg => L.polyline([[a[0] + sg * oy / ky, a[1] + sg * ox / kx], [b[0] + sg * oy / ky, b[1] + sg * ox / kx]], { color: '#d50000', weight: 2, interactive: false }).addTo(map._gk));
         }
         L.marker([m.lat, m.lon], { icon: L.divIcon({ className: 'gkng', html: '<span>✎ ' + esc(m.text) + '</span>', iconSize: null }) }).on('click', tap).addTo(map._gk);
+      } else if (m.kind === 'text') {
+        const st = Object.assign({ c: 'pu', w: 'm' }, m.st || {}), col = (GK_COL[st.c] || GK_COL.pu)[0], fs = { s: 13, m: 16, l: 21 }[st.w] || 16;
+        L.marker([m.lat, m.lon], { icon: L.divIcon({ className: 'gktx' + (st.c === 'wh' ? ' wh' : ''), html: '<span style="color:' + col + ';font-size:' + fs + 'px">' + esc(m.text) + '</span>', iconSize: null }) }).on('click', tap).addTo(map._gk);
       } else if ((m.kind === 'line' || m.kind === 'area') && m.pts && m.pts.length >= 2) {
-        const sh = m.kind === 'area' ? L.polygon : L.polyline;
-        sh(m.pts, { color: '#fff', weight: 9, opacity: .7, fill: false, bubblingMouseEvents: false }).on('click', tap).addTo(map._gk);
-        sh(m.pts, { color: '#4a148c', weight: 4, fillOpacity: .12, bubblingMouseEvents: false }).on('click', tap).addTo(map._gk);
-        const c = m.kind === 'area' ? L.latLngBounds(m.pts).getCenter() : L.latLng(pointAt({ pts: m.pts }, (m.len || 0) / 2));
-        L.marker(c, { icon: L.divIcon({ className: 'gkln', html: '<span>' + esc((m.text || '作図') + (m.len ? '　L=' + m.len + 'm' : '')) + '</span>', iconSize: null }) }).on('click', tap).addTo(map._gk);
+        const sh = m.kind === 'area' ? L.polygon : L.polyline, ls = gkLineStyle(m.st, { bubblingMouseEvents: false });
+        sh(m.pts, { color: gkHalo(m.st), weight: ls.weight + 5, opacity: .7, fill: false, bubblingMouseEvents: false }).on('click', tap).addTo(map._gk);
+        sh(m.pts, m.kind === 'area' ? ls : Object.assign({}, ls, { fill: false })).on('click', tap).addTo(map._gk);
+        if (m.text || m.len) {
+          const c = m.kind === 'area' ? L.latLngBounds(m.pts).getCenter() : L.latLng(pointAt({ pts: m.pts }, (m.len || gkLen(m.pts)) / 2));
+          L.marker(c, { icon: L.divIcon({ className: 'gkln', html: '<span style="color:' + (m.st && m.st.c === 'wh' ? '#111' : (GK_COL[(m.st || {}).c] || GK_COL.pu)[0]) + '">' + esc((m.text || '作図') + (m.len ? '　L=' + m.len + 'm' : '')) + '</span>', iconSize: null }) }).on('click', tap).addTo(map._gk);
+        }
       }
     });
-    if (GK.mode === 'draw' && GK.pts.length) {
-      const sh = GK.shape === 'area' && GK.pts.length >= 3 ? L.polygon : L.polyline;
-      sh(GK.pts, { color: '#4a148c', weight: 4, fillOpacity: .12, interactive: false }).addTo(map._gk);
+    const st = gkStyle();
+    if (GK.mode === 'draw' && GK.pts.length) {      // 描いている途中の点
+      const ar = GK.tool === 'area', sh = ar && GK.pts.length >= 3 ? L.polygon : L.polyline;
+      sh(GK.pts, gkLineStyle(st, { interactive: false, fill: ar && (GK_F[st.f] || GK_F.n)[0] > 0 })).addTo(map._gk);
       GK.pts.forEach((p, i) => L.circleMarker(p, { radius: i === GK.pts.length - 1 ? 8 : 5, color: '#fff', weight: 3, fillColor: '#4a148c', fillOpacity: 1, interactive: false }).addTo(map._gk));
+    }
+    if (GK.stroke && GK.stroke.length >= 2) {          // 指でなぞっている線（フリーハンド・なぞって消す）
+      const ll = GK.stroke.map(p => map.containerPointToLatLng(p));
+      if (GK.mode === 'erase') L.polyline(ll, { color: '#111', weight: 10, opacity: .35, interactive: false }).addTo(map._gk);
+      else L.polyline(ll, gkLineStyle(st, { interactive: false, fill: false })).addTo(map._gk);
+    }
+    if (GK.moving && GK.movePts) {                     // 修正：点を動かす
+      const m = list.find(x => x.id === GK.moving), ar = m && m.kind === 'area';
+      (ar ? L.polygon : L.polyline)(GK.movePts, gkLineStyle(m && m.st, { interactive: false, fill: ar })).addTo(map._gk);
+      GK.movePts.forEach((p, i) => {
+        const mk = L.marker(p, { draggable: true, icon: L.divIcon({ className: 'gkv', html: '<span>' + (i + 1) + '</span>', iconSize: [28, 28] }) }).addTo(map._gk);
+        mk.on('dragend', () => { const q = mk.getLatLng(); GK.movePts[i] = [r7(q.lat), r7(q.lng)]; gkDrawAll(); gkBar(); });
+      });
     }
   });
 }
-/* モードの切り替え（図面チェック・作図）。上に帯を出す */
 function gkLen(pts) { let L0 = 0; for (let i = 0; i + 1 < pts.length; i++) L0 += distM(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); return Math.round(L0 * 10) / 10; }
+/* 印・線をタップしたとき：モードで動きが変わる */
+function gkTapMark(m, e) {
+  if (GK.mode === 'draw') {
+    if ((GK.tool === 'pt' || GK.tool === 'area') && e && e.latlng) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); GK.ptRedo = []; gkBar(); gkDrawAll(); }
+    else if (GK.tool === 'text' && e && e.latlng) gkTextAt(e.latlng);
+    return;
+  }
+  if (GK.mode === 'erase') { if (GK.etool === 'tap') gkErase([m.id]); return; }
+  if (GK.mode === 'edit') { gkEditMark(m); return; }
+  if (GK.mode === 'check') return;
+  gkMarkMenu(m);
+}
+/* ---- 帯（モードごとのボタン） ---- */
 function gkBar() {
   const bar = $('gkBar'); bar.classList.toggle('hidden', !GK.mode); const btns = $('gkBtns'); btns.innerHTML = '';
-  const b = (t, fn, cls) => { const x = el('button', cls || '', t); x.onclick = fn; btns.append(x); return x; };
+  if (!GK.mode) return;
+  const row = () => { const r = el('div', 'gkrow'); btns.append(r); return r; };
+  const b = (r, t, fn, cls, id) => { const x = el('button', cls || '', t); x.onclick = fn; if (id) x.id = id; r.append(x); return x; };
+  const x = gkSess(), n = x.groups.length, st = gkStyle();
+  const sessLine = n ? '　この回の作業 ' + n + '件（「終わる」でまとめて送ります）' : '';
+  const undoRow = r => { b(r, '↶ 戻す', gkUndo, '', 'gkUndo').disabled = !n && !GK.pts.length; b(r, '↷ やり直す', gkRedo, '', 'gkRedo').disabled = !x.redo.length && !GK.ptRedo.length; };
   if (GK.mode === 'check') {
-    $('gkHint').innerHTML = '<b>✓ 図面チェック中</b>　図面の文字を <b>2回タップ＝✓</b>・<b>長押し＝✎ 違う</b>・1回タップ＝選ぶ（拡大は2本指で）';
-    b('終わる', () => gkMode(''), 'end');
+    $('gkHint').innerHTML = '<b>✓ 図面チェック中</b>　図面の文字を <b>2回タップ＝✓</b>・<b>長押し＝✎ 違う</b>・1回タップ＝選ぶ（拡大は2本指で）' + sessLine;
+    const r = row(); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'draw') {
-    $('gkHint').innerHTML = '<b>✏ 作図中</b>　地図をタップして点を打つ（' + (GK.shape === 'area' ? '囲み' : '線') + '）' + (GK.pts.length >= 2 ? '　長さ 約' + gkLen(GK.pts) + 'm' : '');
-    b('📍 今の場所', () => { const f = freshFix(30); if (!f) { toast('今の位置が取れていません'); return; } GK.pts.push([r7(f.lat), r7(f.lon)]); gkBar(); gkDrawAll(); });
-    b('1つ戻す', () => { GK.pts.pop(); gkBar(); gkDrawAll(); });
-    b(GK.shape === 'area' ? '線にする' : '囲みにする', () => { GK.shape = GK.shape === 'area' ? 'line' : 'area'; gkBar(); gkDrawAll(); });
-    b('完了', () => { if (GK.pts.length < (GK.shape === 'area' ? 3 : 2)) { toast(GK.shape === 'area' ? '3点以上打ってください' : '2点以上打ってください'); return; } gkName(GK.pts.slice(), null); }, 'end');
-    b('やめる', () => gkMode(''));
+    const tl = { pt: '✏ 点で線', free: '✍ フリーハンド', area: '⬠ 囲み', text: 'Ａ 文字', check: '✓ チェック' };
+    const how = { pt: '地図をタップして点を打つ→「この線を確定」', free: '指1本でなぞると線（地図は動きません。拡大・移動は2本指）', area: '地図をタップして囲む点を打つ→「囲みを確定」（地図は動きません。拡大・移動は2本指）', text: '文字を置く所をタップ', check: '2回タップ＝✓・長押し＝✎ 違う' };
+    $('gkHint').innerHTML = '<b>✏ 作図中</b>　' + how[GK.tool] + (GK.pts.length >= 2 && GK.tool === 'pt' ? '　長さ 約' + gkLen(GK.pts) + 'm' : '') + sessLine;
+    const r1 = row(); r1.classList.add('tools');
+    Object.keys(tl).forEach(k => { const t = b(r1, (GK.tool === k ? '▶ ' : '') + tl[k], () => gkTool(k), GK.tool === k ? 'on' : '', 'gkT_' + k); t.setAttribute('aria-pressed', GK.tool === k); });
+    if (GK.tool !== 'check') {
+      const r2 = row(); r2.classList.add('style');
+      const cyc = (obj, key, label) => { const ks = Object.keys(obj); b(r2, label + '：' + obj[st[key]][1], () => { const s2 = gkStyle(); s2[key] = ks[(ks.indexOf(s2[key]) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_' + key); };
+      const cb = b(r2, '', () => { const s2 = gkStyle(), ks = Object.keys(GK_COL); s2.c = ks[(ks.indexOf(s2.c) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_c');
+      cb.innerHTML = '色：<i class="sw" style="background:' + GK_COL[st.c][0] + '"></i>' + GK_COL[st.c][1];
+      cyc(GK_W, 'w', GK.tool === 'text' ? '大きさ' : '太さ');
+      if (GK.tool === 'area') cyc(GK_F, 'f', '塗り');
+    }
+    const r3 = row();
+    if (GK.tool === 'pt' || GK.tool === 'area') {
+      b(r3, '📍 今の場所', gkHere, '', 'gkHere');
+      if (GK.pts.length) b(r3, GK.tool === 'area' ? '✔ 囲みを確定' : '✔ この線を確定', gkFinishShape, 'go', 'gkFinish');
+    }
+    undoRow(r3); b(r3, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+  } else if (GK.mode === 'erase') {
+    $('gkHint').innerHTML = '<b>🧽 消しゴム</b>　' + (GK.etool === 'tap' ? '消したい物（✓・✎・線・囲み・文字）をタップ' : '指1本でなぞると、触れた物を丸ごと消します（地図は動きません。拡大・移動は2本指）') + sessLine;
+    const r1 = row(); r1.classList.add('tools');
+    [['tap', '👆 選んで消す'], ['swipe', '〰 なぞって消す']].forEach(([k, t]) => b(r1, (GK.etool === k ? '▶ ' : '') + t, () => { GK.etool = k; gkLock(); gkBar(); }, GK.etool === k ? 'on' : '', 'gkE_' + k));
+    const r = row(); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+  } else if (GK.mode === 'edit') {
+    const r = row();
+    if (GK.moving) {
+      $('gkHint').innerHTML = '<b>✎ 修正：点を動かす</b>　番号の丸を指で動かす' + sessLine;
+      b(r, '✔ 動かし終わる', gkMoveDone, 'go', 'gkMoveOk'); b(r, 'やめる', () => { GK.moving = null; GK.movePts = null; gkBar(); gkDrawAll(); });
+    } else {
+      $('gkHint').innerHTML = '<b>✎ 修正</b>　直したい物（文字・線・囲み・✎）をタップ' + sessLine;
+      undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+    }
   }
 }
-function gkName(pts, m) {
+function gkTool(k) {
+  if (GK.pts.length && k !== GK.tool && !(GK.tool === 'pt' && k === 'area') && !(GK.tool === 'area' && k === 'pt')) { toast('描きかけの点は消しました'); GK.pts = []; }
+  GK.tool = k; GK.ptRedo = []; gkLock(); gkBar(); gkDrawAll();
+  if (k === 'check') gkLoadTexts();
+}
+/* フリーハンド・囲み・なぞって消す の間は、指1本で地図が動かない（図面を手で押さえている感じ）。拡大・移動は2本指 */
+function gkLock() {
+  if (!mainMap) return;
+  const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area')) || (GK.mode === 'erase' && GK.etool === 'swipe');
+  if (lock) mainMap.dragging.disable(); else mainMap.dragging.enable();
+  mainMap.getContainer().classList.toggle('gklock', !!lock);
+}
+async function gkHere() {
+  toast('今の位置を取っています…');
+  const f = await getFixNow(8);
+  if (!f) { toast('今の位置が取れません（位置情報を許可しているか、空が見える所か確かめてください）'); return; }
+  GK.pts.push([r7(f.lat), r7(f.lon)]); GK.ptRedo = []; gkBar(); gkDrawAll();
+  toast(f.old ? '少し前（' + f.age + '秒前）の位置で点を打ちました（±' + Math.round(f.acc) + 'm）' : '今の位置で点を打ちました（±' + Math.round(f.acc) + 'm）');
+}
+function gkFinishShape() {
+  const ar = GK.tool === 'area';
+  if (GK.pts.length < (ar ? 3 : 2)) { toast(ar ? '3点以上打ってください' : '2点以上打ってください'); return; }
+  gkName(GK.pts.slice(), null, ar ? 'area' : 'line');
+}
+function gkName(pts, m, kind) {
   sheet(box => {
-    box.append(el('h3', '', m ? '名前を直す' : '作図に名前を付ける'));
-    const inp = el('input'); inp.type = 'text'; inp.id = 'gkName'; inp.placeholder = '例：畦畔ブロック'; inp.value = m ? m.text : ''; box.append(inp);
-    const used = [...new Set(gkMarks().filter(x => x.kind === 'line' || x.kind === 'area').map(x => x.text).filter(Boolean))].slice(0, 6);
+    box.append(el('h3', '', m ? '名前を直す' : (kind === 'area' ? '囲み' : '線') + 'に名前を付ける（なくてもよい）'));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'gkName'; inp.placeholder = '例：漏水箇所1・畦畔ブロック'; inp.value = m ? m.text : ''; box.append(inp);
+    const used = [...new Set(gkMarks().filter(x => x.kind === 'line' || x.kind === 'area').map(x => x.text).filter(Boolean))].slice(-6).reverse();
     if (used.length && !m) { const c = el('div', 'chips'); used.forEach(n => { const x = el('button', 'chip', n); x.onclick = () => { inp.value = n; }; c.append(x); }); box.append(c); }
-    const ok = el('button', 'btn acc', '保存'); ok.id = 'gkNameOk';
+    const ok = el('button', 'btn acc', '確定'); ok.id = 'gkNameOk';
     ok.onclick = () => {
       const v = inp.value.trim(); sheet(null);
       if (m) { gkSend('直す', { id: m.id, text: v }); return; }
-      const len = GK.shape === 'area' ? null : gkLen(pts), id = 'mk' + uuid().slice(3, 15);
-      gkSend('追加', { id, kind: GK.shape === 'area' ? 'area' : 'line', orig: '', text: v, lat: pts[0][0], lon: pts[0][1], pts, len });
-      GK.pts = []; gkBar(); gkDrawAll(); toast('作図を保存しました' + (len ? '（長さ 約' + len + 'm）' : ''));
+      const len = kind === 'area' ? null : gkLen(pts), id = 'mk' + uuid().slice(3, 15);
+      gkPush([gkOp('追加', { id, kind, orig: '', text: v, lat: pts[0][0], lon: pts[0][1], pts, len, st: gkStyle() })]);
+      GK.pts = []; GK.ptRedo = []; gkBar(); gkDrawAll(); toast((kind === 'area' ? '囲み' : '線') + 'を確定しました' + (len ? '（長さ 約' + len + 'm）' : ''));
     };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
+    const no = el('button', 'btn sub', 'もう少し描く'); no.onclick = () => sheet(null);
+    box.append(ok, no); setTimeout(() => inp.focus(), 100);
+  });
+}
+function gkTextAt(ll) {
+  sheet(box => {
+    box.append(el('h3', '', 'Ａ 文字を置く'));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'gkTxt'; inp.placeholder = '例：漏水箇所1・湿潤'; box.append(inp);
+    const ok = el('button', 'btn acc', '置く'); ok.id = 'gkTxtOk';
+    ok.onclick = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } sheet(null); gkPush([gkOp('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'text', orig: '', text: v, lat: r7(ll.lat), lon: r7(ll.lng), st: gkStyle() })]); toast('文字を置きました'); };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
     const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null);
     box.append(ok, no); setTimeout(() => inp.focus(), 100);
   });
 }
+/* ---- 消しゴム ---- */
+function gkErase(ids) {
+  const list = gkMarks(), ops = ids.map(id => list.find(m => m.id === id)).filter(Boolean).map(m => gkOp('取消', { id: m.id, kind: m.kind }));
+  if (!ops.length) return;
+  gkPush(ops); toast(ops.length + '件消しました（戻すで戻せます）');
+}
+/* なぞった線に触れた物を探す（画面の上で、指から14ピクセル以内） */
+function gkSwipeHits(map, path) {
+  const segD = (p, a, b) => { const vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy, t = l2 ? Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / l2)) : 0; return Math.hypot(p.x - a.x - t * vx, p.y - a.y - t * vy); };
+  const near = (q, tol) => { for (let i = 0; i + 1 < path.length; i++) if (segD(q, path[i], path[i + 1]) <= tol) return true; return path.length === 1 && q.distanceTo(path[0]) <= tol; };
+  const out = [];
+  gkMarks().forEach(m => {
+    if ((m.kind === 'line' || m.kind === 'area') && m.pts && m.pts.length >= 2) {
+      const cps = m.pts.map(p => map.latLngToContainerPoint(p)); if (m.kind === 'area') cps.push(cps[0]);
+      let hit = false;
+      for (let i = 0; i + 1 < cps.length && !hit; i++) for (let j = 0; j + 1 < path.length && !hit; j++) {
+        if (segD(path[j], cps[i], cps[i + 1]) <= 14 || segD(cps[i], path[j], path[j + 1]) <= 14) hit = true;
+        else { const a = cps[i], b2 = cps[i + 1], c = path[j], d = path[j + 1], cr = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); if (cr(a, b2, c) * cr(a, b2, d) < 0 && cr(c, d, a) * cr(c, d, b2) < 0) hit = true; }
+      }
+      if (hit) out.push(m.id);
+    } else if (m.lat != null && near(map.latLngToContainerPoint([m.lat, m.lon]), 22)) out.push(m.id);
+  });
+  return out;
+}
+/* ---- 修正 ---- */
+function gkEditMark(m) {
+  if (m.kind === 'ok') { toast('✓ は直す所がありません。消しゴムで消して付け直してください'); return; }
+  if (m.kind === 'ng') { gkEdit({ orig: m.orig }, m); return; }
+  sheet(box => {
+    box.append(el('h3', '', '✎ 直す：' + GK_KIND[m.kind]));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'gkEdName'; inp.value = m.text || ''; inp.placeholder = m.kind === 'text' ? '文字' : '名前（なくてもよい）'; box.append(inp);
+    const st = Object.assign({ c: 'pu', w: 'm', f: 'n' }, m.st || {});
+    const sr = el('div', 'chips'); box.append(sr);
+    const draw = () => {
+      sr.innerHTML = '';
+      Object.keys(GK_COL).forEach(k => { const c = el('button', 'chip' + (st.c === k ? ' on' : ''), (st.c === k ? '▶ ' : '') + GK_COL[k][1]); c.style.borderLeft = '10px solid ' + GK_COL[k][0]; c.onclick = () => { st.c = k; draw(); }; sr.append(c); });
+      Object.keys(GK_W).forEach(k => { const c = el('button', 'chip' + (st.w === k ? ' on' : ''), (st.w === k ? '▶ ' : '') + (m.kind === 'text' ? '大きさ ' : '太さ ') + GK_W[k][1]); c.onclick = () => { st.w = k; draw(); }; sr.append(c); });
+      if (m.kind === 'area') Object.keys(GK_F).forEach(k => { const c = el('button', 'chip' + (st.f === k ? ' on' : ''), (st.f === k ? '▶ ' : '') + '塗り ' + GK_F[k][1]); c.onclick = () => { st.f = k; draw(); }; sr.append(c); });
+    };
+    draw();
+    const ok = el('button', 'btn acc', '直す'); ok.id = 'gkEdOk';
+    ok.onclick = () => { const v = inp.value.trim(); if (m.kind === 'text' && !v) { inp.focus(); return; } sheet(null); gkPush([gkOp('直す', { id: m.id, text: v, st })]); toast('直しました'); };
+    box.append(ok);
+    if (m.pts && m.pts.length >= 2) { const mv = el('button', 'btn sub', '点を動かす'); mv.id = 'gkEdMove'; mv.onclick = () => { sheet(null); GK.moving = m.id; GK.movePts = m.pts.map(p => p.slice()); gkBar(); gkDrawAll(); }; box.append(mv); }
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no);
+  });
+}
+function gkMoveDone() {
+  const m = gkMarks().find(x => x.id === GK.moving), pts = GK.movePts; GK.moving = null; GK.movePts = null;
+  if (m && pts) gkPush([gkOp('直す', { id: m.id, pts, lat: pts[0][0], lon: pts[0][1], len: m.kind === 'line' && m.len != null ? gkLen(pts) : undefined })]);
+  gkBar(); gkDrawAll(); toast('点を動かしました');
+}
+/* ---- モードの切り替え。ほかのモードに移る・終わるときは、この回の作業をまとめて送る ---- */
 async function gkMode(mode) {
-  GK.mode = mode; GK.pts = []; if (mode === 'draw') GK.shape = 'line';
+  if (GK.mode && GK.pts.length && GK.mode === 'draw') toast('確定していない描きかけの点は消しました');
+  const n = gkCommit();
+  if (GK.mode && n) toast(n + '件をまとめて送ります');
+  GK.mode = mode; GK.pts = []; GK.ptRedo = []; GK.stroke = null; GK.hits = []; GK.moving = null; GK.movePts = null;
+  if (mode === 'draw') GK.tool = 'pt';
+  if (mode === 'erase') GK.etool = 'tap';
   if (mainMap) { if (mode) mainMap.doubleClickZoom.disable(); else mainMap.doubleClickZoom.enable(); }
+  gkLock();
   if (mode === 'check') { await gkLoadTexts(); if (!docShown().length) toast('図面を重ねていません。文字のない所（場所）に✓・✎を付けられます'); }
+  ['gkCheck', 'gkDraw', 'gkEraseBtn', 'gkEditBtn'].forEach(id => { const x = $(id); if (x) x.classList.toggle('on', { gkCheck: 'check', gkDraw: 'draw', gkEraseBtn: 'erase', gkEditBtn: 'edit' }[id] === mode); });
   gkBar(); gkDrawAll();
   if (mode) $('gkBar').scrollIntoView({ block: 'start' });
 }
-/* 地図のタップ：1回・2回・長押しを見分ける（図面チェック中）／点を打つ（作図中） */
+/* チェックの操作が効くか（図面チェックモード・作図モードの「✓ チェック」） */
+const gkChecking = () => GK.mode === 'check' || (GK.mode === 'draw' && GK.tool === 'check');
+/* なぞる（フリーハンド・なぞって消す）か */
+const gkStroking = () => (GK.mode === 'draw' && GK.tool === 'free') || (GK.mode === 'erase' && GK.etool === 'swipe');
+/* 線を間引く（形を崩さない程度に：画面で1.5ピクセル） */
+function gkSimplify(pts, tol) {
+  if (pts.length < 3) return pts.slice();
+  const keep = new Array(pts.length).fill(false); keep[0] = keep[pts.length - 1] = true;
+  const st = [[0, pts.length - 1]];
+  while (st.length) {
+    const [a, b] = st.pop(); let md = 0, mi = -1;
+    const A = pts[a], B = pts[b], vx = B.x - A.x, vy = B.y - A.y, l = Math.hypot(vx, vy) || 1;
+    for (let i = a + 1; i < b; i++) { const d = Math.abs((pts[i].x - A.x) * vy - (pts[i].y - A.y) * vx) / l; if (d > md) { md = d; mi = i; } }
+    if (md > tol) { keep[mi] = true; st.push([a, mi], [mi, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+/* 地図のタップ：1回・2回・長押しを見分ける（チェック）／点を打つ（作図）／なぞる（フリーハンド・消しゴム） */
 function gkAttach(map) {
   if (map._gkA) return; map._gkA = true;
-  const ct = map.getContainer(); let down = null, lpT = null, longDone = 0, lastTap = null, singleT = null;
+  const ct = map.getContainer(); let down = null, lpT = null, longDone = 0, lastTap = null, singleT = null, strokeEnd = 0;
+  const ptrs = new Set();
+  const cpOf = e => { const r = ct.getBoundingClientRect(); return L.point(e.clientX - r.left, e.clientY - r.top); };
   ct.addEventListener('pointerdown', e => {
-    if (GK.mode !== 'check' || e.isPrimary === false) return;
+    ptrs.add(e.pointerId);
+    if (gkStroking()) {
+      if (ptrs.size > 1) { GK.stroke = null; GK.hits = []; gkDrawAll(); return; }      // 2本指＝拡大・移動（なぞるのはやめる）
+      if (e.target.closest && e.target.closest('.leaflet-control')) return;
+      GK.stroke = [cpOf(e)]; GK.hits = []; e.preventDefault(); try { ct.setPointerCapture(e.pointerId); } catch (x) {} return;      // 指が地図の外に出ても線は続く
+    }
+    if (!gkChecking() || e.isPrimary === false) return;
     down = { x: e.clientX, y: e.clientY }; clearTimeout(lpT);
     lpT = setTimeout(() => { const r = ct.getBoundingClientRect(), cp = L.point(down.x - r.left, down.y - r.top); longDone = Date.now(); clearTimeout(singleT); lastTap = null; const hit = gkHit(map, cp); gkEdit(gkGeom(hit, map.containerPointToLatLng(cp))); }, 600);
   });
-  ct.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { clearTimeout(lpT); down = null; } });
-  ['pointerup', 'pointercancel'].forEach(t => ct.addEventListener(t, () => { clearTimeout(lpT); down = null; }));
+  ct.addEventListener('pointermove', e => {
+    if (GK.stroke && gkStroking() && ptrs.size === 1) {
+      const p = cpOf(e), l = GK.stroke[GK.stroke.length - 1];
+      if (p.distanceTo(l) >= 2) { GK.stroke.push(p); if (GK.mode === 'erase') GK.hits = gkSwipeHits(map, GK.stroke); gkDrawAll(); }
+      e.preventDefault(); return;
+    }
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { clearTimeout(lpT); down = null; }
+  });
+  ['pointerup', 'pointercancel'].forEach(t => ct.addEventListener(t, e => {
+    ptrs.delete(e.pointerId); clearTimeout(lpT); down = null;
+    if (!GK.stroke) return;
+    const path = GK.stroke; GK.stroke = null;
+    if (t === 'pointercancel' && GK.mode !== 'erase') { gkDrawAll(); return; }
+    let len = 0; for (let i = 0; i + 1 < path.length; i++) len += path[i].distanceTo(path[i + 1]);
+    strokeEnd = Date.now();
+    if (GK.mode === 'erase') { const hits = path.length ? gkSwipeHits(map, path) : []; GK.hits = []; if (hits.length) gkErase(hits); else gkDrawAll(); return; }
+    if (path.length < 3 || len < 15) { gkDrawAll(); return; }
+    const sp = gkSimplify(path, 1.5).map(p => { const q = map.containerPointToLatLng(p); return [r7(q.lat), r7(q.lng)]; });
+    gkPush([gkOp('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'line', orig: '', text: '', lat: sp[0][0], lon: sp[0][1], pts: sp, len: null, free: true, st: gkStyle() })]);
+  }));
   ct.addEventListener('contextmenu', e => { if (GK.mode) e.preventDefault(); });
   map.on('click', e => {
-    if (GK.mode === 'draw') { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); gkBar(); gkDrawAll(); return; }
-    if (GK.mode !== 'check' || Date.now() - longDone < 800) return;
+    if (Date.now() - strokeEnd < 350) return;
+    if (GK.mode === 'draw' && (GK.tool === 'pt' || GK.tool === 'area')) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); GK.ptRedo = []; gkBar(); gkDrawAll(); return; }
+    if (GK.mode === 'draw' && GK.tool === 'text') { gkTextAt(e.latlng); return; }
+    if (!gkChecking() || Date.now() - longDone < 800) return;
     const cp = e.containerPoint, now = Date.now();
     if (lastTap && now - lastTap.t < 400 && cp.distanceTo(lastTap.cp) < 30) {      // 2回タップ＝✓
       clearTimeout(singleT); const lt = lastTap; lastTap = null; gkOk(gkGeom(gkHit(map, lt.cp), map.containerPointToLatLng(lt.cp))); return;
@@ -4209,7 +4808,11 @@ function gkAttach(map) {
 }
 $('gkCheck').onclick = () => gkMode(GK.mode === 'check' ? '' : 'check');
 $('gkDraw').onclick = () => gkMode(GK.mode === 'draw' ? '' : 'draw');
+$('gkEraseBtn').onclick = () => gkMode(GK.mode === 'erase' ? '' : 'erase');
+$('gkEditBtn').onclick = () => gkMode(GK.mode === 'edit' ? '' : 'edit');
 $('gkOn').checked = LS.get('gkOn', true); $('gkOn').onchange = () => { LS.set('gkOn', $('gkOn').checked); gkDrawAll(); };
+/* アプリを閉じる前の作業が残っていたら、まとめて送る（消えないように） */
+setTimeout(() => { if (gkSess().groups.length && !GK.mode) gkCommit(); }, 0);
 
 /* ---- 図面を重ねる（位置図・調査票の小さい地図・今ここの地図）：図面は航空写真の下に置き、航空写真の濃さ（透け具合）を変えて見比べる。
    図面ごとに表示・非表示（u.on）。一度作った図面の層は使い回す（開くたびに作り直さない＝表示が速い） */
