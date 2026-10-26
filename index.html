@@ -586,7 +586,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.7.2β';
+const VERSION = 'v0.7.3β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
@@ -2207,7 +2207,7 @@ $('nochoFile').onchange = async () => {
    ・打った文字で候補（ひな形）が出る。並びは使った回数の多い順
    ・ひな形の ○ は数字を入れる所、◇ は選ぶ所。専用キーの［次へ］で次の ○ へ
    ・⚙ で細かい設定 */
-const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true };
+const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true, hereMove: true };
 function SET() { return Object.assign({}, SET_DEF, LS.get('set', {})); }
 function setSet(k, v) { const o = LS.get('set', {}); o[k] = v; LS.set('set', o); }
 
@@ -2611,7 +2611,7 @@ $('gear').onclick = () => sheet(box => {
   row('打った文字で候補を出す', 'sugg', 'checkbox');
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
   row('写真もWi-Fiのときに手で送る（通信量の節約。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
-  row('「今ここ」の窓で位置も動かす（ふつうは向きだけ直す）', 'hereMove', 'checkbox');
+  row('「今ここ」の窓で位置も動かす（外すと向きだけ直す）', 'hereMove', 'checkbox');
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
   box.append(el('h3', '', '試験中'));
   const dr = el('button', 'btn sub', '📄 図面の下敷き・位置合わせ（PCで使うのがおすすめ）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
@@ -4434,7 +4434,26 @@ function gkCommit() {
   if (ops.length) gkSendNow(ops);
   return ops.length;
 }
-var GK = { mode: '', tool: 'pt', etool: 'tap', pts: [], ptRedo: [], texts: {}, moving: null, movePts: null };
+var GK = { mode: '', tool: 'pt', etool: 'tap', pts: [], ptRedo: [], texts: {}, moving: null, movePts: null, sel: null, drag: null, edMove: false };
+/* ✥ 移動：選んだ物を丸ごと平行に動かす（作図の「移動」・修正の「全体を動かす」） */
+const gkMoving = () => (GK.mode === 'draw' && GK.tool === 'move') || (GK.mode === 'edit' && GK.edMove);
+function gkShift(m, dlat, dlon) {
+  const c = Object.assign({}, m), r = v => r7(v);
+  if (m.lat != null) c.lat = r(m.lat + dlat); if (m.lon != null) c.lon = r(m.lon + dlon);
+  if (Array.isArray(m.pts)) c.pts = m.pts.map(p => [r(p[0] + dlat), r(p[1] + dlon)]);
+  return c;
+}
+function gkMoveSel(m) { GK.sel = m ? m.id : null; gkBar(); gkDrawAll(); if (m) toast('選びました：' + gkLabel(m) + '　指で引っぱると動きます'); }
+function gkLabel(m) { return (GK_KIND[m.kind] || '') + (m.text ? '「' + m.text + '」' : ''); }
+function gkMoveCommit(dlat, dlon) {
+  const m = gkMarks().find(x => x.id === GK.sel); if (!m || (!dlat && !dlon)) return;
+  const c = gkShift(m, dlat, dlon), d = { id: m.id };
+  if (m.lat != null) { d.lat = c.lat; d.lon = c.lon; } if (Array.isArray(m.pts)) d.pts = c.pts;
+  gkPush([gkOp('直す', d)]); toast('動かしました（戻すで戻せます）');
+}
+/* 文字の履歴：この業務で書いた文字（ほかのスマホの分も）を新しい順に10個まで */
+function gkTextHist() { const seen = new Set(), out = []; gkMarks().filter(x => x.kind === 'text' && x.text).sort((a, b) => String(b.at || '') < String(a.at || '') ? -1 : String(b.at || '') > String(a.at || '') ? 1 : 0).forEach(x => { if (!seen.has(x.text) && out.length < 10) { seen.add(x.text); out.push(x.text); } }); return out; }
+function gkHistChips(box, inp) { const h = gkTextHist(); if (!h.length) return; const t = el('p', '', '最近書いた文字（押すと入ります）'); t.style.cssText = 'font-size:12px;color:var(--mute);margin:6px 0 2px'; const c = el('div', 'chips'); c.id = 'gkTxtHist'; h.forEach(n => { const x = el('button', 'chip', n); x.type = 'button'; x.addEventListener('pointerdown', e => e.preventDefault()); x.onclick = () => { inp.value = n; inp.focus(); }; c.append(x); }); box.append(t, c); }
 const r7 = v => Math.round(v * 1e7) / 1e7;
 /* 図面の文字を地図の上で探す：取り込んだ図面ごとに、文字の位置（画像の画素）を持っている */
 async function gkLoadTexts() { for (const u of docShown()) if (!GK.texts[u.id]) { const d = await docDb.get(u.id).catch(() => null); GK.texts[u.id] = d && d.texts || []; } }
@@ -4475,7 +4494,7 @@ function gkEdit(g, mk) {
     ok.onclick = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } sheet(null); if (mk) { gkSend('直す', { id: mk.id, text: v }); toast('書き直しました'); } else gkNg(g, v); };
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
     const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null);
-    box.append(ok, no); setTimeout(() => { inp.focus(); inp.select(); }, 100);
+    box.append(ok); if (mk && GK.mode === 'edit') box.append(gkMoveAllBtn(mk)); box.append(no); setTimeout(() => { inp.focus(); inp.select(); }, 100);
   });
 }
 function gkAsk(g) {
@@ -4508,9 +4527,10 @@ function gkDrawAll() {
     if (!map || typeof L === 'undefined') return;
     if (!map._gk) map._gk = L.layerGroup().addTo(map);
     map._gk.clearLayers();
-    const list = gkMarks(); $('gkCount').textContent = list.length ? '（' + list.length + '件）' : '';
+    let list = gkMarks(); $('gkCount').textContent = list.length ? '（' + list.length + '件）' : '';
+    if (GK.drag && GK.sel) list = list.map(m => m.id === GK.sel ? gkShift(m, GK.drag.dlat, GK.drag.dlon) : m);
     if (!$('gkOn').checked && !GK.mode) return;
-    const hl = new Set(GK.hits || []);
+    const hl = new Set(GK.hits || []); if (gkMoving() && GK.sel) hl.add(GK.sel);
     list.forEach(m => {
       if (GK.moving && GK.moving === m.id) return;        // 点を動かしている物は、動かしている形で描く
       const tap = e => { if (e && e.originalEvent) L.DomEvent.stop(e.originalEvent); gkTapMark(m, e); };
@@ -4564,6 +4584,7 @@ function gkDrawAll() {
 function gkLen(pts) { let L0 = 0; for (let i = 0; i + 1 < pts.length; i++) L0 += distM(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); return Math.round(L0 * 10) / 10; }
 /* 印・線をタップしたとき：モードで動きが変わる */
 function gkTapMark(m, e) {
+  if (gkMoving()) { gkMoveSel(m); return; }
   if (GK.mode === 'draw') {
     if ((GK.tool === 'pt' || GK.tool === 'area') && e && e.latlng) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); GK.ptRedo = []; gkBar(); gkDrawAll(); }
     else if (GK.tool === 'text' && e && e.latlng) gkTextAt(e.latlng);
@@ -4587,13 +4608,13 @@ function gkBar() {
     $('gkHint').innerHTML = '<b>✓ 図面チェック中</b>　図面の文字を <b>2回タップ＝✓</b>・<b>長押し＝✎ 違う</b>・1回タップ＝選ぶ（拡大は2本指で）' + sessLine;
     const r = row(); r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'draw') {
-    const tl = { pt: '✏ 点で線', free: '✍ フリーハンド', area: '⬠ 囲み', text: 'Ａ 文字', check: '✓ チェック' };
-    const how = { pt: '地図をタップして点を打つ→「この線を確定」', free: '指1本でなぞると線（地図は動きません。拡大・移動は2本指）', area: '地図をタップして囲む点を打つ→「囲みを確定」（地図は動きません。拡大・移動は2本指）', text: '文字を置く所をタップ', check: '2回タップ＝✓・長押し＝✎ 違う' };
-    $('gkHint').innerHTML = '<b>✏ 作図中</b>　' + how[GK.tool] + (GK.pts.length >= 2 && GK.tool === 'pt' ? '　長さ 約' + gkLen(GK.pts) + 'm' : '') + sessLine;
+    const tl = { pt: '✏ 点で線', free: '✍ フリーハンド', area: '⬠ 囲み', text: 'Ａ 文字', check: '✓ チェック', move: '✥ 移動' };
+    const how = { pt: '地図をタップして点を打つ→「この線を確定」', free: '指1本でなぞると線（地図は動きません。拡大・移動は2本指）', area: '地図をタップして囲む点を打つ→「囲みを確定」（地図は動きません。拡大・移動は2本指）', text: '文字を置く所をタップ', check: '2回タップ＝✓・長押し＝✎ 違う', move: '動かしたい物（線・囲み・文字・✓・✎）をタップ→指で引っぱる（地図は動きません。拡大・移動は2本指）' };
+    $('gkHint').innerHTML = '<b>✏ 作図中</b>　' + (GK.tool === 'move' && GK.sel ? '選んだ物を指で引っぱると動きます（ほかの物をタップで選び直し）' : how[GK.tool]) + (GK.pts.length >= 2 && GK.tool === 'pt' ? '　長さ 約' + gkLen(GK.pts) + 'm' : '') + sessLine;
     const r1 = row(); r1.classList.add('tools');
     Object.keys(tl).forEach(k => { const t = b(r1, tl[k], () => gkTool(k), GK.tool === k ? 'on' : '', 'gkT_' + k); t.setAttribute('aria-pressed', GK.tool === k); });
     /* ボタンの並びは道具を替えても同じ（使えないボタンは薄くするだけで、位置は動かさない） */
-    const r2 = row(); r2.classList.add('style'); const noStyle = GK.tool === 'check';
+    const r2 = row(); r2.classList.add('style'); const noStyle = GK.tool === 'check' || GK.tool === 'move';
     const cyc = (obj, key, label, off) => { const ks = Object.keys(obj); const x2 = b(r2, label + '：' + obj[st[key]][1], () => { const s2 = gkStyle(); s2[key] = ks[(ks.indexOf(s2[key]) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_' + key); x2.disabled = !!off; return x2; };
     const cb = b(r2, '', () => { const s2 = gkStyle(), ks = Object.keys(GK_COL); s2.c = ks[(ks.indexOf(s2.c) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_c');
     cb.innerHTML = '色：<i class="sw" style="background:' + GK_COL[st.c][0] + '"></i>' + GK_COL[st.c][1]; cb.disabled = noStyle;
@@ -4610,7 +4631,10 @@ function gkBar() {
     const r = row(); r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'edit') {
     const r = row();
-    if (GK.moving) {
+    if (GK.edMove) {
+      $('gkHint').innerHTML = '<b>✎ 修正：全体を動かす</b>　' + (GK.sel ? '指で引っぱると動きます（ほかの物をタップで選び直し）' : '動かしたい物をタップ') + sessLine;
+      r.classList.add('fix'); undoRow(r); b(r, '✔ 動かし終わる', () => { GK.edMove = false; GK.sel = null; gkLock(); gkBar(); gkDrawAll(); }, 'go', 'gkMoveAllOk');
+    } else if (GK.moving) {
       $('gkHint').innerHTML = '<b>✎ 修正：点を動かす</b>　番号の丸を指で動かす' + sessLine;
       b(r, '✔ 動かし終わる', gkMoveDone, 'go', 'gkMoveOk'); b(r, 'やめる', () => { GK.moving = null; GK.movePts = null; gkBar(); gkDrawAll(); });
     } else {
@@ -4621,13 +4645,13 @@ function gkBar() {
 }
 function gkTool(k) {
   if (GK.pts.length && k !== GK.tool && !(GK.tool === 'pt' && k === 'area') && !(GK.tool === 'area' && k === 'pt')) { toast('描きかけの点は消しました'); GK.pts = []; }
-  GK.tool = k; GK.ptRedo = []; gkLock(); gkBar(); gkDrawAll();
+  GK.tool = k; GK.ptRedo = []; GK.sel = null; GK.drag = null; gkLock(); gkBar(); gkDrawAll();
   if (k === 'check') gkLoadTexts();
 }
 /* フリーハンド・囲み・なぞって消す の間は、指1本で地図が動かない（図面を手で押さえている感じ）。拡大・移動は2本指 */
 function gkLock() {
   if (!mainMap) return;
-  const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area')) || (GK.mode === 'erase' && GK.etool === 'swipe');
+  const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area' || GK.tool === 'move')) || (GK.mode === 'erase' && GK.etool === 'swipe') || (GK.mode === 'edit' && GK.edMove);
   if (lock) mainMap.dragging.disable(); else mainMap.dragging.enable();
   mainMap.getContainer().classList.toggle('gklock', !!lock); document.body.classList.toggle('gkdrawing', !!lock);
 }
@@ -4665,7 +4689,7 @@ function gkName(pts, m, kind) {
 function gkTextAt(ll) {
   sheet(box => {
     box.append(el('h3', '', 'Ａ 文字を置く'));
-    const inp = el('input'); inp.type = 'text'; inp.id = 'gkTxt'; inp.placeholder = '例：漏水箇所1・湿潤'; box.append(inp);
+    const inp = el('input'); inp.type = 'text'; inp.id = 'gkTxt'; inp.placeholder = '例：漏水箇所1・湿潤'; box.append(inp); gkHistChips(box, inp);
     const ok = el('button', 'btn acc', '置く'); ok.id = 'gkTxtOk';
     ok.onclick = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } sheet(null); gkPush([gkOp('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'text', orig: '', text: v, lat: r7(ll.lat), lon: r7(ll.lng), st: gkStyle() })]); toast('文字を置きました'); };
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
@@ -4699,11 +4723,11 @@ function gkSwipeHits(map, path) {
 }
 /* ---- 修正 ---- */
 function gkEditMark(m) {
-  if (m.kind === 'ok') { toast('✓ は直す所がありません。消しゴムで消して付け直してください'); return; }
+  if (m.kind === 'ok') { sheet(box => { box.append(el('h3', '', '✎ 直す：✓ 図面どおり' + (m.orig ? '（' + m.orig + '）' : ''))); box.append(gkMoveAllBtn(m)); const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no); }); return; }
   if (m.kind === 'ng') { gkEdit({ orig: m.orig }, m); return; }
   sheet(box => {
     box.append(el('h3', '', '✎ 直す：' + GK_KIND[m.kind]));
-    const inp = el('input'); inp.type = 'text'; inp.id = 'gkEdName'; inp.value = m.text || ''; inp.placeholder = m.kind === 'text' ? '文字' : '名前（なくてもよい）'; box.append(inp);
+    const inp = el('input'); inp.type = 'text'; inp.id = 'gkEdName'; inp.value = m.text || ''; inp.placeholder = m.kind === 'text' ? '文字' : '名前（なくてもよい）'; box.append(inp); if (m.kind === 'text') gkHistChips(box, inp);
     const st = Object.assign({ c: 'pu', w: 'm', f: 'n' }, m.st || {});
     const sr = el('div', 'chips'); box.append(sr);
     const draw = () => {
@@ -4716,10 +4740,12 @@ function gkEditMark(m) {
     const ok = el('button', 'btn acc', '直す'); ok.id = 'gkEdOk';
     ok.onclick = () => { const v = inp.value.trim(); if (m.kind === 'text' && !v) { inp.focus(); return; } sheet(null); gkPush([gkOp('直す', { id: m.id, text: v, st })]); toast('直しました'); };
     box.append(ok);
+    box.append(gkMoveAllBtn(m));
     if (m.pts && m.pts.length >= 2) { const mv = el('button', 'btn sub', '点を動かす'); mv.id = 'gkEdMove'; mv.onclick = () => { sheet(null); GK.moving = m.id; GK.movePts = m.pts.map(p => p.slice()); gkBar(); gkDrawAll(); }; box.append(mv); }
     const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no);
   });
 }
+function gkMoveAllBtn(m) { const b = el('button', 'btn sub', '✥ 全体を動かす'); b.id = 'gkEdMoveAll'; b.onclick = () => { sheet(null); GK.edMove = true; GK.sel = m.id; gkLock(); gkBar(); gkDrawAll(); toast('指で引っぱると動きます'); }; return b; }
 function gkMoveDone() {
   const m = gkMarks().find(x => x.id === GK.moving), pts = GK.movePts; GK.moving = null; GK.movePts = null;
   if (m && pts) gkPush([gkOp('直す', { id: m.id, pts, lat: pts[0][0], lon: pts[0][1], len: m.kind === 'line' && m.len != null ? gkLen(pts) : undefined })]);
@@ -4730,7 +4756,7 @@ async function gkMode(mode) {
   if (GK.mode && GK.pts.length && GK.mode === 'draw') toast('確定していない描きかけの点は消しました');
   const n = gkCommit();
   if (GK.mode && n) toast(n + '件をまとめて送ります');
-  GK.mode = mode; GK.pts = []; GK.ptRedo = []; GK.stroke = null; GK.hits = []; GK.moving = null; GK.movePts = null;
+  GK.mode = mode; GK.pts = []; GK.ptRedo = []; GK.stroke = null; GK.hits = []; GK.moving = null; GK.movePts = null; GK.sel = null; GK.drag = null; GK.edMove = false;
   if (mode === 'draw') GK.tool = 'pt';
   if (mode === 'erase') GK.etool = 'tap';
   if (mainMap) { if (mode) mainMap.doubleClickZoom.disable(); else mainMap.doubleClickZoom.enable(); }
@@ -4764,7 +4790,17 @@ function gkAttach(map) {
   const ptrs = new Set();
   const cpOf = e => { const r = ct.getBoundingClientRect(); return L.point(e.clientX - r.left, e.clientY - r.top); };
   ct.addEventListener('pointerdown', e => {
+    if (e.isPrimary) ptrs.clear();          // 1本目の指：前に離し損ねた指の記録は捨てる（印を消して描き直したときなど）
     ptrs.add(e.pointerId);
+    if (gkMoving()) {
+      if (ptrs.size > 1) { if (GK.drag) { GK.drag = null; gkDrawAll(); } return; }      // 2本指＝拡大・移動
+      if (!GK.sel || (e.target.closest && e.target.closest('.leaflet-control'))) return;
+      GK.drag = { s: cpOf(e), dlat: 0, dlon: 0, on: false, pid: e.pointerId };
+      // 印の上で押したときはタップ（選び直し）になるかもしれないので、ここではつかまない。それ以外はすぐつかむ（指が下のボタンの上に出ても動き続ける）
+      const onMark = e.target.closest && (e.target.closest('.gkok,.gkng,.gktx,.gkln') || (e.target.classList && e.target.classList.contains('leaflet-interactive')));
+      if (!onMark) try { ct.setPointerCapture(e.pointerId); } catch (x) {}
+      return;
+    }
     if (gkStroking()) {
       if (ptrs.size > 1) { GK.stroke = null; GK.hits = []; gkDrawAll(); return; }      // 2本指＝拡大・移動（なぞるのはやめる）
       if (e.target.closest && e.target.closest('.leaflet-control')) return;
@@ -4775,6 +4811,13 @@ function gkAttach(map) {
     lpT = setTimeout(() => { const r = ct.getBoundingClientRect(), cp = L.point(down.x - r.left, down.y - r.top); longDone = Date.now(); clearTimeout(singleT); lastTap = null; const hit = gkHit(map, cp); gkEdit(gkGeom(hit, map.containerPointToLatLng(cp))); }, 600);
   });
   ct.addEventListener('pointermove', e => {
+    if (GK.drag && gkMoving() && ptrs.size === 1) {
+      const p = cpOf(e);
+      if (!GK.drag.on && p.distanceTo(GK.drag.s) < 8) return;                          // 少し動くまではタップ（選び直し）として扱う
+      if (!GK.drag.on) { GK.drag.on = true; try { ct.setPointerCapture(GK.drag.pid); } catch (x) {} }
+      const a = map.containerPointToLatLng(GK.drag.s), b2 = map.containerPointToLatLng(p); GK.drag.dlat = b2.lat - a.lat; GK.drag.dlon = b2.lng - a.lng;
+      e.preventDefault(); gkDrawAll(); return;
+    }
     if (GK.stroke && gkStroking() && ptrs.size === 1) {
       const p = cpOf(e), l = GK.stroke[GK.stroke.length - 1];
       if (p.distanceTo(l) >= 2) { GK.stroke.push(p); if (GK.mode === 'erase') GK.hits = gkSwipeHits(map, GK.stroke); gkDrawAll(); }
@@ -4784,6 +4827,7 @@ function gkAttach(map) {
   });
   ['pointerup', 'pointercancel'].forEach(t => ct.addEventListener(t, e => {
     ptrs.delete(e.pointerId); clearTimeout(lpT); down = null;
+    if (GK.drag) { const d = GK.drag; GK.drag = null; if (d.on) { strokeEnd = Date.now(); if (t === 'pointerup') gkMoveCommit(d.dlat, d.dlon); else gkDrawAll(); } return; }
     if (!GK.stroke) return;
     const path = GK.stroke; GK.stroke = null;
     if (t === 'pointercancel' && GK.mode !== 'erase') { gkDrawAll(); return; }
@@ -4799,6 +4843,7 @@ function gkAttach(map) {
     if (Date.now() - strokeEnd < 350) return;
     if (GK.mode === 'draw' && (GK.tool === 'pt' || GK.tool === 'area')) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); GK.ptRedo = []; gkBar(); gkDrawAll(); return; }
     if (GK.mode === 'draw' && GK.tool === 'text') { gkTextAt(e.latlng); return; }
+    if (gkMoving()) { if (GK.sel) gkMoveSel(null); return; }
     if (!gkChecking() || Date.now() - longDone < 800) return;
     const cp = e.containerPoint, now = Date.now();
     if (lastTap && now - lastTap.t < 400 && cp.distanceTo(lastTap.cp) < 30) {      // 2回タップ＝✓
