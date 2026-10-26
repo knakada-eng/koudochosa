@@ -58,21 +58,24 @@
   #mapDocRow b { min-width:3.2em; text-align:right; }
   #gkBar { position:relative; z-index:30; background:#16303f; color:#fff; border-radius:12px 12px 0 0; padding:8px 10px; font-size:14px; }
   #gkBar.hidden { display:none; }
-  #gkBtns { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+  #gkBtns { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
   #gkBtns .gkrow { display:flex; flex-wrap:wrap; gap:6px; }
   #gkBtns button { flex:1 1 auto; min-height:40px; border:0; border-radius:8px; background:#fff; color:#16303f; font-weight:bold; font-size:14px; padding:6px 8px; }
   #gkBtns button:disabled { opacity:.45; }
   #gkBtns button.end { background:#2e7d32; color:#fff; }
   #gkBtns button.go { background:#1764b5; color:#fff; }
-  #gkBtns .tools button { font-size:13px; padding:6px 4px; min-height:38px; }
+  #gkBtns .gkrow.tools { display:grid; grid-template-columns:repeat(3, 1fr); }
+  #gkBtns .tools button { font-size:13px; padding:6px 2px; min-height:38px; min-width:0; white-space:nowrap; overflow:hidden; }
   #gkBtns .tools button.on { background:#ffd9f0; outline:3px solid #fff; box-shadow:inset 0 0 0 2px #16303f; text-decoration:underline; }
   #gkBtns .style button { font-size:13px; min-height:34px; background:#e8eef3; }
+  #gkBtns .gkrow.style, #gkBtns .gkrow.fix { flex-wrap:nowrap; } #gkBtns .gkrow.style button, #gkBtns .gkrow.fix button { flex:1 1 0; min-width:0; padding:6px 2px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip; }
   #gkBtns .sw { display:inline-block; width:14px; height:14px; border-radius:50%; border:2px solid #16303f; vertical-align:-2px; margin:0 3px; }
   .gktx span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; font-family:'Hiragino Maru Gothic ProN','Hiragino Maru Gothic Pro','Zen Maru Gothic','Hiragino Sans',sans-serif; font-weight:bold;
     text-shadow:-2px 0 #fff, 2px 0 #fff, 0 -2px #fff, 0 2px #fff, -1.5px -1.5px #fff, 1.5px 1.5px #fff, -1.5px 1.5px #fff, 1.5px -1.5px #fff; }
   .gktx.wh span { text-shadow:-2px 0 #111, 2px 0 #111, 0 -2px #111, 0 2px #111, -1.5px -1.5px #111, 1.5px 1.5px #111, -1.5px 1.5px #111, 1.5px -1.5px #111; }
   .gkv span { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fff; border:3px solid #16303f; color:#16303f; font-weight:bold; font-size:13px; }
-  .gklock { touch-action:none; }
+  .gklock, .leaflet-container.gklock, .gklock .leaflet-pane, .gklock .leaflet-interactive { touch-action:none !important; }
+  body.gkdrawing { overscroll-behavior:none; }
   #gkCheck.on, #gkDraw.on, #gkEraseBtn.on, #gkEditBtn.on { outline:3px solid #16303f; text-decoration:underline; }
   .gkon { display:flex; align-items:center; gap:6px; font-size:13px; margin:2px 0 8px; } .gkon input { width:20px; height:20px; margin:0; }
   .gkok span, .gkng span, .gkln span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; font-family:'Hiragino Maru Gothic ProN','Hiragino Maru Gothic Pro','Zen Maru Gothic','Hiragino Sans',sans-serif; font-weight:bold;
@@ -406,7 +409,7 @@
 
   <!-- 位置図（地図）：今いる場所・撮った場所・対象・他の機種・コンビニ -->
   <section id="mapView" class="hidden">
-    <div id="gkBar" class="hidden"><div id="gkHint"></div><div id="gkBtns"></div></div>
+    <div id="gkBar" class="hidden"><div id="gkBtns"></div><div id="gkHint"></div></div>
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
       <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
@@ -583,7 +586,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.7.1β';
+const VERSION = 'v0.7.2β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
@@ -4356,6 +4359,7 @@ function showMap() {
   if (typeof L === 'undefined') return;
   if (!mainMap) {
     mainMap = L.map('mainMap', { zoomControl: true }); mainLayers = baseLayers(); mainLayers.photo.addTo(mainMap); mainMap._cur = 'photo';
+    { const mc = mainMap.getContainer(); mc.addEventListener('touchmove', e => { if (mc.classList.contains('gklock') && e.touches.length === 1) e.preventDefault(); }, { passive: false }); }   // 描いている間、指1本で画面が上下に動かないように（iPhone）
     L.control.scale({ imperial: false }).addTo(mainMap);
   }
   drawTargets(mainMap); drawRecArrows(mainMap); drawMe(); mapDocs(); drawTodoPins(mainMap); gkAttach(mainMap); gkDrawAll(); gkBar();
@@ -4581,32 +4585,29 @@ function gkBar() {
   const undoRow = r => { b(r, '↶ 戻す', gkUndo, '', 'gkUndo').disabled = !n && !GK.pts.length; b(r, '↷ やり直す', gkRedo, '', 'gkRedo').disabled = !x.redo.length && !GK.ptRedo.length; };
   if (GK.mode === 'check') {
     $('gkHint').innerHTML = '<b>✓ 図面チェック中</b>　図面の文字を <b>2回タップ＝✓</b>・<b>長押し＝✎ 違う</b>・1回タップ＝選ぶ（拡大は2本指で）' + sessLine;
-    const r = row(); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+    const r = row(); r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'draw') {
     const tl = { pt: '✏ 点で線', free: '✍ フリーハンド', area: '⬠ 囲み', text: 'Ａ 文字', check: '✓ チェック' };
     const how = { pt: '地図をタップして点を打つ→「この線を確定」', free: '指1本でなぞると線（地図は動きません。拡大・移動は2本指）', area: '地図をタップして囲む点を打つ→「囲みを確定」（地図は動きません。拡大・移動は2本指）', text: '文字を置く所をタップ', check: '2回タップ＝✓・長押し＝✎ 違う' };
     $('gkHint').innerHTML = '<b>✏ 作図中</b>　' + how[GK.tool] + (GK.pts.length >= 2 && GK.tool === 'pt' ? '　長さ 約' + gkLen(GK.pts) + 'm' : '') + sessLine;
     const r1 = row(); r1.classList.add('tools');
-    Object.keys(tl).forEach(k => { const t = b(r1, (GK.tool === k ? '▶ ' : '') + tl[k], () => gkTool(k), GK.tool === k ? 'on' : '', 'gkT_' + k); t.setAttribute('aria-pressed', GK.tool === k); });
-    if (GK.tool !== 'check') {
-      const r2 = row(); r2.classList.add('style');
-      const cyc = (obj, key, label) => { const ks = Object.keys(obj); b(r2, label + '：' + obj[st[key]][1], () => { const s2 = gkStyle(); s2[key] = ks[(ks.indexOf(s2[key]) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_' + key); };
-      const cb = b(r2, '', () => { const s2 = gkStyle(), ks = Object.keys(GK_COL); s2.c = ks[(ks.indexOf(s2.c) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_c');
-      cb.innerHTML = '色：<i class="sw" style="background:' + GK_COL[st.c][0] + '"></i>' + GK_COL[st.c][1];
-      cyc(GK_W, 'w', GK.tool === 'text' ? '大きさ' : '太さ');
-      if (GK.tool === 'area') cyc(GK_F, 'f', '塗り');
-    }
-    const r3 = row();
-    if (GK.tool === 'pt' || GK.tool === 'area') {
-      b(r3, '📍 今の場所', gkHere, '', 'gkHere');
-      if (GK.pts.length) b(r3, GK.tool === 'area' ? '✔ 囲みを確定' : '✔ この線を確定', gkFinishShape, 'go', 'gkFinish');
-    }
-    undoRow(r3); b(r3, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+    Object.keys(tl).forEach(k => { const t = b(r1, tl[k], () => gkTool(k), GK.tool === k ? 'on' : '', 'gkT_' + k); t.setAttribute('aria-pressed', GK.tool === k); });
+    /* ボタンの並びは道具を替えても同じ（使えないボタンは薄くするだけで、位置は動かさない） */
+    const r2 = row(); r2.classList.add('style'); const noStyle = GK.tool === 'check';
+    const cyc = (obj, key, label, off) => { const ks = Object.keys(obj); const x2 = b(r2, label + '：' + obj[st[key]][1], () => { const s2 = gkStyle(); s2[key] = ks[(ks.indexOf(s2[key]) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_' + key); x2.disabled = !!off; return x2; };
+    const cb = b(r2, '', () => { const s2 = gkStyle(), ks = Object.keys(GK_COL); s2.c = ks[(ks.indexOf(s2.c) + 1) % ks.length]; LS.set('gkStyle', s2); gkBar(); gkDrawAll(); }, 'cyc', 'gkS_c');
+    cb.innerHTML = '色：<i class="sw" style="background:' + GK_COL[st.c][0] + '"></i>' + GK_COL[st.c][1]; cb.disabled = noStyle;
+    cyc(GK_W, 'w', GK.tool === 'text' ? '大きさ' : '太さ', noStyle);
+    cyc(GK_F, 'f', '塗り', GK.tool !== 'area');
+    const r3 = row(); r3.classList.add('fix'); const ptk = GK.tool === 'pt' || GK.tool === 'area';
+    b(r3, '📍 今の場所', gkHere, '', 'gkHere').disabled = !ptk;
+    b(r3, '✔ 確定', gkFinishShape, 'go', 'gkFinish').disabled = !(ptk && GK.pts.length);
+    const r4 = row(); r4.classList.add('fix'); undoRow(r4); b(r4, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'erase') {
     $('gkHint').innerHTML = '<b>🧽 消しゴム</b>　' + (GK.etool === 'tap' ? '消したい物（✓・✎・線・囲み・文字）をタップ' : '指1本でなぞると、触れた物を丸ごと消します（地図は動きません。拡大・移動は2本指）') + sessLine;
     const r1 = row(); r1.classList.add('tools');
     [['tap', '👆 選んで消す'], ['swipe', '〰 なぞって消す']].forEach(([k, t]) => b(r1, (GK.etool === k ? '▶ ' : '') + t, () => { GK.etool = k; gkLock(); gkBar(); }, GK.etool === k ? 'on' : '', 'gkE_' + k));
-    const r = row(); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+    const r = row(); r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
   } else if (GK.mode === 'edit') {
     const r = row();
     if (GK.moving) {
@@ -4614,7 +4615,7 @@ function gkBar() {
       b(r, '✔ 動かし終わる', gkMoveDone, 'go', 'gkMoveOk'); b(r, 'やめる', () => { GK.moving = null; GK.movePts = null; gkBar(); gkDrawAll(); });
     } else {
       $('gkHint').innerHTML = '<b>✎ 修正</b>　直したい物（文字・線・囲み・✎）をタップ' + sessLine;
-      undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
+      r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
     }
   }
 }
@@ -4628,7 +4629,7 @@ function gkLock() {
   if (!mainMap) return;
   const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area')) || (GK.mode === 'erase' && GK.etool === 'swipe');
   if (lock) mainMap.dragging.disable(); else mainMap.dragging.enable();
-  mainMap.getContainer().classList.toggle('gklock', !!lock);
+  mainMap.getContainer().classList.toggle('gklock', !!lock); document.body.classList.toggle('gkdrawing', !!lock);
 }
 async function gkHere() {
   toast('今の位置を取っています…');
