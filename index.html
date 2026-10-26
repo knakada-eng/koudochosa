@@ -201,6 +201,16 @@
   .bdg.here { background:#dff0e4; color:var(--ok); } .bdg.photo { background:#e6f4ea; color:#1b5e20; } .bdg.gps { background:#e8f1fb; color:#0b4f8a; } .bdg.mark { background:#f3eafa; color:#6b2f8f; }
   .bdg.warn { background:var(--warnbg); color:var(--warn); } .bdg.bad { background:var(--errbg); color:var(--err); }
   .bdg.xbdg { background:#16303f; color:#fff; font-weight:bold; }
+  .reccard.other { background:#f4f6f8; border-style:dashed; }
+  .reccard .devno { display:inline-block; min-width:2.4em; margin-right:6px; padding:0 5px; border-radius:6px; background:#16303f; color:#fff; font-size:12px; text-align:center; }
+  .reccard.other .devno { background:#fff; color:#16303f; box-shadow:inset 0 0 0 2px #16303f; }
+  #recLock { display:flex; align-items:center; gap:10px; margin:0 0 10px; padding:10px 12px; border-radius:12px; background:#16303f; color:#fff; font-size:14px; }
+  #recLock.hidden, #recEditing.hidden { display:none; }
+  #recLock div { flex:1; min-width:0; } #recLock .btn { flex:0 0 auto; width:auto; margin:0; background:#fff; color:#16303f; }
+  #recEditing { margin:0 0 10px; padding:6px 12px; border-radius:10px; background:var(--warnbg); color:var(--warn); font-size:13px; font-weight:bold; }
+  #srvRec.ro .rofix > *, #srvRec.ro .rofix { pointer-events:none; } #srvRec.ro .card.rofix { pointer-events:auto; } #srvRec.ro .card.rofix > * { pointer-events:none; }
+  #srvRec.ro .rofix { opacity:.78; } #srvRec.ro .rohide, #srvRec.ro #recAddPhoto { display:none; }
+  .cloudph { display:flex; align-items:center; justify-content:center; text-align:center; background:#e8eef3; color:#16303f; font-size:12px; border-radius:8px; min-height:54px; }
   .reccard .noimg { display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--mute); }
   .photos { display:flex; gap:8px; overflow-x:auto; }
   .photos img { height:120px; border-radius:8px; display:block; }
@@ -358,27 +368,30 @@
     <div class="nearbar hidden" id="nearList"></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">調査票（<span id="srvCount">0</span>件）</h2><button class="minibtn" id="srvBlank">＋ 写真なしで作る</button></div>
+      <div class="chips" id="srvWhoF" style="margin-bottom:6px"></div>
+      <div id="srvSyncNote" class="hidden" style="font-size:12px;color:var(--mute);margin:-2px 0 6px"></div>
       <div class="chips" id="srvDayF" style="margin-bottom:6px"></div>
       <div class="chips kinds" id="srvFilter" style="margin-bottom:8px"></div>
       <div class="chips" id="srvCatF" style="margin-bottom:8px"></div>
       <div class="reclist" id="srvItems"></div>
-    </div>
     </div>
     <button class="btn acc wide" id="dayEnd" style="margin-top:4px">🏁 今日の調査を終える<small>送信を確かめる</small></button>
   </section>
 
   <!-- 1件の調査票 -->
   <section id="srvRec" class="hidden">
+    <div id="recLock" class="hidden"><div id="recLockText"></div><button type="button" class="btn go" id="recUnlock">✎ この票を直す</button></div>
+    <div id="recEditing" class="hidden"></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 id="recTitle" style="margin:0">写真番号</h2><span id="recTime" style="font-size:12px;color:var(--mute)"></span></div>
       <div class="photos" id="recPhotos" style="margin-top:8px"></div>
       <button class="btn sub wide" id="recAddPhoto">＋ 写真を追加</button>
-      <div class="xrow"><label class="crossrow" id="fCross"><input type="checkbox" id="recCross"> 📏 ポール横断</label><label class="crossrow" id="fFN"><input type="checkbox" id="recFN"> 🔭 遠景近景</label></div>
-      <div class="fnslots hidden" id="recFNSlots"></div>
+      <div class="xrow rofix"><label class="crossrow" id="fCross"><input type="checkbox" id="recCross"> 📏 ポール横断</label><label class="crossrow" id="fFN"><input type="checkbox" id="recFN"> 🔭 遠景近景</label></div>
+      <div class="fnslots hidden rofix" id="recFNSlots"></div>
       <input type="file" id="fnFile" accept="image/*" capture="environment" class="hidden">
       <input type="file" id="recFile" accept="image/*" capture="environment" class="hidden"><input type="file" id="recLib" accept="image/*" class="hidden">
     </div>
-    <div class="card" style="display:flex;flex-direction:column">
+    <div class="card rofix" style="display:flex;flex-direction:column">
       <div id="fNear"><div class="nearbar hidden" id="nearRec" style="margin:0 0 10px"></div></div>
       <div class="field" id="fKind"><label>工種（空でもよい・次の調査票に引き継ぎ）</label><div class="chips kinds" id="recKind"></div></div>
       <div class="field" id="fRoute"><label>路線・区画名（空でもよい）</label><div style="display:flex;gap:6px"><input type="text" id="recRoute" list="routeNames" autocomplete="off" style="flex:1;min-width:0" placeholder="例：第2号排水路・19"><button class="minibtn hidden" id="recNear"></button></div><datalist id="routeNames"></datalist><div class="chips" id="routeChips"></div></div>
@@ -396,7 +409,7 @@
       <h2>位置と撮影方向</h2>
       <div class="posline" id="recPos"></div>
       <div id="recMap" class="minimap"></div>
-      <div class="btnrow">
+      <div class="btnrow rohide">
         <button class="btn go" id="recHere">今ここに合わせる</button>
         <button class="btn sub" id="recSuspect">今ここは怪しい</button>
       </div>
@@ -404,7 +417,7 @@
       <div style="font-size:12px;color:var(--mute);margin-top:6px">地図の点：<b>G</b>＝GPS（撮影時）、<b>目</b>＝目印で補正、<b>今</b>＝今ここ。大きい点が使う位置、白い矢印＝撮影方向。位置と向きは「今ここに合わせる」でまとめて直せます（向きだけでも可）。位置は上書きせず全部残ります。</div>
     </div>
     <button class="btn acc wide" id="recDone">一覧に戻る</button>
-    <button class="btn dangerline wide" id="recDel">この調査票を削除…</button>
+    <button class="btn dangerline wide rohide" id="recDel">この調査票を削除…</button>
   </section>
 
   <!-- 位置図（地図）：今いる場所・撮った場所・対象・他の機種・コンビニ -->
@@ -586,8 +599,9 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.7.3β';
+const VERSION = 'v0.8β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
+const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
 let keyBad = false;                      // 合言葉が止められた・間違っている
@@ -780,6 +794,7 @@ function noteServer(v) {
   const b = $('oldSrv'); b.classList.toggle('hidden', !old);
   if (old) b.textContent = '受け付け側（Apps Script）が古いです。スプレッドシートの Apps Script を ' + VERSION + ' に合わせて更新してください。それまで記録と写真はスマホに残っています（消えません）。';
   if (!old) autoResend();
+  if (useSync()) syncSrv();
 }
 /* 送れなかった記録を送り直す：はじかれた記録＋調査票の記録すべて（同じ記録は受け付け側で1回だけ数えるので重ならない） */
 function resendAll() {
@@ -892,7 +907,7 @@ function renderTodoBar() {
 }
 function todoAdd(text) {
   text = String(text || '').trim(); if (!text) return false;
-  const f = freshFix(120) || lastFix, plot = PLOT || (curRec && recs()[curRec] ? recs()[curRec].plot : '') || '';
+  const f = freshFix(120) || lastFix, plot = PLOT || (curRec && recsAll()[curRec] ? recsAll()[curRec].plot : '') || '';
   let target = ''; try { if (f) { const nn = nearTargets(f.lat, f.lon)[0]; if (nn && nn.d <= NEAR_M) target = nn.t.name; } } catch (e) {}
   sendTodo('追加', { id: 'td' + uuid().slice(3, 15), text: text.slice(0, 200), lat: f ? Math.round(f.lat * 1e7) / 1e7 : null, lon: f ? Math.round(f.lon * 1e7) / 1e7 : null, plot, target });
   return true;
@@ -1449,8 +1464,8 @@ let lastFix = null, geoWatch = null, heading = null, headingOn = false, curRec =
 const idb = (() => {
   let dbp = null;
   const open = () => dbp || (dbp = new Promise((res, rej) => {
-    const r = indexedDB.open('chosa', 3);
-    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); };
+    const r = indexedDB.open('chosa', 4);
+    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('xops')) db.createObjectStore('xops', { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
   const txs = async (store, mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); };
@@ -1461,7 +1476,7 @@ const idb = (() => {
   const unpack = p => { if (p && p.buf && !p.blob) p.blob = new Blob([p.buf], { type: p.mime || 'image/jpeg' }); return p; };
   return {
     put: async v => { const x = await pack(v); return tx('readwrite', st => st.put(x)); },
-    get: k => tx('readonly', st => st.get(k)).then(unpack),
+    get: k => tx('readonly', st => st.get(k)).then(r => r && r.pid ? unpack(r) : null),       // ないときは null（v0.8〜。前は読み出しの入れ物が返っていた）
     all: () => tx('readonly', st => st.getAll()).then(l => l.filter(p => (p.biz || '') === BIZ).map(unpack)),       // 今の業務の写真だけ
     every: () => tx('readonly', st => st.getAll()).then(l => l.map(unpack)),
     del: k => tx('readwrite', st => st.delete(k)),
@@ -1472,10 +1487,11 @@ async function clearPhotos() {
   try { await idb.clear(); } catch (e) {}
   try { for (const v of (LS.get('videos', []) || [])) await idbTx('videos', 'readwrite', st => st.delete(v.vid)); } catch (e) {}
   LS.del('srv:ops'); LS.del('srv:no'); LS.del('srv:offset'); LS.del('videos');
+  try { await xopsClear(); await thumbsClear(); } catch (e) {}
 }
 async function refreshPending() { try { photoPending = (await idb.all()).filter(p => !p.sent).length; } catch (e) { photoPending = 0; } updateSync(); if (typeof renderSendLines === 'function' && CONN) renderSendLines(); }
 const urlCache = {};
-async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p || !p.blob) return ''; return (urlCache[pid] = URL.createObjectURL(p.blob)); }
+async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p || !p.blob) return p ? '' : thumbUrl(pid); return (urlCache[pid] = URL.createObjectURL(p.blob)); }
 /* 写真の表示：スマホの中の写真が読めないとき（iPhoneでまれに起きる）は「?」にせず、
    送れていればドライブの写真を開けるようにし、送れていなければ撮り直しが要ると知らせる */
 function phFail(box, pid) {
@@ -1483,6 +1499,8 @@ function phFail(box, pid) {
     const d = el('div', 'brokenph');
     if (p && p.sent && p.url) { d.innerHTML = '☁ ドライブに保存済み<br><small>タップで開く</small>'; d.onclick = e => { e.stopPropagation(); window.open(p.url, '_blank', 'noopener'); }; }
     else if (p && p.sent) d.innerHTML = '☁ ドライブに保存済み<br><small>（スマホでは表示できません）</small>';
+    else if (!p) { d.className = 'brokenph cloudph'; d.innerHTML = '☁ 写真はドライブにあります<br><small>電波があるときに表示（タップで読み直す）</small>';
+      d.onclick = async e => { e.stopPropagation(); const u = await thumbUrl(pid); if (u) { const im = phImg(pid, u, box.className); d.replaceWith(im); } else toast('まだ読めません（電波があるときにもう一度）'); }; }
     else { d.classList.add('bad'); d.innerHTML = '⚠ 写真が読めません<br><small>まだ送れていません。撮り直してください</small>'; }
     box.replaceWith(d);
   });
@@ -1517,7 +1535,11 @@ function shrink(file, longSide = 1280) {
 /* ---------- 調査票の記録（このスマホで行った操作。送信は耕土厚と同じ送信待ちで） ---------- */
 function srvOps() { return LS.get('srv:ops', []); }
 function recordSrv(action, rec, data) {
-  const op = { id: uuid(), at: nowIso(), kind: 'srv', action, rec, data: data || {}, who: worker() || LS.get('who', '') };
+  data = data || {};
+  const tgt = action !== '作成' ? recsAll()[rec] : null;
+  if (tgt && recLocked(rec)) { toast('見るだけで開いています。直すときは「✎ この票を直す」を押してください'); return null; }
+  if (tgt && !tgt.mine) data = Object.assign({}, data, { edDev: devNo(), edId: devId(), edName: worker() });     // 他の端末の票を直した：どの端末で直したかを残す
+  const op = { id: uuid(), at: nowIso(), kind: 'srv', action, rec, data, who: worker() || LS.get('who', '') };
   const all = srvOps(); all.push(op); LS.set('srv:ops', all);
   queue.push(op); LS.set('queue', queue); flush();
   return op;
@@ -1530,10 +1552,11 @@ function reduceSurvey(rows) {     // コード.gs の reduceSurvey と同じ決�
       if (s) return;
       s = out[r.rec] = { id: r.rec, no: d.no, created: r.at, photos: (d.photos || []).slice(), removed: [], plot: d.plot || '', kind: d.kind || '', target: d.target || '', situ: !!d.situ, text: '', gps: d.gps || null,
         heading: d.heading ?? null, headingSrc: d.heading == null ? '' : '方位センサー', cands: [], suspect: false, deleted: false,
-        devNo: d.devNo || '', dev: d.dev || '', name: d.name || '', src: d.src || '', ktype: d.ktype || '', pos: d.pos ?? '', line2: d.line2 || '', nocho: !!d.nocho, cross: false, fn: false, pk: {}, cat: '' };
+        devNo: d.devNo || '', dev: d.dev || '', name: d.name || '', src: d.src || '', ktype: d.ktype || '', pos: d.pos ?? '', line2: d.line2 || '', nocho: !!d.nocho, cross: false, fn: false, pk: {}, cat: '', xed: [] };
       if (d.mark) s.cands.push({ src: 'mark', lat: d.mark.lat, lon: d.mark.lon, at: r.at }); return;
     }
     if (!s) return;
+    if (d.edId && s.dev && d.edId !== s.dev) s.xed.push({ devNo: d.edDev || '', name: d.edName || '', at: r.at, action: r.action });
     if (r.action === '内容') { if (d.field === '区画') s.plot = d.value || ''; else if (d.field === '内容') s.text = d.value || ''; else if (d.field === '工種') s.kind = d.value || ''; else if (d.field === '対象') s.target = d.value || ''; else if (d.field === 'ポール横断') s.cross = !!d.value; else if (d.field === '種類') s.ktype = d.value || ''; else if (d.field === '撮影日時') s.shotAt = d.value || ''; else if (d.field === '遠景近景') s.fn = !!d.value; else if (d.field === '分類') s.cat = d.value || ''; }
     else if (r.action === '写真追加') { if (!s.photos.includes(d.pid)) s.photos.push(d.pid); s.removed = s.removed.filter(x => x !== d.pid); if (d.kind || d.gps) s.pk[d.pid] = { kind: d.kind || '', gps: d.gps || null, heading: d.heading ?? null, at: r.at }; }
     else if (r.action === '写真位置') { const k = s.pk[d.pid] || (s.pk[d.pid] = { kind: '', gps: null, heading: null }); if (d.lat != null) k.pos = { lat: d.lat, lon: d.lon }; if (d.heading !== undefined) k.heading = d.heading; }
@@ -1554,7 +1577,146 @@ function adopted(s) {
   if (s.gps) return { kind: 'gps', label: 'GPS', lat: s.gps.lat, lon: s.gps.lon };
   return { kind: 'none', label: '位置なし', lat: null, lon: null };
 }
-const recs = () => reduceSurvey(srvOps());
+/* ---------- v0.8：ほかの端末の調査票も受け取る ----------
+ *  ・受け付け側の「調査票記録」を、前回の続きから少しずつ受け取って、このスマホ（IndexedDB）にしまう（件数の上限はない）
+ *  ・自分の操作（srv:ops）と合わせて計算する。recsAll()＝全部の端末の票、recs()＝この端末で作った票（今までどおりの集計・チェック用）
+ *  ・この端末で作った票かどうかは、作ったときの端末ID（なければ機種番号）で決める */
+let XOPS = [], XIDS = new Set(), xver = 0, xLoaded = false;
+async function loadXops() {
+  try { const l = await idbTx('xops', 'readonly', st => st.getAll()); XOPS = []; XIDS = new Set(); (l || []).forEach(x => { if ((x.biz || '') === BIZ && x.op && !XIDS.has(x.id)) { XOPS.push(x.op); XIDS.add(x.id); } }); } catch (e) {}
+  xLoaded = true; xver++; OTHERS = null;
+}
+async function xopsAdd(ops) {
+  const fresh = ops.filter(o => o && o.id && !XIDS.has(o.id)); if (!fresh.length) return 0;
+  fresh.forEach(o => { XOPS.push(o); XIDS.add(o.id); });
+  try { await idbTx('xops', 'readwrite', st => { fresh.forEach(o => st.put({ id: o.id, biz: BIZ, op: o })); }); } catch (e) {}
+  xver++; OTHERS = null; return fresh.length;
+}
+async function xopsClear() {
+  try { const keys = XOPS.map(o => o.id); if (keys.length) await idbTx('xops', 'readwrite', st => { keys.forEach(k => st.delete(k)); }); } catch (e) {}
+  XOPS = []; XIDS = new Set(); xver++; OTHERS = null; LS.del('srv:sync');
+}
+let RC = { k: null };
+function recsAll() {
+  let raw = ''; try { raw = localStorage.getItem(lsKey('srv:ops')) || ''; } catch (e) {}
+  const k = BIZ + '|' + xver + '|' + raw.length + '|' + raw.slice(-48) + '|' + devNo();
+  if (RC.k === k) return RC.all;
+  const own = srvOps(), ids = new Set(own.map(o => o.id));
+  const all = reduceSurvey(XOPS.length ? own.concat(XOPS.filter(o => !ids.has(o.id))) : own), me = devId(), mn = devNo(), mine = {};
+  Object.values(all).forEach(s => { s.mine = s.dev ? s.dev === me : (!s.devNo || s.devNo === mn); if (s.mine) mine[s.id] = s; });
+  RC = { k, all, mine, oth: null };
+  return all;
+}
+const recs = () => { recsAll(); return RC.mine; };
+function useSync() { return (!!serverVer && !verLt(serverVer, SYNC_SERVER)) || (serverVer === null && LS.get('srv:sync', null) !== null); }
+/* 受け取る：more の間は続けて取りにいく（Googleの1回の実行時間の制限に掛からないよう、受け付け側が分けて返すだけ） */
+let syncing = false, syncAt = 0;
+async function syncSrv(force) {
+  if (syncing || !CONN || !online || !useSync()) return;
+  if (!force && Date.now() - syncAt < 20000) return;
+  syncing = true; syncAt = Date.now();
+  let got = 0;
+  try {
+    if (!xLoaded) await loadXops();
+    let st = LS.get('srv:sync', null) || { next: 0, lastId: '' };
+    for (let guard = 0; guard < 1000; guard++) {
+      const r = await call('api_srvSync', st.next, st.lastId);
+      if (!r || !Array.isArray(r.ops)) break;
+      if (r.reset) { await xopsClear(); got++; }
+      got += await xopsAdd(r.ops);
+      st = { next: r.next, lastId: r.ops.length ? r.ops[r.ops.length - 1].id : (r.reset ? '' : st.lastId), total: r.total };
+      LS.set('srv:sync', st);
+      if (!r.more) break;
+    }
+  } catch (e) {} finally { syncing = false; }
+  if (got) afterSync();
+  return got;
+}
+function afterSync() {
+  if (!$('srvList').classList.contains('hidden')) renderList();
+  if (curRec && !$('srvRec').classList.contains('hidden')) { const s = recsAll()[curRec]; if (s) paintLock(s); }
+  if (typeof mainMap !== 'undefined' && mainMap && !$('mapView').classList.contains('hidden')) { try { drawRecArrows(mainMap); refreshTargets(); } catch (e) {} }
+  try { renderDevBar(); } catch (e) {}
+  prefetchThumbs();
+}
+/* ほかの端末の写真：一覧用の小さい写真（約640px）を受け付け側から受け取り、このスマホにしまう。元の大きさは見るときだけ */
+const thumbQ = new Map(); let thumbRun = 0; const thumbWait = [];
+const thumbSlot = () => thumbRun < 3 ? (thumbRun++, Promise.resolve()) : new Promise(r => thumbWait.push(r));
+const thumbFree = () => { const n = thumbWait.shift(); if (n) n(); else thumbRun--; };
+async function thumbGet(pid) { try { const t = await idbTx('thumbs', 'readonly', st => st.get(pid)); return t && t.buf ? t : null; } catch (e) { return null; } }
+async function thumbUrl(pid, full) {
+  if (!full && urlCache[pid]) return urlCache[pid];
+  const t = await thumbGet(pid);
+  if (t && (!full || t.kind === 'full')) return (urlCache[pid] = URL.createObjectURL(new Blob([t.buf], { type: t.mime || 'image/jpeg' })));
+  if (!CONN || !online || !useSync()) return '';
+  const key = pid + (full ? '#full' : '');
+  if (!thumbQ.has(key)) thumbQ.set(key, fetchPhoto(pid, full).finally(() => thumbQ.delete(key)));
+  return thumbQ.get(key);
+}
+async function fetchPhoto(pid, full) {
+  await thumbSlot();
+  try {
+    const r = await call('api_photoGet', pid, full ? 'full' : 'thumb'); if (!r || !r.b64) return '';
+    const bin = atob(r.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    try { await idbTx('thumbs', 'readwrite', st => st.put({ pid, biz: BIZ, buf: u8.buffer, mime: r.mime || 'image/jpeg', kind: r.kind || 'thumb', at: Date.now() })); } catch (e) {}
+    if (urlCache[pid]) URL.revokeObjectURL(urlCache[pid]);
+    return (urlCache[pid] = URL.createObjectURL(new Blob([u8], { type: r.mime || 'image/jpeg' })));
+  } catch (e) { return ''; } finally { thumbFree(); }
+}
+async function thumbsClear() { try { const l = await idbTx('thumbs', 'readonly', st => st.getAllKeys()); const mine = []; for (const k of l || []) { const t = await thumbGet(k); if (!t || (t.biz || '') === BIZ) mine.push(k); } if (mine.length) await idbTx('thumbs', 'readwrite', st => { mine.forEach(k => st.delete(k)); }); } catch (e) {} }
+/* 先に取っておく：ほかの端末の、ここ3日の票の写真（⚙で止められる。止めると開いたときだけ受け取る） */
+let prefetching = false;
+async function prefetchThumbs() {
+  if (prefetching || !SET().xph || !online || !useSync()) return;
+  prefetching = true;
+  try {
+    const since = new Date(Date.now() - 3 * 86400000), lim = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
+    const want = Object.values(recsAll()).filter(s => !s.mine && !s.deleted && recDay(s) >= lim).flatMap(s => s.photos);
+    for (const pid of want) { if (!online || !SET().xph) break; if (urlCache[pid] || await thumbGet(pid)) continue; await thumbUrl(pid); }
+  } finally { prefetching = false; }
+}
+/* ---------- 他の端末の票・別の日の票は「見るだけ」で開く。「✎ この票を直す」で直せる ----------
+ *  警告は「別の日」「他の端末」を別々に覚える（以後表示しない＝アプリを閉じるまで）。警告を出さなくても、直した端末の記録は毎回残る */
+const editOK = new Set(), warnOff = { dev: false, day: false };
+function lockWhy(s) { if (!s) return null; const dev = !s.mine, day = recDay(s) !== isoDay(); return dev || day ? { dev, day } : null; }
+function devLabel(s) { return (s.devNo ? s.devNo + 'の端末' : '別の端末') + (s.name ? '（' + s.name + '）' : ''); }
+function dayLabel(s) { const d = recDay(s); return d ? Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10)) : '別の日'; }
+function lockText(s, w) {
+  if (w.dev && w.day) return devLabel(s) + 'で ' + dayLabel(s) + ' に作られた票です';
+  if (w.dev) return devLabel(s) + 'で作られた票です';
+  return '別の日（' + dayLabel(s) + '）に調査済みの票です';
+}
+function recLocked(id) { const s = recsAll()[id]; return !!lockWhy(s) && !editOK.has(id); }
+function paintLock(s) {
+  const w = lockWhy(s), lk = !!w && !editOK.has(s.id);
+  $('srvRec').classList.toggle('ro', lk);
+  $('recLock').classList.toggle('hidden', !lk);
+  if (lk) $('recLockText').innerHTML = esc(lockText(s, w)) + '<br><small>見るだけで開いています</small>';
+  const ed = !!w && editOK.has(s.id);
+  $('recEditing').classList.toggle('hidden', !ed);
+  if (ed) $('recEditing').textContent = '✎ ' + lockText(s, w).replace(/です$/, '') + 'を直しています' + (w.dev ? '（直した端末は記録に残ります）' : '');
+  if (s.xed && s.xed.length) { const e = s.xed[s.xed.length - 1]; $('recTime').textContent = String(s.created).replace('T', ' ').slice(0, 16) + '　✎ ' + (e.devNo || '別の端末') + 'で修正'; }
+}
+$('recUnlock').onclick = () => {
+  const s = recsAll()[curRec], w = lockWhy(s); if (!s || !w) return;
+  const ask = (w.dev && !warnOff.dev) || (w.day && !warnOff.day);
+  const go = () => { editOK.add(s.id); paintLock(s); toast('直せるようにしました'); };
+  if (!ask) { go(); return; }
+  sheet(box => {
+    box.append(el('h3', '', '⚠ この票を直しますか？'));
+    const m = el('div', 'warnbox'); m.append(el('div', '', lockText(s, w) + '。本当に直しますか？'));
+    if (w.dev) m.append(el('div', '', '直すと、どの端末で直したかが記録に残ります。'));
+    box.append(m);
+    const lb = el('label', 'crossrow'); lb.style.fontSize = '14px'; const cb = el('input'); cb.type = 'checkbox'; cb.id = 'lockOff';
+    lb.append(cb, document.createTextNode('以後表示しない（アプリを閉じるまで）')); box.append(lb);
+    const yes = el('button', 'btn go', '✎ 直す'); yes.id = 'lockYes';
+    yes.onclick = () => { if (cb.checked) { if (w.dev) warnOff.dev = true; if (w.day) warnOff.day = true; } sheet(null); go(); };
+    const no = el('button', 'btn sub', 'やめる（見るだけ）'); no.onclick = () => sheet(null);
+    box.append(yes, no);
+  });
+};
+/* 見るだけのときに入力の所を押したら、直し方を知らせる */
+document.querySelectorAll('#srvRec .card.rofix, #srvRec .rofix').forEach(c => c.addEventListener('click', () => { if ($('srvRec').classList.contains('ro')) toast('見るだけで開いています。直すときは上の「✎ この票を直す」を押してください'); }));
 function distM(a, b, c, d) { const r = Math.PI / 180, x = (d - b) * r * Math.cos((a + c) / 2 * r), y = (c - a) * r; return Math.hypot(x, y) * 6371000; }
 function bearing(a, b, c, d) { const r = Math.PI / 180, y = Math.sin((d - b) * r) * Math.cos(c * r), x = Math.cos(a * r) * Math.sin(c * r) - Math.sin(a * r) * Math.cos(c * r) * Math.cos((d - b) * r); return (Math.atan2(y, x) / r + 360) % 360; }
 const dirName = h => h == null ? '' : ['北', '北東', '東', '南東', '南', '南西', '西', '北西'][Math.round(h / 45) % 8];
@@ -1675,7 +1837,9 @@ function listThumbs(box) {
 }
 async function renderList() {
   if (typeof renderSendLines === 'function') renderSendLines();
-  const every = Object.values(recs()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
+  const pool = Object.values(recsAll()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
+  renderWhoFilter(pool);
+  const every = pool.filter(whoOK);
   renderDayFilter(every);
   const ofDay = every.filter(dayOK);
   renderKindFilter(ofDay); renderCatFilter(ofDay);
@@ -1683,13 +1847,14 @@ async function renderList() {
   $('srvCount').textContent = all.length !== every.length ? all.length + '／' + every.length : all.length;
   const box = $('srvItems');
   if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">' + (every.length ? 'この絞り込みでは調査票がありません（上のボタンで日付・工種を切り替え）。' : 'まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。') + '</span>'; return; }
-  const me = worker(), sig = JSON.stringify([dayF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s)]; }));
+  const me = worker(), sig = JSON.stringify([dayF().v, whoF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s), s.mine, (s.xed || []).length]; }));
   if (sig !== listSig || !box.querySelector('.reccard')) {
     listSig = sig; box.innerHTML = '';
     for (const s of all) {
-      const a = adopted(s), b = document.createElement('button'); b.className = 'reccard'; b.dataset.rec = s.id;
+      const a = adopted(s), b = document.createElement('button'); b.className = 'reccard' + (s.mine ? '' : ' other'); b.dataset.rec = s.id;
       b.innerHTML = (s.photos[0] ? '<img alt="" data-pid="' + esc(s.photos[0]) + '">' : '<div class="noimg">写真なし</div>') + '<div style="min-width:0"><div class="t"></div><div class="d"></div><div class="badges"></div></div>';
       b.querySelector('.t').textContent = 'No.' + recNo(s) + (s.target ? '　' + s.target : s.kind ? '　' + s.kind : '') + (s.plot ? '　区画 ' + s.plot : '');
+      if (!s.mine) { const dv = el('span', 'devno', s.devNo || '他'); b.querySelector('.t').prepend(dv); }
       if (s.kind) b.style.borderLeft = '6px solid ' + kindColor(s.kind);
       b.querySelector('.d').textContent = (s.text || '（内容なし）').split('\n')[0];
       const bd = b.querySelector('.badges');
@@ -1705,6 +1870,8 @@ async function renderList() {
       if (s.nocho) add('野帳・控え（台帳に出さない）', 'gps');
       if (s.src === 'koudo') add('耕土厚 ' + (s.ktype || ''), 'gps');
       if (s.name && s.name !== me) add('撮影：' + s.name, 'gps');
+      if (!s.mine) add((s.devNo ? s.devNo + 'の端末' : '別の端末') + '・見るだけ', 'gps');
+      if (s.xed && s.xed.length) add('✎ ' + (s.xed[s.xed.length - 1].devNo || '別の端末') + 'で修正', 'mark');
       b.onclick = () => openRec(s.id);
       box.append(b);
     }
@@ -1713,7 +1880,7 @@ async function renderList() {
   // 送信待ちの印だけは毎回直す（写真の中身は読まない）
   const sent = {}; (await idb.all().catch(() => [])).forEach(p => sent[p.pid] = p.sent);
   box.querySelectorAll('.reccard').forEach(b => {
-    const s = recs()[b.dataset.rec]; if (!s) return;
+    const s = recsAll()[b.dataset.rec]; if (!s || !s.mine) return;
     const n = s.photos.filter(pid => sent[pid] === false).length, bd = b.querySelector('.badges'), w = bd.querySelector('.unsent');
     if (n && !w) { const x = document.createElement('span'); x.className = 'bdg warn unsent'; x.textContent = '⚠ 写真 送信待ち'; bd.append(x); }
     else if (!n && w) w.remove();
@@ -1775,7 +1942,7 @@ let recFrom = null;     // 調査票を開いた元（耕土厚の区画から�
 function backFromRec() { const f = recFrom; recFrom = null; if (f && f.plot) { curRec = null; $('srvRec').classList.add('hidden'); openPlot(f.plot); } else showSurvey(); }
 function refreshView() { if (PLOT) render(); else renderList(); }
 async function openRec(id, fresh, from) {
-  const s = recs()[id]; if (!s) return;
+  const s = recsAll()[id]; if (!s) return;
   if (from !== undefined) recFrom = from;
   if (PLOT && from === undefined && !curRec) recFrom = { plot: PLOT };
   PLOT = null;
@@ -1784,17 +1951,17 @@ async function openRec(id, fresh, from) {
   $('srvRec').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = '← 一覧';
   $('title').textContent = '調査票 No.' + recNo(s); window.scrollTo(0, 0);
   $('recTitle').textContent = '写真番号 ' + recNo(s); $('recTime').textContent = String(s.created).replace('T', ' ').slice(0, 16);
-  $('recPlot').value = s.plot; $('recTarget').value = s.target || ''; renderTargetField(); openInput(s);
+  $('recPlot').value = s.plot; $('recTarget').value = s.target || ''; renderTargetField(); openInput(s); paintLock(s);
   const dl = $('plotNames'); dl.innerHTML = ''; try { currentPlots().forEach(e => { const o = document.createElement('option'); o.value = e.plot; dl.append(o); }); } catch (e) {}
   const ph = $('recPhotos'); ph.innerHTML = '';
-  for (const pid of recMainPhotos(s)) { const u = await photoUrl(pid); const im = phImg(pid, u); im.onclick = () => photoSheet(id, pid, u); ph.append(im); }
+  for (const pid of recMainPhotos(s)) { const u = await photoUrl(pid); const im = phImg(pid, u); im.onclick = () => photoSheet(id, pid, u || im.src); ph.append(im); }
   $('recCross').checked = !!s.cross;
   renderFN(s);
   renderPos();
   if (fresh) setTimeout(() => $('recText').focus(), 300);
 }
 function renderPos() {
-  const s = recs()[curRec]; if (!s) return;
+  const s = recsAll()[curRec]; if (!s) return;
   const a = adopted(s), g = s.gps;
   let t = '使う位置：<b>' + a.label + '</b>';
   if (a.kind !== 'gps' && a.kind !== 'none' && g) t += '（GPSから ' + distM(g.lat, g.lon, a.lat, a.lon).toFixed(1) + 'm）';
@@ -1833,7 +2000,7 @@ $('recPlot').onchange = () => { const v = norm($('recPlot').value); $('recPlot')
 $('recDone').onclick = () => { saveText(); $('recText').blur(); $('recPlot').blur(); setTimeout(backFromRec, 50); };
 $('recHere').onclick = () => {
   // 今ここ：地図をずらして位置、矢印の先の○を回して向き。決定1回でまとめて直す（向きだけ・位置だけでもよい）
-  const s = recs()[curRec], a = adopted(s), f = freshFix(30);
+  const s = recsAll()[curRec], a = adopted(s), f = freshFix(30);
   const c = a.lat != null ? [a.lat, a.lon] : f ? [f.lat, f.lon] : null;
   openPicker({ mode: 'here', center: c, gps: s.gps, arrow: true, heading: s.heading, okText: '決定',
                hint: '地図をずらして十字を撮影した場所へ。向きは矢印の先の○を指で回す（どちらか片方だけでもよい）' }, (ll, o) => {
@@ -1843,7 +2010,7 @@ $('recHere').onclick = () => {
     renderPos(); toast(msg.length ? msg.join('と') + 'を直しました' : '変えていません');
   });
 };
-$('recSuspect').onclick = () => { const s = recs()[curRec]; recordSrv('怪しい', curRec, { value: !s.suspect }); renderPos(); toast(s.suspect ? '今ここの位置に戻しました' : 'GPSなどの位置に切り替えました（今ここも残っています）'); };
+$('recSuspect').onclick = () => { const s = recsAll()[curRec]; recordSrv('怪しい', curRec, { value: !s.suspect }); renderPos(); toast(s.suspect ? '今ここの位置に戻しました' : 'GPSなどの位置に切り替えました（今ここも残っています）'); };
 /* 写真の情報（EXIF）を読む：撮った時刻・位置・向き（iPhoneのカメラの写真に入っていることが多い。渡すときに位置が消えていることもある） */
 async function readExif(file) {
   try {
@@ -1881,9 +2048,9 @@ function exifTiff(v, t) {
 }
 /* 調査票に写真を入れる（撮った写真・写真アプリから選んだ写真）。写真に位置・向き・時刻があれば調査票に使う */
 async function addPhotoExif(recId, file) {
-  const ex = await readExif(file), s0 = recs()[recId], first = s0 && !s0.photos.length;
+  const ex = await readExif(file), s0 = recsAll()[recId], first = s0 && !s0.photos.length;
   const pid = await addPhotoTo(recId, file); if (!pid) return null;
-  const s = recs()[recId], used = [];
+  const s = recsAll()[recId], used = [];
   if (ex) {
     const hasHand = s.cands.some(c => c.src === 'here' || c.src === 'pc' || c.src === 'photo');
     if (ex.lat != null && !hasHand) { recordSrv('位置', recId, { src: 'photo', lat: Math.round(ex.lat * 1e7) / 1e7, lon: Math.round(ex.lon * 1e7) / 1e7 }); used.push('位置'); }
@@ -1936,21 +2103,21 @@ function fnShoot(kind) { fnPend = { kind, heading, fix: freshFix(15) }; $('fnFil
 $('fnFile').onchange = async () => {
   const file = $('fnFile').files[0]; if (!file || !curRec || !fnPend) return;
   const p = fnPend; fnPend = null;
-  const old = fnPhoto(recs()[curRec], p.kind);
+  const old = fnPhoto(recsAll()[curRec], p.kind);
   const pid = await addPhotoTo(curRec, file, { kind: p.kind, fix: p.fix || freshFix(15), heading: p.heading });
   if (!pid) return;
   if (old) recordSrv('写真外す', curRec, { pid: old });
-  if (!recs()[curRec].fn) recordSrv('内容', curRec, { field: '遠景近景', value: true });
+  if (!recsAll()[curRec].fn) recordSrv('内容', curRec, { field: '遠景近景', value: true });
   openRec(curRec); toast(p.kind + 'を撮りました' + (p.fix ? '（位置 ±' + Math.round(p.fix.acc) + 'm）' : '（位置なし）'));
 };
 $('recFN').onchange = () => {
-  const v = $('recFN').checked, s = recs()[curRec];
+  const v = $('recFN').checked, s = recsAll()[curRec];
   if (!v && s.photos.some(p => s.pk[p] && s.pk[p].kind)) { $('recFN').checked = true; toast('遠景・近景の写真があるので外せません（写真を外してから）'); return; }
-  recordSrv('内容', curRec, { field: '遠景近景', value: v }); renderFN(recs()[curRec]);
+  recordSrv('内容', curRec, { field: '遠景近景', value: v }); renderFN(recsAll()[curRec]);
 };
 function fnMenu(id, kind, pid, url) {
   sheet(box => {
-    const s = recs()[id], k = s.pk[pid] || {};
+    const s = recsAll()[id], k = s.pk[pid] || {};
     box.append(el('h3', '', kind + 'の写真'));
     const im = el('img', 'bigph'); im.src = url; im.alt = '写真'; im.onerror = () => phFail(im, pid); box.append(im);
     const pos = k.pos || k.gps;
@@ -1971,8 +2138,10 @@ function fnMenu(id, kind, pid, url) {
 /* 写真を押す → 大きく表示。「この写真を外す」（ドライブ・スマホからは消さず、調査票から外すだけ。元に戻せる） */
 function photoSheet(id, pid, url) {
   sheet(box => {
-    const s = recs()[id];
+    const s = recsAll()[id];
     const im = el('img', 'bigph'); im.src = url; im.alt = '写真'; box.append(im);
+    idb.get(pid).catch(() => null).then(p => { if (p) return; const fb = el('button', 'btn sub', '🔍 元の大きさで見る（電波が要ります）'); fb.onclick = async () => { fb.textContent = '読み込み中…'; const u = await thumbUrl(pid, true); if (u) { im.src = u; fb.remove(); } else fb.textContent = '読めませんでした（電波があるときにもう一度）'; }; im.after(fb); });
+    if (recLocked(id)) { const c0 = el('button', 'btn sub', '閉じる'); c0.onclick = () => sheet(null); box.append(c0); return; }
     const rm = el('button', 'btn dangerline', '🗑 この写真を外す');
     rm.onclick = () => {
       recordSrv('写真外す', id, { pid }); sheet(null); openRec(id);
@@ -1985,7 +2154,7 @@ function photoSheet(id, pid, url) {
   });
 }
 $('recDel').onclick = () => {
-  const id = curRec, s = recs()[id];
+  const id = curRec, s = recsAll()[id];
   sheet(box => {
     box.append(el('h3', '', '⚠ 写真番号 ' + recNo(s) + ' の調査票を削除しますか？'));
     const w = el('div', 'warnbox'); w.append(el('div', '', '写真 ' + s.photos.length + '枚' + (s.text ? '・内容「' + s.text.split('\n')[0].slice(0, 20) + '」' : '')));
@@ -2055,7 +2224,7 @@ function kdShoot(ktype, line2, lib) {
 /* 写真を今の調査票に入れる（写真番号はそのまま）。撮り直し・写真を外した枠に撮るときに使う */
 async function addPhotoTo(recId, file, meta) {
   let blob; try { ({ blob } = await shrink(file)); } catch (e) { toast(e.message); return null; }
-  const s = recs()[recId], pid = 'p' + uuid().slice(3), br = s.photos.length + s.removed.length;
+  const s = recsAll()[recId], pid = 'p' + uuid().slice(3), br = s.photos.length + s.removed.length;
   meta = meta || {};
   await idb.put({ pid, rec: recId, blob, sent: false, at: nowIso(), name: photoName(s.no, pid, br, meta.kind) });
   // 写真ごとの位置・向き（v0.7〜）：遠景近景の枠で撮った写真は、その写真を撮った所を残す（調査票の位置とは別）
@@ -2070,8 +2239,8 @@ $('kdFile').onchange = () => kdFromInput($('kdFile'));
 async function kdFromInput(input) {
   const file = input.files[0], k = kdPending; if (!file || !k) return;
   if (k.into || k.retake) {        // 写真を外した枠・撮り直し：同じ調査票（同じ写真番号）に入れる
-    const id = k.into || k.retake, s0 = recs()[id], old = k.retake ? s0.photos.slice() : [];
-    const used = await addPhotoExif(id, file); if (used === null) return; const pid = recs()[id].photos.slice(-1)[0];
+    const id = k.into || k.retake, s0 = recsAll()[id], old = k.retake ? s0.photos.slice() : [];
+    const used = await addPhotoExif(id, file); if (used === null) return; const pid = recsAll()[id].photos.slice(-1)[0];
     old.forEach(o => recordSrv('写真外す', id, { pid: o }));
     if (old.length) showUndo('撮り直しました（No.' + recNo(s0) + '）', () => { recordSrv('写真外す', id, { pid }); old.forEach(o => recordSrv('写真戻す', id, { pid: o })); if (PLOT === k.plot) render(); toast('元の写真に戻しました'); });
     else toast('✓ No.' + recNo(s0) + '　' + (s0.ktype || '') + 'に入れました');
@@ -2207,7 +2376,7 @@ $('nochoFile').onchange = async () => {
    ・打った文字で候補（ひな形）が出る。並びは使った回数の多い順
    ・ひな形の ○ は数字を入れる所、◇ は選ぶ所。専用キーの［次へ］で次の ○ へ
    ・⚙ で細かい設定 */
-const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true, hereMove: true };
+const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true, hereMove: true, xph: true };
 function SET() { return Object.assign({}, SET_DEF, LS.get('set', {})); }
 function setSet(k, v) { const o = LS.get('set', {}); o[k] = v; LS.set('set', o); }
 
@@ -2377,7 +2546,7 @@ function curToken() {
 }
 /* この現場で前に書いた行（履歴）。分類が同じ調査票の1行目を先に。多く書いた形・新しい順（v0.7〜） */
 function histLines(prefix, lineIdx) {
-  const cur = recs()[curRec], cat = cur && cur.cat, f = fold(prefix), cnt = {}, last = {}, sameCat = {};
+  const cur = recsAll()[curRec], cat = cur && cur.cat, f = fold(prefix), cnt = {}, last = {}, sameCat = {};
   Object.values(recs()).forEach(s => {
     if (s.deleted || s.id === curRec || !s.text) return;
     s.text.split('\n').slice(0, 3).forEach((l, i) => {
@@ -2401,10 +2570,10 @@ function renderSugg() {
   { // 履歴（その現場で前に書いた形）
     const el = ta(), v = el.value, end = el.selectionEnd, ls = v.lastIndexOf('\n', end - 1) + 1, idx = v.slice(0, ls).split('\n').length - 1;
     const pre = v.slice(ls, end);
-    if (idx < 3 && !kpOn && (pre.trim().length >= 1 || (idx === 0 && recs()[curRec] && recs()[curRec].cat))) {
+    if (idx < 3 && !kpOn && (pre.trim().length >= 1 || (idx === 0 && recsAll()[curRec] && recsAll()[curRec].cat))) {
       const h = histLines(pre.trim(), idx);
       if (h.length) {
-        const lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = pre.trim() ? 'この現場で書いた形' : '同じ分類（' + recs()[curRec].cat + '）で書いた1行目'; box.append(lab);
+        const lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = pre.trim() ? 'この現場で書いた形' : '同じ分類（' + recsAll()[curRec].cat + '）で書いた1行目'; box.append(lab);
         h.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'hist'; b.textContent = l; b.addEventListener('pointerdown', e => e.preventDefault()); b.onclick = () => useHist(l); box.append(b); });
       }
     }
@@ -2492,8 +2661,8 @@ let saveTimer = null;
 function textChanged() { paintText(); renderSugg(); clearTimeout(saveTimer); saveTimer = setTimeout(saveText, 1500); }
 function saveText() {
   clearTimeout(saveTimer); if (typeof tidyNow === 'function' && tidyT) tidyNow();
-  if (!curRec) return;
-  const s = recs()[curRec]; if (!s) return;
+  if (!curRec || recLocked(curRec)) return;
+  const s = recsAll()[curRec]; if (!s) return;
   const v = ta().value.replace(/\s+$/, '');
   if (v !== (s.text || '')) recordSrv('内容', curRec, { field: '内容', value: v });
 }
@@ -2506,7 +2675,7 @@ ta().addEventListener('blur', () => { saveText(); setTimeout(() => { if (documen
 /* ---- 前と同じ ---- */
 $('recSame').onclick = () => {
   const all = Object.values(recs()).filter(s => !s.deleted && s.id !== curRec && (s.text || s.kind)).sort((a, b) => a.created < b.created ? 1 : -1);
-  const me = recs()[curRec], prev = all.find(s => s.created <= me.created) || all[0];
+  const me = recsAll()[curRec], prev = all.find(s => s.created <= me.created) || all[0];
   if (!prev) { toast('前の調査票がありません'); return; }
   const old = ta().value, oldKind = me.kind || '';
   ta().value = prev.text || ''; textChanged(); saveText();
@@ -2528,14 +2697,14 @@ function routeCands() {
   return out;
 }
 function renderRoute() {
-  const s = recs()[curRec]; if (!s) return;
+  const s = recsAll()[curRec]; if (!s) return;
   $('recRoute').value = routeOf(s);
   const dl = $('routeNames'); dl.innerHTML = ''; const c = routeCands(); c.forEach(v => { const o = document.createElement('option'); o.value = v; dl.append(o); });
   const box = $('routeChips'); box.innerHTML = '';
   c.slice(0, 5).filter(v => v !== routeOf(s)).forEach(v => { const b = el('button', 'chip', v); b.type = 'button'; b.onclick = () => setRoute(v); box.append(b); });
 }
 function setRoute(v) {
-  v = String(v || '').trim(); const s = recs()[curRec]; if (!s) return;
+  v = String(v || '').trim(); const s = recsAll()[curRec]; if (!s) return;
   if (s.kind === '区画' || (!s.kind && /^[0-9０-９][0-9０-９\-－ー‐]*$/.test(v))) { const n = norm(v); $('recPlot').value = n; LS.set('srv:lastPlot', n); if (s.plot !== n) recordSrv('内容', curRec, { field: '区画', value: n }); if (s.kind !== '区画' && s.target) { recordSrv('内容', curRec, { field: '対象', value: '' }); $('recTarget').value = ''; } }
   else setTarget(v);
   renderRoute();
@@ -2546,7 +2715,7 @@ const CAT_DEF = ['吐口', '水口', '取水桝', '分水', '搬入路', '横断
 function catList() { return CAT_DEF.concat((LS.get('cats', []) || []).filter(k => !CAT_DEF.includes(k))); }
 function setCat(k) { recordSrv('内容', curRec, { field: '分類', value: k }); renderCats(); renderSugg(); }
 function renderCats() {
-  const box = $('recCat'); box.innerHTML = ''; const s = recs()[curRec]; if (!s) return;
+  const box = $('recCat'); box.innerHTML = ''; const s = recsAll()[curRec]; if (!s) return;
   catList().forEach(k => { const c = el('button', 'chip' + (s.cat === k ? ' on' : ''), k); c.type = 'button'; c.onclick = () => setCat(s.cat === k ? '' : k); box.append(c); });
   const add = el('button', 'chip', '＋追加'); add.type = 'button';
   add.onclick = () => sheet(bx => {
@@ -2560,7 +2729,7 @@ function renderCats() {
   box.append(add);
 }
 function renderKinds() {
-  const box = $('recKind'); box.innerHTML = ''; const s = recs()[curRec]; if (!s) return;
+  const box = $('recKind'); box.innerHTML = ''; const s = recsAll()[curRec]; if (!s) return;
   kindList().forEach(k => {
     const c = document.createElement('button'); c.type = 'button'; c.className = 'chip' + (s.kind === k ? ' on' : ''); c.textContent = k;
     c.onclick = () => setKind(s.kind === k ? '' : k); box.append(c);
@@ -2612,6 +2781,7 @@ $('gear').onclick = () => sheet(box => {
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
   row('写真もWi-Fiのときに手で送る（通信量の節約。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
   row('「今ここ」の窓で位置も動かす（外すと向きだけ直す）', 'hereMove', 'checkbox');
+  row('ほかの端末の写真（ここ3日分）を先に受け取っておく（外すと、開いたときだけ受け取る。通信量の節約）', 'xph', 'checkbox');
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
   box.append(el('h3', '', '試験中'));
   const dr = el('button', 'btn sub', '📄 図面の下敷き・位置合わせ（PCで使うのがおすすめ）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
@@ -3303,15 +3473,15 @@ $('areaReuse').onchange = () => areaDraw();
 function renderTargetField() {
   const dl = $('tgtNames'); dl.innerHTML = '';
   tgts().forEach(t => { const o = document.createElement('option'); o.value = t.name; dl.append(o); });
-  const s = recs()[curRec], b = $('recNear'); if (!s) return;
+  const s = recsAll()[curRec], b = $('recNear'); if (!s) return;
   const a = adopted(s), lat = a.lat != null ? a.lat : lastFix && lastFix.lat, lon = a.lat != null ? a.lon : lastFix && lastFix.lon;
   const nt = lat != null && tgts().length ? nearTargets(lat, lon)[0] : null;
   if (nt && nt.d <= 100 && nt.t.name !== (s.target || '')) { b.textContent = '近く：' + nt.t.name; b.classList.remove('hidden'); b.onclick = () => setTarget(nt.t.name); }
   else b.classList.add('hidden');
 }
 function setTarget(name) {
-  name = String(name || '').trim(); $('recTarget').value = name; if (recs()[curRec] && recs()[curRec].kind !== '区画') $('recRoute').value = name;
-  const s = recs()[curRec]; if (!s || (s.target || '') === name) return;
+  name = String(name || '').trim(); $('recTarget').value = name; if (recsAll()[curRec] && recsAll()[curRec].kind !== '区画') $('recRoute').value = name;
+  const s = recsAll()[curRec]; if (!s || (s.target || '') === name) return;
   recordSrv('内容', curRec, { field: '対象', value: name });
   const t = tgts().find(x => x.name === name);
   if (t && t.kind && s.kind !== t.kind) setKind(t.kind);
@@ -3347,6 +3517,7 @@ function bizRemove(b) {
   Object.keys(localStorage).filter(k => bizOwns(k, b.id)).forEach(k => localStorage.removeItem(k));
   LS.set('bizList', LS.get('bizList', []).filter(x => x.id !== b.id));
   idb.every().then(l => l.filter(p => (p.biz || '') === b.id).forEach(p => idb.del(p.pid))).catch(() => {});
+  ['xops', 'thumbs'].forEach(store => idbTx(store, 'readonly', st => st.getAll()).then(l => { const ks = (l || []).filter(x => (x.biz || '') === b.id).map(x => x.id || x.pid); if (ks.length) idbTx(store, 'readwrite', st => { ks.forEach(k => st.delete(k)); }); }).catch(() => {}));     // v0.8：受け取ったほかの端末の票・写真も
 }
 function bizSection(box) {
   box.append(el('h3', '', '業務（スプレッドシート）'));
@@ -3389,6 +3560,23 @@ function dayOK(s) { const v = dayF().v; return v === 'all' || (v === 'today' ? r
 function recShown(s) {
   const fk = LS.get('srv:filter', ''), fc = LS.get('srv:cat', '');
   return dayOK(s) && (!fk || (s.kind || '工種なし') === fk) && (!fc || (s.cat || '分類なし') === fc);
+}
+/* だれの票を出すか（v0.8〜）。開いた日は「自分」（今までと同じ見え方）。ほかの端末の票があるときだけボタンを出す */
+function whoF() { const d = LS.get('srv:who', null); if (!d || d.set !== isoDay()) { const n = { set: isoDay(), v: 'me' }; LS.set('srv:who', n); return n; } return d; }
+function whoOK(s) { const v = whoF().v; return v === 'all' || (v === 'me' ? s.mine : !s.mine && (s.devNo || '他') === v); }
+function renderWhoFilter(pool) {
+  const box = $('srvWhoF'); box.innerHTML = '';
+  const note = $('srvSyncNote');
+  const st = LS.get('srv:sync', null);
+  note.classList.toggle('hidden', useSync() || !serverVer);
+  if (!useSync() && serverVer) note.textContent = 'ほかの端末の票を出すには、受け付け側（Apps Script）を0.8に更新してください';
+  const oth = pool.filter(s => !s.mine); if (!oth.length && whoF().v === 'me') return;
+  const cnt = {}; oth.forEach(s => { const k = s.devNo || '他'; cnt[k] = (cnt[k] || 0) + 1; });
+  const cur = whoF().v, td = isoDay();
+  const mk = (v, label) => { const c = el('button', 'chip' + (cur === v ? ' on' : ''), (cur === v ? '▶ ' : '') + label); c.dataset.who = v; c.onclick = () => { LS.set('srv:who', { set: td, v }); renderList(); if (typeof mainMap !== 'undefined' && mainMap) drawRecArrows(mainMap); }; box.append(c); };
+  mk('me', '自分 ' + pool.filter(s => s.mine).length);
+  mk('all', '全員 ' + pool.length);
+  Object.keys(cnt).sort().forEach(k => mk(k, k + 'の端末 ' + cnt[k]));
 }
 function renderDayFilter(every) {
   const box = $('srvDayF'); box.innerHTML = '';
@@ -3962,7 +4150,14 @@ function isBoss() { const b = siteState().boss, w = worker(); return !!(b && w &
 /* 他の機種の撮影位置（数千件になることがあるので、読み出しは1回だけにして使い回す） */
 let OTHERS = null;
 function setOthers(l) { OTHERS = null; LS.set('others', l || []); }
-function othersList() { if (OTHERS === null) { const me = devId(), mine = devNo(); OTHERS = (LS.get('others', []) || []).filter(o => o.dev ? o.dev !== me : o.devNo !== mine); } return OTHERS; }
+function othersList() {
+  if (useSync() || XOPS.length) {          // v0.8〜：受け取った調査票から作る（上限なし・撮影方向つき）
+    recsAll(); if (RC.oth && OTHERS !== null) return RC.oth;
+    RC.oth = Object.values(RC.all).filter(s => !s.mine && !s.deleted && s.devNo).map(s => { const a = adopted(s); return a.lat == null ? null : { no: s.no, devNo: s.devNo, dev: s.dev, name: s.name || '', at: String(s.created), lat: a.lat, lon: a.lon, target: s.target || '', heading: s.heading == null ? null : Number(s.heading) }; }).filter(Boolean);
+    OTHERS = RC.oth; return RC.oth;
+  }
+  if (OTHERS === null) { const me = devId(), mine = devNo(); OTHERS = (LS.get('others', []) || []).filter(o => o.dev ? o.dev !== me : o.devNo !== mine); } return OTHERS;
+}
 function sendSite(action, data) {
   const op = { id: uuid(), at: nowIso(), kind: 'site', action, data: Object.assign({ name: worker() }, data), who: worker() };
   queue.push(op); LS.set('queue', queue); flush();
@@ -3995,7 +4190,13 @@ function drawSiteLayer(map, g) {
   (LS.get('konbini', { list: [] }).list || []).forEach(k => L.marker([k.lat, k.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🏪 ' + esc(k.brand) + '</span>', iconSize: null }) }).addTo(g));
   const oth = othersList(); if (!oth.length) return;
   const last = {};
-  oth.forEach(o => { L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); const k = o.devNo || o.dev; if (!last[k] || o.at > last[k].at) last[k] = o; });
+  const rr = Math.PI / 180;
+  oth.forEach(o => {
+    if (o.heading != null && isFinite(o.heading)) {        // 撮影方向（v0.8〜）：自分の矢印より細く短い黒の線
+      const h = o.heading * rr, off = (dd, ang) => [o.lat + dd * Math.cos(ang) / 6371000 / rr, o.lon + dd * Math.sin(ang) / (6371000 * Math.cos(o.lat * rr)) / rr];
+      const tip = off(9, h); L.polyline([[o.lat, o.lon], tip], { color: '#111', weight: 2, interactive: false }).addTo(g); L.polyline([off(6, h - 0.4), tip, off(6, h + 0.4)], { color: '#111', weight: 2, interactive: false }).addTo(g);
+    }
+    L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); const k = o.devNo || o.dev; if (!last[k] || o.at > last[k].at) last[k] = o; });
   const day = nowIso().slice(0, 10);
   Object.values(last).forEach(o => { if (String(o.at).slice(0, 10) !== day) return;
     L.marker([o.lat, o.lon], { interactive: false, icon: L.divIcon({ className: 'devtag', html: '<span>' + esc((o.devNo ? o.devNo + '機　' : '') + (o.name || '') + '　' + hhmm(o.at)) + '</span>', iconSize: null }) }).addTo(g); });
@@ -4004,7 +4205,8 @@ function drawSiteLayer(map, g) {
 let progTimer = null;
 async function pullProgress() {
   if (!CONN || !online || document.hidden || !serverVer || verLt(serverVer, NEED_SERVER)) return;
-  try { const r = await call('api_progress'); if (r && r.others) setOthers(r.others); if (r && r.site) LS.set('site', r.site); if (r && r.todos) setServerTodos(r.todos); if (r && r.marks) setServerMarks(r.marks); refreshTargets(); renderDevBar(); } catch (e) {}
+  const sync = useSync(); if (sync) syncSrv(true);
+  try { const r = await call('api_progress', sync ? { noOthers: true } : undefined); if (r && r.others) setOthers(r.others); if (r && r.site) LS.set('site', r.site); if (r && r.todos) setServerTodos(r.todos); if (r && r.marks) setServerMarks(r.marks); refreshTargets(); renderDevBar(); } catch (e) {}
 }
 function startProgress() { clearInterval(progTimer); progTimer = setInterval(pullProgress, 300000); pullProgress(); }
 /* 今日、この現場で動いている機種（自分も入れる） */
@@ -5141,6 +5343,8 @@ async function sendVideos() {
 $('videoSend').onclick = () => sendVideos();
 
 start();
+/* v0.8：しまってある、ほかの端末の調査票を読み込む（読み終わったら一覧・地図を描き直す） */
+loadXops().then(() => { if (XOPS.length) afterSync(); });
 </script>
 </body>
 </html>
