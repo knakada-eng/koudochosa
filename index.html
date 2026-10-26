@@ -109,6 +109,7 @@
   .todorow .tx { flex:1; min-width:0; } .todorow .tx b { display:block; font-size:16px; } .todorow .tx small { display:block; font-size:12px; color:var(--mute); }
   .todorow.done .tx b { text-decoration:line-through; color:var(--mute); }
   .todorow button { flex:0 0 auto; }
+  .sheetbox .todorow .btn, .sheetbox #todoAdd { width:auto; margin-top:0; white-space:nowrap; }
   .todomk span { display:inline-block; transform:translate(-50%,-100%); background:#16303f; color:#fff; border:2px solid #fff; border-radius:8px; padding:1px 6px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,.4); }
   #headWarn { display:block; width:100%; margin:4px 0; padding:8px 10px; border:1px solid var(--warn); border-radius:8px; background:var(--warnbg); color:var(--warn); font-size:13px; text-align:left; }
   #headWarn.hidden { display:none; }
@@ -582,7 +583,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.7β';
+const VERSION = 'v0.7.1β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
@@ -903,7 +904,7 @@ function todoSheet() {
     box.append(el('h3', '', '📝 今日やること'));
     const row = el('div'); row.style.cssText = 'display:flex;gap:6px';
     const inp = el('input'); inp.type = 'text'; inp.id = 'todoText'; inp.placeholder = '例：区画15の排水路を撮影する'; inp.style.cssText = 'flex:1;min-width:0';
-    const add = el('button', 'btn acc', '＋ 足す'); add.id = 'todoAdd'; add.style.cssText = 'flex:0 0 auto;min-width:0;margin:0;padding:8px 14px';
+    const add = el('button', 'btn acc', '＋ 足す'); add.id = 'todoAdd'; add.style.cssText = 'flex:0 0 auto;width:auto;min-width:0;margin:0;padding:8px 14px;white-space:nowrap';
     add.onclick = () => { if (todoAdd(inp.value)) { inp.value = ''; toast('足しました（今いる場所も一緒に）'); todoSheet(); } else inp.focus(); };
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add.click(); } });
     row.append(inp, add); box.append(row);
