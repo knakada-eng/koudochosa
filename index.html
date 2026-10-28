@@ -23,6 +23,8 @@
   #sync.wait { background:var(--warnbg); color:var(--warn); font-weight:bold; }
   #sync.err { background:var(--errbg); color:var(--err); font-weight:bold; }
   #sync.hold { background:#e8eef3; color:#16303f; font-weight:bold; }
+  #saveErr { font-size:14px; padding:10px 14px; background:#b3261e; color:#fff; font-weight:bold; }
+  #saveErr.hidden { display:none; }
   #oldSrv { font-size:13px; padding:8px 14px; background:var(--errbg); color:var(--err); font-weight:bold; border-bottom:1px solid var(--line); }
   #devBar { font-size:12px; padding:4px 14px; background:#eef3f6; color:#16303f; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
   #devBar.hidden, #oldSrv.hidden { display:none; }
@@ -86,6 +88,12 @@
   .gkhit span { display:inline-block; transform:translate(-50%,-50%); background:rgba(255,255,0,.0); }
   #mapDocList { display:flex; flex-wrap:wrap; gap:6px 14px; margin:-2px 0 8px; font-size:13px; }
   #mapDocList.hidden { display:none; }
+  #mapShow .mshow { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
+  #mapShow .mlab { font-size:12px; color:var(--mute); font-weight:bold; min-width:2.6em; }
+  #mapShow .mday { display:inline-flex; gap:2px; align-items:center; padding:2px; border-radius:18px; background:#eef3f6; }
+  #mapShow .chip { padding:4px 10px; font-size:13px; min-height:32px; }
+  #mapShow .chip.half { padding:4px 7px; font-size:12px; }
+  .docbusy { position:absolute; left:50%; top:10px; transform:translateX(-50%); z-index:800; background:#16303f; color:#fff; font-size:13px; font-weight:bold; padding:4px 10px; border-radius:8px; pointer-events:none; }
   #mapDocList .docchk { display:flex; align-items:center; gap:5px; }
   #mapDocList input { width:20px; height:20px; margin:0; }
   #mainMap { isolation:isolate; position:relative; z-index:0; height:calc(100dvh - 420px); min-height:260px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
@@ -118,11 +126,12 @@
   #headWarn.hidden { display:none; }
   .crossrow { display:flex !important; align-items:center; gap:10px; font-size:16px; font-weight:bold; margin-top:8px; padding:10px 12px; border:2px solid var(--line); border-radius:10px; background:#fff; }
   .crossrow:has(input:checked) { border-color:#16303f; background:#16303f; color:#fff; }
+  .crossrow.on { border-color:#16303f; background:#16303f; color:#fff; }   /* v0.8.2：:has が効かない古いAndroidのChrome向けに、同じ見た目をクラスでも付ける（:has と同じ行に書くと、効かない端末では行ごと無視される） */
   .crossrow input { width:26px; height:26px; margin:0; }
   .bigph { width:100%; border-radius:8px; display:block; }
   .kdcnt { font-size:11px !important; }
   .kbmk span { display:inline-block; white-space:nowrap; background:#fff; color:#111; font-size:11px; padding:1px 5px; border-radius:6px; border:1px solid #111; }
-  .devtag span { display:inline-block; white-space:nowrap; background:#16303f; color:#fff; font-size:12px; padding:2px 6px; border-radius:6px; border:2px solid #fff; transform:translate(8px,-24px); }
+  .devtag span { display:inline-block; white-space:nowrap; background:#16303f; color:#fff; font-size:12px; padding:2px 6px; border-radius:6px; border:2px solid #fff; transform:translate(calc(-100% - 12px),-50%); }   /* v0.8.1：写真番号の札（点の右）と重ならないよう、点の左に */
   .kdgrid { display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-top:8px; }
   .kdph { position:relative; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#f4f6f8; padding:0; font:inherit; text-align:left; }
   .kdph img { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; }
@@ -133,6 +142,7 @@
   .gapnote { font-size:13px; background:#eef3f6; border-radius:8px; padding:8px 10px; margin:8px 0; }
   .modelabel { font-size:11px; color:var(--mute); margin:0 0 2px 2px; }
   .modelabel:has(+ #modebar.hidden) { display:none; }
+  .modelabel.off { display:none; }
   main { padding:12px; max-width:640px; margin:0 auto; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
   .card h2 { font-size:15px; margin:0 0 8px; color:var(--mute); }
@@ -165,6 +175,7 @@
   .avg { font-size:15px; margin-top:6px; }
   .avg b { font-size:22px; }
   .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  #routeChips:not(:empty) { margin-top:10px; }   /* v0.8.2：路線の候補が入力欄にくっつかないように */
   .chip { border:1px solid var(--line); background:#fff; border-radius:18px; padding:8px 14px; font-size:16px; }
   .chip.on { background:var(--acc); color:#fff; border-color:var(--acc); font-weight:bold; }
   .field { margin-bottom:12px; }
@@ -224,6 +235,8 @@
   .fnslot.empty { border-style:solid; color:#1764b5; }
   .fnslot.add { min-height:44px; font-size:14px; background:#fff; }
   .arrowmk b.fn { border:3px solid #7fd3ff; font-weight:bold; }
+  .arrowmk.oth b { border:1.5px dashed #16303f; background:#f1f4f6; }
+  .arrowmk.past b { border:1.5px solid #8a8f94; background:#eceeef; color:#555; } .arrowmk.oth b.x { border:2px dashed #fff; background:#16303f; }
   .brokenph { height:120px; min-width:120px; padding:6px 10px; border-radius:8px; background:#e8eef3; color:#16303f; border:2px dashed #16303f; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; font-weight:bold; line-height:1.4; cursor:pointer; }
   .brokenph.bad { background:#fff; border-color:#b00020; color:#b00020; }
   .reccard .brokenph { width:72px; height:54px; min-width:0; padding:2px; font-size:9px; border-width:1px; }
@@ -331,6 +344,7 @@
   <button id="gear" aria-label="設定" style="font-size:19px;padding:6px 11px">⚙</button>
 </header>
 <div id="sync">読み込み中…</div>
+<div id="saveErr" class="hidden">⚠ スマホに保存できませんでした。電波のある所で送れるまで、アプリを閉じないでください（スマホの空き容量も確かめてください）</div>
 <div id="oldSrv" class="hidden"></div>
 <div id="devBar" class="hidden"></div>
 <main>
@@ -383,12 +397,12 @@
     <div id="recLock" class="hidden"><div id="recLockText"></div><button type="button" class="btn go" id="recUnlock">✎ この票を直す</button></div>
     <div id="recEditing" class="hidden"></div>
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 id="recTitle" style="margin:0">写真番号</h2><span id="recTime" style="font-size:12px;color:var(--mute)"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="recTitle" style="margin:0">写真番号</h2><span style="display:flex;align-items:center;gap:8px"><span id="recTime" style="font-size:12px;color:var(--mute)"></span><button type="button" class="minibtn rohide" id="recLibBtn" title="アルバムから入れる" aria-label="アルバムから入れる">🖼</button></span></div>
       <div class="photos" id="recPhotos" style="margin-top:8px"></div>
-      <button class="btn sub wide" id="recAddPhoto">＋ 写真を追加</button>
+      <button class="btn sub wide" id="recAddPhoto">📷 撮って追加</button>
       <div class="xrow rofix"><label class="crossrow" id="fCross"><input type="checkbox" id="recCross"> 📏 ポール横断</label><label class="crossrow" id="fFN"><input type="checkbox" id="recFN"> 🔭 遠景近景</label></div>
       <div class="fnslots hidden rofix" id="recFNSlots"></div>
-      <input type="file" id="fnFile" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="fnFile" accept="image/*" capture="environment" class="hidden"><input type="file" id="fnLib" accept="image/*" class="hidden">
       <input type="file" id="recFile" accept="image/*" capture="environment" class="hidden"><input type="file" id="recLib" accept="image/*" class="hidden">
     </div>
     <div class="card rofix" style="display:flex;flex-direction:column">
@@ -425,11 +439,12 @@
     <div id="gkBar" class="hidden"><div id="gkBtns"></div><div id="gkHint"></div></div>
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
+      <div id="mapShow"></div>
+      <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab">航空写真</span><input type="range" id="mapPhotoOp" min="0" max="100" step="5" value="50"><b id="mapPhotoPct">50%</b></div>
+      <div id="mapDocList" class="hidden"></div>
       <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
       <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
       <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
-      <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab">航空写真</span><input type="range" id="mapPhotoOp" min="0" max="100" step="5" value="50"><b id="mapPhotoPct">50%</b></div>
-      <div id="mapDocList" class="hidden"></div>
       <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
@@ -572,19 +587,91 @@
 </div>
 <script src="leaflet.js"></script>
 <script>
+/* v0.9：記録の置き場所（5MB対策）
+ *  前は記録・送信待ちなどをブラウザの小さいメモ帳（localStorage・約5MB、全業務で共用）に入れていた。いっぱいになると黙って保存に失敗していた
+ *  → 大きい倉庫（IndexedDB の chosa-kv。端末の空き容量に応じてGB単位）に入れる。読み書きは手元の写し（STORE）で行い、倉庫へはすぐ後ろで書く
+ *  ・メモ帳には小さい値（2000字未満：接続コード・設定など）だけ控えとして残す（倉庫が使えない端末でも最低限動くように）
+ *  ・最初に開いたとき、メモ帳にある記録を倉庫へ引っ越す（メモ帳にある値は倉庫の値より優先して写す）
+ *  ・保存に失敗したら赤い帯を出す
+ *  ・倉庫の用意ができてから、アプリ本体（下の2つの script）を動かす */
+(function () {
+  const STORE = new Map(), pend = new Map(); let db = null, timer = null, bad = false;
+  const SMALL = 2000;
+  const showFail = on => { bad = on; const b = document.getElementById('saveErr'); if (b) b.classList.toggle('hidden', !on); };
+  const mirror = (k, v) => { try { if (v === null || v.length >= SMALL) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
+  function flush() {          // 戻り値：倉庫に書き終わったら解決する Promise（業務の切り替えなど、書き終わってから開き直すときに使う）
+    clearTimeout(timer); timer = null;
+    if (!pend.size) return Promise.resolve();
+    if (!db) {           // 倉庫が使えない端末：前と同じくメモ帳へ（失敗したら帯）
+      const items = [...pend]; pend.clear();
+      items.forEach(([k, v]) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { showFail(true); } });
+      return Promise.resolve();
+    }
+    const items = [...pend]; pend.clear();
+    return new Promise(res => {
+      try {
+        const t = db.transaction('kv', 'readwrite'), st = t.objectStore('kv');
+        items.forEach(([k, v]) => { if (v === null) st.delete(k); else st.put({ k, v }); });
+        t.oncomplete = () => { if (bad) showFail(false); res(); };
+        t.onerror = t.onabort = () => { items.forEach(([k, v]) => { if (!pend.has(k)) pend.set(k, v); }); showFail(true); res(); };
+      } catch (e) { items.forEach(([k, v]) => { if (!pend.has(k)) pend.set(k, v); }); showFail(true); res(); }
+    });
+  }
+  const later = () => { if (!timer) timer = setTimeout(flush, 30); };
+  window.KV = {
+    getItem: k => STORE.has(k) ? STORE.get(k) : null,
+    setItem(k, v) { v = String(v); STORE.set(k, v); mirror(k, v); pend.set(k, v); later(); },
+    removeItem(k) { STORE.delete(k); mirror(k, null); pend.set(k, null); later(); },
+    keys: () => [...STORE.keys()],
+    flush, failed: () => bad, kind: () => db ? 'idb' : 'ls',
+    size: () => { let n = 0; STORE.forEach((v, k) => n += v.length + k.length); return n; }
+  };
+  addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  function runApp() {
+    document.querySelectorAll('script[type="text/x-chosa"]').forEach(o => { const sc = document.createElement('script'); sc.textContent = o.textContent; o.after(sc); });
+  }
+  function migrate() {          // メモ帳 → 倉庫（メモ帳にある値を優先）
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (!k.startsWith('chosa:')) return;
+        const v = localStorage.getItem(k); if (v === null) return;
+        if (STORE.get(k) !== v) { STORE.set(k, v); pend.set(k, v); }
+        if (db && v.length >= SMALL) { try { localStorage.removeItem(k); } catch (e) {} }     // 大きい記録はメモ帳から消して空ける
+      });
+    } catch (e) {}
+    if (db) flush();
+  }
+  function fallback() { db = null; try { Object.keys(localStorage).forEach(k => { if (k.startsWith('chosa:')) STORE.set(k, localStorage.getItem(k)); }); } catch (e) {} runApp(); }
+  try {
+    const rq = indexedDB.open('chosa-kv', 1);
+    rq.onupgradeneeded = () => { if (!rq.result.objectStoreNames.contains('kv')) rq.result.createObjectStore('kv', { keyPath: 'k' }); };
+    rq.onerror = rq.onblocked = () => fallback();
+    rq.onsuccess = () => {
+      db = rq.result;
+      try {
+        const g = db.transaction('kv', 'readonly').objectStore('kv').getAll();
+        g.onsuccess = () => { (g.result || []).forEach(r => STORE.set(r.k, r.v)); migrate(); runApp(); };
+        g.onerror = () => fallback();
+      } catch (e) { fallback(); }
+    };
+  } catch (e) { fallback(); }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}     // 空き容量が少ないときにブラウザが消さないよう頼む
+})();
+</script>
+<script type="text/x-chosa">
 "use strict";
 /* ---------------- 設定・保存 ---------------- */
 const $ = id => document.getElementById(id);
 /* 業務（スプレッドシート）ごとに記録を分けて持つ。最初の業務は今までどおりの置き場所（BIZ = ''）
    業務にかかわらず共通のもの：設定・候補の回数・自分の候補・工種の追加・入力者・業務の一覧 */
-const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today']);
-let BIZ = (() => { try { return JSON.parse(localStorage.getItem('chosa:biz')) || ''; } catch (e) { return ''; } })();
+const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today', 'bizSeen', 'notice415']);
+let BIZ = (() => { try { return JSON.parse(KV.getItem('chosa:biz')) || ''; } catch (e) { return ''; } })();
 const PFX = (b = BIZ) => 'chosa:' + (b ? b + '|' : '');
 const lsKey = k => GLOBAL_KEYS.has(k) ? 'chosa:' + k : PFX() + k;
 const LS = {
-  get(k, d) { try { const v = localStorage.getItem(lsKey(k)); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(lsKey(k), JSON.stringify(v)); } catch (e) {} },
-  del(k) { try { localStorage.removeItem(lsKey(k)); } catch (e) {} }
+  get(k, d) { try { const v = KV.getItem(lsKey(k)); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { KV.setItem(lsKey(k), JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { KV.removeItem(lsKey(k)); } catch (e) {} }
 };
 let CFG = LS.get('cfg', null);          // 最後に取得した設定（電波がなくても開けるように）
 let TYPE = null, PLOT = null, STATE = null;
@@ -599,7 +686,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.8β';
+const VERSION = 'v0.9β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -611,9 +698,9 @@ async function call(fn, ...args) {
   try {
     // text/plain で送る（Googleの受け付け口に、別の場所の画面から送るための決まった形）
     const r = await fetch(CONN.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                                      body: JSON.stringify({ key: CONN.key, fn, args }), signal: ctl.signal, redirect: 'follow' });
+                                      body: JSON.stringify(Object.assign({ key: CONN.key, fn, args }, CONN.b ? { b: CONN.b } : {})), signal: ctl.signal, redirect: 'follow' });
     const j = await r.json();
-    if (!j.ok) { const e = new Error(j.error || 'エラー'); e.server = true; throw e; }
+    if (!j.ok) { const e = new Error(j.error === 'BIZ' ? 'KEY' : (j.error || 'エラー')); e.server = true; throw e; }     // BIZ＝登録されていない業務（マスターから外した等）も、使えない接続コードとして扱う
     keyBad = false;
     return j.result;
   } finally { clearTimeout(timer); }
@@ -624,7 +711,7 @@ function parseConn(text) {               // 接続コード（またはそれを
   try {
     const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((t.length + 3) % 4));
     const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
-    if (o && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(o.a) && o.k && o.k.length >= 16) return { api: o.a, key: o.k, name: o.n || '' };
+    if (o && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(o.a) && o.k && o.k.length >= 16) return Object.assign({ api: o.a, key: o.k, name: o.n || '' }, o.b ? { b: String(o.b) } : {});     // v0.9：マスターから作った業務は業務ID（b）も
   } catch (e) {}
   return null;
 }
@@ -1115,10 +1202,10 @@ function renameFlow(old) {
   });
 }
 function moveLocal(type, from, to) {   // スマホに置いている値・入力途中の数字を新しい番号へ移す
-  Object.keys(localStorage).forEach(k => {
+  KV.keys().forEach(k => {
     for (const pre of ['plot:', 'draft:', 'draftf:', 'extra:'].map(x => PFX() + x)) {
       const head = pre + type + ':' + from;
-      if (k === head || k.startsWith(head + ':')) { localStorage.setItem(pre + type + ':' + to + k.slice(head.length), localStorage.getItem(k)); localStorage.removeItem(k); }
+      if (k === head || k.startsWith(head + ':')) { KV.setItem(pre + type + ':' + to + k.slice(head.length), KV.getItem(k)); KV.removeItem(k); }
     }
   });
 }
@@ -1153,7 +1240,7 @@ function deleteFlow(plot) {
 }
 function doDelete(plot) {
   record({ kind: 'plot', plot, action: '削除' });
-  ['draft:', 'draftf:', 'extra:'].map(x => PFX() + x).forEach(pre => Object.keys(localStorage).filter(k => k.startsWith(pre + TYPE + ':' + plot + ':') || k === pre + TYPE + ':' + plot).forEach(k => localStorage.removeItem(k)));
+  ['draft:', 'draftf:', 'extra:'].map(x => PFX() + x).forEach(pre => KV.keys().filter(k => k.startsWith(pre + TYPE + ':' + plot + ':') || k === pre + TYPE + ':' + plot).forEach(k => KV.removeItem(k)));
   const cur = LS.get('current', null); if (cur && cur.plot === plot) LS.del('current');
   if (PLOT === plot) showHome(); else renderPlotList();
   showUndo('区画 ' + plot + ' を削除しました', () => { record({ kind: 'plot', plot, action: '復元' }); toast('区画 ' + plot + ' を元に戻しました'); });
@@ -1345,7 +1432,7 @@ $('wipe').onclick = () => {           // 個人のスマホに調査データを
   const rj = LS.get('rejected', []).length + (typeof videoPending === 'function' ? videoPending().length : 0);
   if (queue.length || photoPending || rj) { alert('まだ送れていない入力が ' + (queue.length + photoPending + rj) + ' 件あります。' + (rj ? '受け付け側を新しくしてから ⚙「送れなかった記録を送り直す」を押し、' : '') + '電波のある所で「すべて保存済み」になってから押してください。'); return; }
   if (!confirm('このスマホに残っている調査の記録を消します。\n（スプレッドシートの記録は消えません）')) return;
-  Object.keys(localStorage).filter(k => bizOwns(k, BIZ) && ![lsKey('cfg'), lsKey('conn'), lsKey('targets'), lsKey('tileAreas')].includes(k)).forEach(k => localStorage.removeItem(k));
+  KV.keys().filter(k => bizOwns(k, BIZ) && ![lsKey('cfg'), lsKey('conn'), lsKey('targets'), lsKey('tileAreas')].includes(k)).forEach(k => KV.removeItem(k));
   LS.set('plots:' + TYPE, (CFG.visited || {})[TYPE] || []);
   clearPhotos().then(() => { refreshPending(); toast('このスマホの記録を消しました'); renderPlotList(); });
 };
@@ -1445,9 +1532,9 @@ async function start() {
 }
 // start() は調査票の部分（下のscript）を読み込んだあとに呼ぶ
 // 画面をスマホに保存して、電波がなくても開けるようにする
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) { const reg = () => navigator.serviceWorker.register('sw.js').catch(() => {}); if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg); }
 </script>
-<script>
+<script type="text/x-chosa">
 "use strict";
 /* =====================================================================
  *  調査票（写真＋内容＋位置）
@@ -1464,8 +1551,8 @@ let lastFix = null, geoWatch = null, heading = null, headingOn = false, curRec =
 const idb = (() => {
   let dbp = null;
   const open = () => dbp || (dbp = new Promise((res, rej) => {
-    const r = indexedDB.open('chosa', 4);
-    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('xops')) db.createObjectStore('xops', { keyPath: 'id' }); };
+    const r = indexedDB.open('chosa', 5);
+    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('xops')) db.createObjectStore('xops', { keyPath: 'id' }); if (!db.objectStoreNames.contains('refs')) db.createObjectStore('refs', { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
   const txs = async (store, mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); };
@@ -1598,7 +1685,7 @@ async function xopsClear() {
 }
 let RC = { k: null };
 function recsAll() {
-  let raw = ''; try { raw = localStorage.getItem(lsKey('srv:ops')) || ''; } catch (e) {}
+  let raw = ''; try { raw = KV.getItem(lsKey('srv:ops')) || ''; } catch (e) {}
   const k = BIZ + '|' + xver + '|' + raw.length + '|' + raw.slice(-48) + '|' + devNo();
   if (RC.k === k) return RC.all;
   const own = srvOps(), ids = new Set(own.map(o => o.id));
@@ -1635,7 +1722,7 @@ async function syncSrv(force) {
 function afterSync() {
   if (!$('srvList').classList.contains('hidden')) renderList();
   if (curRec && !$('srvRec').classList.contains('hidden')) { const s = recsAll()[curRec]; if (s) paintLock(s); }
-  if (typeof mainMap !== 'undefined' && mainMap && !$('mapView').classList.contains('hidden')) { try { drawRecArrows(mainMap); refreshTargets(); } catch (e) {} }
+  if (typeof mainMap !== 'undefined' && mainMap && !$('mapView').classList.contains('hidden')) { try { renderMapShow(); drawRecArrows(mainMap); refreshTargets(); } catch (e) {} }
   try { renderDevBar(); } catch (e) {}
   prefetchThumbs();
 }
@@ -1907,7 +1994,7 @@ async function newRec(file, pend, extra) {
   if (portrait && !extra.nocho) toast('縦向きの写真です（台帳の枠は横長なので、次はスマホを横にして撮ると収まりがよくなります）');
   let fix = pend && pend.fix || freshFix(15);
   if (!fix && !extra.quick) fix = await waitFix(20);                     // 位置がまだなら少し待つ（待たずに保存もできる）
-  const no = LS.get('srv:no', 0) + 1; LS.set('srv:no', no);
+  const no = nextPhotoNo(); LS.set('srv:no', no);
   const rec = 'r' + uuid().slice(3), pid = 'p' + uuid().slice(3);
   if (extra.hold) { holdNew = rec; curRec = rec; }
   if (blob) await idb.put({ pid, rec, blob, sent: false, at: nowIso(), name: photoName(no, pid) });
@@ -1922,6 +2009,14 @@ async function newRec(file, pend, extra) {
   if (extra.text) recordSrv('内容', rec, { field: '内容', value: extra.text });
   await refreshPending(); uploadPhotos();
   return { rec, no, hit, fix, label: (data.devNo ? data.devNo + '-' : '') + no };
+}
+/* 写真番号の続き（v0.9）：振った番号は二度と使わない（消した票は欠番のまま）。
+   スマホが覚えている番号と、受け取った記録（消した票も含む）の中のこの機種番号のいちばん大きい番号の、大きいほう＋1。
+   「このスマホに残っている記録を消す」や、同じ接続コードを別のスマホに入れ直しても1に戻らない */
+function nextPhotoNo() {
+  const mn = devNo(), me = devId(); let mx = Number(LS.get('srv:no', 0)) || 0;
+  Object.values(recsAll()).forEach(s => { if (mn ? (s.devNo || '') === mn : s.dev === me) { const n = Number(s.no); if (n > mx) mx = n; } });
+  return mx + 1;
 }
 function waitFix(sec) {
   return new Promise(res => {
@@ -1939,23 +2034,24 @@ function waitFix(sec) {
 
 /* ---------- 1件の調査票 ---------- */
 let recFrom = null;     // 調査票を開いた元（耕土厚の区画から開いたら、戻るとその区画へ）
-function backFromRec() { const f = recFrom; recFrom = null; if (f && f.plot) { curRec = null; $('srvRec').classList.add('hidden'); openPlot(f.plot); } else showSurvey(); }
+function backFromRec() { const f = recFrom; recFrom = null; if (f && f.map) { curRec = null; $('srvRec').classList.add('hidden'); showMap(); return; } if (f && f.plot) { curRec = null; $('srvRec').classList.add('hidden'); openPlot(f.plot); } else showSurvey(); }
 function refreshView() { if (PLOT) render(); else renderList(); }
 async function openRec(id, fresh, from) {
   const s = recsAll()[id]; if (!s) return;
   if (from !== undefined) recFrom = from;
   if (PLOT && from === undefined && !curRec) recFrom = { plot: PLOT };
   PLOT = null;
+  if (curRec !== id) editOK.clear();         // 「✎ この票を直す」はその票を開いている間だけ（開き直すと、また見るだけ）
   curRec = id; holdNew = null;
   ['home', 'plotView', 'srvList', 'mapView', 'drawView'].forEach(x => $(x).classList.add('hidden')); $('modebar').classList.add('hidden'); dockOn('');
-  $('srvRec').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = '← 一覧';
+  $('srvRec').classList.remove('hidden'); $('back').classList.remove('hidden'); $('back').textContent = recFrom && recFrom.map ? '← 位置図' : '← 一覧';
   $('title').textContent = '調査票 No.' + recNo(s); window.scrollTo(0, 0);
   $('recTitle').textContent = '写真番号 ' + recNo(s); $('recTime').textContent = String(s.created).replace('T', ' ').slice(0, 16);
   $('recPlot').value = s.plot; $('recTarget').value = s.target || ''; renderTargetField(); openInput(s); paintLock(s);
   const dl = $('plotNames'); dl.innerHTML = ''; try { currentPlots().forEach(e => { const o = document.createElement('option'); o.value = e.plot; dl.append(o); }); } catch (e) {}
   const ph = $('recPhotos'); ph.innerHTML = '';
   for (const pid of recMainPhotos(s)) { const u = await photoUrl(pid); const im = phImg(pid, u); im.onclick = () => photoSheet(id, pid, u || im.src); ph.append(im); }
-  $('recCross').checked = !!s.cross;
+  $('recCross').checked = !!s.cross; paintChecks($('srvRec'));
   renderFN(s);
   renderPos();
   if (fresh) setTimeout(() => $('recText').focus(), 300);
@@ -2067,14 +2163,22 @@ async function recAddFrom(input) {
 }
 $('recFile').onchange = () => recAddFrom($('recFile'));
 $('recLib').onchange = () => recAddFrom($('recLib'));
-$('recAddPhoto').onclick = () => sheet(box => {
-  box.append(el('h3', '', '＋ 写真を追加'));
-  const a = el('button', 'btn acc', '📷 撮る'); a.id = 'addCam'; a.onclick = () => { sheet(null); $('recFile').value = ''; $('recFile').click(); };
-  const b = el('button', 'btn sub', '🖼 写真アプリから選ぶ'); b.id = 'addLib'; b.onclick = () => { sheet(null); $('recLib').value = ''; $('recLib').click(); };
-  const p = el('p', '', '間違えてiPhoneの普通のカメラで撮った写真も、ここから入れられます。写真に位置・向き・時刻があれば使います（なければ「今ここ」で合わせてください）。'); p.style.cssText = 'font-size:12px;color:var(--mute)';
-  const c = el('button', 'btn sub', 'やめる'); c.onclick = () => sheet(null);
-  box.append(a, b, p, c);
-});
+/* v0.9：写真の追加は撮るのが主（押すとすぐカメラ）。アルバムからは右上の🖼から（遠景近景を入れているときは、どこに入れるかを聞く） */
+$('recAddPhoto').onclick = () => { $('recFile').value = ''; $('recFile').click(); };
+$('recLibBtn').onclick = () => {
+  const s = recsAll()[curRec]; if (!s || recLocked(curRec)) return;
+  const lib = () => { $('recLib').value = ''; $('recLib').click(); };
+  if (!$('recFN').checked) { lib(); return; }
+  sheet(box => {
+    box.append(el('h3', '', '🖼 アルバムから：どこに入れますか？'));
+    const a = el('button', 'btn acc', '写真として追加'); a.id = 'libMain'; a.onclick = () => { sheet(null); lib(); }; box.append(a);
+    const kinds = fnKinds(s), lastNear = kinds[kinds.length - 1];
+    kinds.forEach(k => { const b = el('button', 'btn sub', k + (fnPhoto(s, k) ? '（差し替え）' : '')); b.dataset.k = k; b.onclick = () => { sheet(null); fnLibPick(k); }; box.append(b); });
+    if (fnPhoto(s, lastNear)) { const k = '近景' + (kinds.filter(x => x.startsWith('近景')).length + 1), b = el('button', 'btn sub', k + '（足す）'); b.dataset.k = k; b.onclick = () => { sheet(null); fnLibPick(k); }; box.append(b); }
+    const pp = el('p', '', '写真に位置・向きが入っていれば使います（なければ位置なしで入れて、あとで「📍 この写真の位置・向きを直す」）'); pp.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(pp);
+    const c = el('button', 'btn sub', 'やめる'); c.onclick = () => sheet(null); box.append(c);
+  });
+};
 /* 写真なしの調査票：番号と位置（GPS）だけ先に作り、写真はあとから入れる */
 $('srvBlank').onclick = async () => {
   const r = await newRec(null, { heading, fix: freshFix(15), at: Date.now() }, { quick: true, hold: true });
@@ -2086,7 +2190,7 @@ $('recCross').onchange = () => { const v = $('recCross').checked; recordSrv('内
 function fnKinds(s) { const used = s.photos.map(p => s.pk[p] && s.pk[p].kind).filter(Boolean); let n = 1; while (used.includes('近景' + (n + 1))) n++; const l = ['遠景', '近景']; for (let i = 2; i <= n; i++) l.push('近景' + i); return l; }
 function fnPhoto(s, kind) { return s.photos.find(pid => s.pk[pid] && s.pk[pid].kind === kind) || null; }
 async function renderFN(s) {
-  $('recFN').checked = !!s.fn || s.photos.some(p => s.pk[p] && s.pk[p].kind);
+  $('recFN').checked = !!s.fn || s.photos.some(p => s.pk[p] && s.pk[p].kind); paintChecks($('srvRec'));
   const box = $('recFNSlots'); box.classList.toggle('hidden', !$('recFN').checked); box.innerHTML = '';
   if (!$('recFN').checked) return;
   const kinds = fnKinds(s);
@@ -2100,19 +2204,31 @@ async function renderFN(s) {
 }
 let fnPend = null;
 function fnShoot(kind) { fnPend = { kind, heading, fix: freshFix(15) }; $('fnFile').value = ''; $('fnFile').click(); }
-$('fnFile').onchange = async () => {
-  const file = $('fnFile').files[0]; if (!file || !curRec || !fnPend) return;
-  const p = fnPend; fnPend = null;
-  const old = fnPhoto(recsAll()[curRec], p.kind);
-  const pid = await addPhotoTo(curRec, file, { kind: p.kind, fix: p.fix || freshFix(15), heading: p.heading });
+async function fnPut(file, kind, fix, hd, word) {
+  const old = fnPhoto(recsAll()[curRec], kind);
+  const pid = await addPhotoTo(curRec, file, { kind, fix, heading: hd });
   if (!pid) return;
   if (old) recordSrv('写真外す', curRec, { pid: old });
   if (!recsAll()[curRec].fn) recordSrv('内容', curRec, { field: '遠景近景', value: true });
-  openRec(curRec); toast(p.kind + 'を撮りました' + (p.fix ? '（位置 ±' + Math.round(p.fix.acc) + 'm）' : '（位置なし）'));
+  openRec(curRec); toast(kind + word + (fix ? '（位置' + (fix.acc != null ? ' ±' + Math.round(fix.acc) + 'm' : '：写真の情報') + '）' : '（位置なし）'));
+}
+$('fnFile').onchange = async () => {
+  const file = $('fnFile').files[0]; if (!file || !curRec || !fnPend) return;
+  const p = fnPend; fnPend = null;
+  await fnPut(file, p.kind, p.fix || freshFix(15), p.heading, 'を撮りました');
+};
+/* アルバムから遠景・近景を入れる（v0.9）：写真の情報（EXIF）の位置・向きを使う */
+let fnLibKind = null;
+function fnLibPick(kind) { fnLibKind = kind; $('fnLib').value = ''; $('fnLib').click(); }
+$('fnLib').onchange = async () => {
+  const file = $('fnLib').files[0]; if (!file || !curRec || !fnLibKind) return;
+  const kind = fnLibKind; fnLibKind = null;
+  const ex = await readExif(file);
+  await fnPut(file, kind, ex && ex.lat != null ? { lat: ex.lat, lon: ex.lon, acc: null } : null, ex && ex.dir != null ? ex.dir : null, 'をアルバムから入れました');
 };
 $('recFN').onchange = () => {
   const v = $('recFN').checked, s = recsAll()[curRec];
-  if (!v && s.photos.some(p => s.pk[p] && s.pk[p].kind)) { $('recFN').checked = true; toast('遠景・近景の写真があるので外せません（写真を外してから）'); return; }
+  if (!v && s.photos.some(p => s.pk[p] && s.pk[p].kind)) { $('recFN').checked = true; paintChecks($('srvRec')); toast('遠景・近景の写真があるので外せません（写真を外してから）'); return; }
   recordSrv('内容', curRec, { field: '遠景近景', value: v }); renderFN(recsAll()[curRec]);
 };
 function fnMenu(id, kind, pid, url) {
@@ -3497,7 +3613,7 @@ function bizOwns(k, b) {                    // その業務の置き場所のキ
   if (b) return rest.startsWith(b + '|');
   return !rest.includes('|') && !GLOBAL_KEYS.has(rest);
 }
-function bizRaw(b, k, d) { try { const v = localStorage.getItem(PFX(b) + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+function bizRaw(b, k, d) { try { const v = KV.getItem(PFX(b) + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 function bizList() {
   const l = LS.get('bizList', []);
   if (!l.some(x => x.id === '')) l.unshift({ id: '' });           // 最初の業務
@@ -3507,17 +3623,20 @@ function bizList() {
              survey: (cfg && cfg.biz && cfg.biz.survey) || '現況調査', pending: bizRaw(x.id, 'queue', []).length, conn: !!conn };
   }).filter(x => x.conn || x.id === BIZ);
 }
-function bizSwitch(id) { try { localStorage.setItem('chosa:biz', JSON.stringify(id)); } catch (e) {} location.reload(); }
+function bizSwitch(id) { try { KV.setItem('chosa:biz', JSON.stringify(id)); } catch (e) {} KV.flush().then(() => location.reload()); }
 function bizAdd() {
   const id = 'b' + Date.now().toString(36);
   const l = LS.get('bizList', []); l.push({ id }); LS.set('bizList', l);
   bizSwitch(id);                              // 新しい業務は接続コードの登録画面から始まる
 }
 function bizRemove(b) {
-  Object.keys(localStorage).filter(k => bizOwns(k, b.id)).forEach(k => localStorage.removeItem(k));
+  const vids = (bizRaw(b.id, 'videos', []) || []).map(v => v.vid);        // v0.9：外した業務の動画の本体・図面も消す（前は残っていた）
+  KV.keys().filter(k => bizOwns(k, b.id)).forEach(k => KV.removeItem(k));
   LS.set('bizList', LS.get('bizList', []).filter(x => x.id !== b.id));
+  const seen = LS.get('bizSeen', {}); delete seen[b.id]; LS.set('bizSeen', seen);
   idb.every().then(l => l.filter(p => (p.biz || '') === b.id).forEach(p => idb.del(p.pid))).catch(() => {});
-  ['xops', 'thumbs'].forEach(store => idbTx(store, 'readonly', st => st.getAll()).then(l => { const ks = (l || []).filter(x => (x.biz || '') === b.id).map(x => x.id || x.pid); if (ks.length) idbTx(store, 'readwrite', st => { ks.forEach(k => st.delete(k)); }); }).catch(() => {}));     // v0.8：受け取ったほかの端末の票・写真も
+  ['xops', 'thumbs', 'docs'].forEach(store => idbTx(store, 'readonly', st => st.getAll()).then(l => { const ks = (l || []).filter(x => (x.biz || '') === b.id).map(x => x.id || x.pid); if (ks.length) idbTx(store, 'readwrite', st => { ks.forEach(k => st.delete(k)); }); }).catch(() => {}));
+  vids.forEach(v => { try { vdb.del(v); } catch (e) {} });
 }
 function bizSection(box) {
   box.append(el('h3', '', '業務（スプレッドシート）'));
@@ -3527,6 +3646,7 @@ function bizSection(box) {
     const sub = el('div', '', b.survey + (b.pending ? '・送信待ち ' + b.pending + '件（切り替えて電波のある所で開くと送ります）' : '')); sub.style.cssText = 'font-size:12px;color:var(--mute)';
     const left = el('div'); left.append(name, sub); r.append(left);
     const btns = el('div'); btns.style.cssText = 'display:flex;gap:6px';
+    if (cur) { const fin = el('button', 'minibtn', '終える…'); fin.onclick = () => bizFinish(b); btns.append(fin); }
     if (!cur) {
       const go = el('button', 'minibtn', '切り替える'); go.onclick = () => bizSwitch(b.id); btns.append(go);
       const rm = el('button', 'minibtn', '外す…');
@@ -3542,6 +3662,7 @@ function bizSection(box) {
     r.append(btns); box.append(r);
   });
   const add = el('button', 'btn sub', '＋ 業務を追加（接続コードを入れる）'); add.onclick = () => { sheet(null); bizAdd(); }; box.append(add);
+  refSection(box);
 }
 /* 調査の種類（スプレッドシートの「業務設定」で決める）：施設調査なら 対象・工種 を上に、現況調査なら 区画 を上に */
 function surveyKind() { return (CFG && CFG.biz && CFG.biz.survey) || '現況調査'; }
@@ -3666,7 +3787,8 @@ const DocLayer = L.Layer ? L.Layer.extend({
     const im = this._img = L.DomUtil.create('img', 'docov');
     im.src = this._url; im.style.cssText = 'position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;max-width:none;width:' + this._w + 'px;height:' + this._h + 'px;opacity:' + this._op;
     (map.getPane(this._pane || 'overlayPane') || map.getPanes().overlayPane).appendChild(im);
-    im.decoding = 'async';
+    im.decoding = 'async'; im.onload = im.onerror = () => this.fire('ready');
+    if (this._shown === false) im.style.visibility = 'hidden';
     if (map.options.zoomAnimation && L.Browser.any3d) { im.classList.add('leaflet-zoom-animated'); map.on('zoomanim', this._anim, this); } else map.on('zoomstart', this._hide, this);
     map.on('zoomend viewreset moveend', this._up, this); this._up();
   },
@@ -3677,6 +3799,7 @@ const DocLayer = L.Layer ? L.Layer.extend({
     this._img.style.transform = 'matrix(' + [(ex.x - o.x) / this._w, (ex.y - o.y) / this._w, (ey.x - o.x) / this._h, (ey.y - o.y) / this._h, o.x, o.y].join(',') + ')';
   },
   setOpacity(o) { this._op = o; if (this._img) this._img.style.opacity = o; },
+  setShown(on) { this._shown = !!on; if (this._img) this._img.style.visibility = on ? '' : 'hidden'; },     // v0.9：出し入れは作り直さず、見せる・隠すだけ
   setA(A) { this._A = A; this._up(); },
   _hide() { if (this._img) this._img.style.display = 'none'; },
   _up() {
@@ -3689,11 +3812,11 @@ const DocLayer = L.Layer ? L.Layer.extend({
 /* ---- 画像の置き場所（IndexedDB の docs） ---- */
 const docDb = {
   put: v => idbTx('docs', 'readwrite', st => st.put(Object.assign({ biz: BIZ }, v))),
-  get: k => idbTx('docs', 'readonly', st => st.get(k)),
+  get: k => idbTx('docs', 'readonly', st => st.get(k)).then(r => r && r.id ? r : null),
   del: k => idbTx('docs', 'readwrite', st => st.delete(k))
 };
 const docUrls = {};
-async function docUrl(id) { if (docUrls[id]) return docUrls[id]; const d = await docDb.get(id).catch(() => null); return d ? (docUrls[id] = URL.createObjectURL(d.blob)) : ''; }
+async function docUrl(id) { if (docUrls[id]) return docUrls[id]; const d = await docDb.get(id).catch(() => null); return d && d.blob ? (docUrls[id] = URL.createObjectURL(d.blob)) : ''; }     // ない図面（消した・ほかの端末で取り込んだ）は空
 /* PDF（1ページ目または選んだページ）を画像にする。pdf.js はこのときだけ読み込む */
 function loadPdfJs() {
   if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
@@ -4106,28 +4229,74 @@ $('situEnd').onclick = () => $('situBar').classList.add('hidden');
 $('situAgain').onclick = () => $('srvSitu').click();
 
 /* ---- 撮影方向の小さな矢印（地図に、調査票ごとに）。状況写真は細い矢印、調査票は太い矢印＋番号 ---- */
-function arrowIcon(h, situ, no, cross) {
-  const w = situ ? 2.2 : 3.6, len = situ ? 16 : 20;
+function arrowIcon(h, situ, no, cross, other) {      // other：ほかの端末の票（黒い矢印・点線の札。自分の票は白い矢印）／'past'＝過去の調査（灰色）
+  const w = situ ? 2.2 : 3.6, len = situ ? 16 : 20, ec = other ? '#fff' : '#111', fc = other === 'past' ? '#8a8f94' : other ? '#111' : '#fff';
   const svg = '<svg width="44" height="44" viewBox="-22 -22 44 44" style="transform:rotate(' + h + 'deg)"><g stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="#111" stroke-width="' + (w + 2.5) + '" fill="none"/>' +
-    '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="#fff" stroke-width="' + w + '" fill="none"/>' +
+    '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="' + ec + '" stroke-width="' + (w + 2.5) + '" fill="none"/>' +
+    '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="' + fc + '" stroke-width="' + w + '" fill="none"/>' +
     (cross ? '<path d="M-14 0 L14 0" stroke="#111" stroke-width="7"/><path d="M-14 0 L14 0" stroke="#fff" stroke-width="3"/>' : '') +       // ポール横断：撮影方向と直角の横断線
     '<circle r="' + (situ ? 3 : 4) + '" fill="#fff" stroke="#111" stroke-width="1.5"/></g></svg>';
-  return L.divIcon({ className: 'arrowmk', html: svg + (situ ? '' : cross ? '<b class="x">📏 ' + no + '</b>' : '<b>' + no + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
+  return L.divIcon({ className: 'arrowmk' + (other === 'past' ? ' past' : other ? ' oth' : ''), html: svg + (situ ? '' : cross ? '<b class="x">📏 ' + no + '</b>' : '<b>' + no + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
+}
+/* ---- 位置図に出す日・だれ（v0.9・R31）：一覧の絞り込みとは別。日ごと・午前午後ごと、自分・機種ごとにいくつでも選べる。
+   開いた日は「今日（午前・午後）・全員」。工種・分類は一覧の絞り込みに合わせる。オフの分は描かないので重くならない ---- */
+function mapShowState() {
+  let st = LS.get('mapShow', null);
+  if (!st || st.set !== isoDay()) { st = { set: isoDay(), days: { [isoDay()]: { am: true, pm: true } }, who: {} }; LS.set('mapShow', st); }
+  return st;
+}
+const halfOf = at => Number(String(at || '').slice(11, 13)) < 12 ? 'am' : 'pm';
+function mapDayOK(at) { const d = mapShowState().days[String(at || '').slice(0, 10)]; return !!(d && d[halfOf(at)]); }
+function mapWhoOK(mine, dn) { const w = mapShowState().who || {}; return mine ? w.me !== false : w[dn || '他'] !== false; }
+function mapShown(s) {
+  const fk = LS.get('srv:filter', ''), fc = LS.get('srv:cat', '');
+  return mapDayOK(s.created) && mapWhoOK(s.mine !== false, s.devNo) && (!fk || (s.kind || '工種なし') === fk) && (!fc || (s.cat || '分類なし') === fc);
+}
+let mapShowMore = false;
+function mapShowRedraw() { renderMapShow(); if (typeof mainMap !== 'undefined' && mainMap) { drawRecArrows(mainMap); refreshTargets(); } }
+function renderMapShow() {
+  const box = $('mapShow'); if (!box) return; box.innerHTML = '';
+  const st = mapShowState(), all = Object.values(recsAll()).filter(s => !s.deleted), cnt = {}, who = {};
+  all.forEach(s => { const d = recDay(s); if (!d) return; const c = cnt[d] || (cnt[d] = { am: 0, pm: 0 }); c[halfOf(s.created)]++; const k = s.mine ? 'me' : (s.devNo || '他'); who[k] = (who[k] || 0) + 1; });
+  const days = Object.keys(cnt).sort().reverse(); if (!days.includes(isoDay())) days.unshift(isoDay());
+  const save = () => { LS.set('mapShow', st); mapShowRedraw(); };
+  const row1 = el('div', 'mshow'); row1.append(el('span', 'mlab', '出す日'));
+  (mapShowMore ? days : days.slice(0, 7)).forEach(d => {
+    const v = st.days[d] || { am: false, pm: false }, c = cnt[d] || { am: 0, pm: 0 }, g = el('span', 'mday');
+    const dc = el('button', 'chip' + (v.am || v.pm ? ' on' : ''), (d === isoDay() ? '今日' : Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10))) + ' ' + (c.am + c.pm)); dc.dataset.day = d;
+    dc.onclick = () => { const both = v.am && v.pm; st.days[d] = { am: !both, pm: !both }; save(); };
+    g.append(dc);
+    ['am', 'pm'].forEach(h => { const hc = el('button', 'chip half' + (v[h] ? ' on' : ''), (h === 'am' ? '午前' : '午後')); hc.dataset.day = d; hc.dataset.half = h; hc.onclick = () => { st.days[d] = Object.assign({ am: false, pm: false }, st.days[d], { [h]: !v[h] }); save(); }; g.append(hc); });
+    row1.append(g);
+  });
+  if (days.length > 7) { const m = el('button', 'chip', mapShowMore ? '▲ 閉じる' : '＋ 前の日（' + (days.length - 7) + '日）'); m.onclick = () => { mapShowMore = !mapShowMore; renderMapShow(); }; row1.append(m); }
+  box.append(row1);
+  const keys = Object.keys(who).filter(k => k !== 'me').sort();
+  if (keys.length) {
+    const row2 = el('div', 'mshow'); row2.append(el('span', 'mlab', 'だれ'));
+    ['me'].concat(keys).forEach(k => { const on = (st.who || {})[k] !== false, c = el('button', 'chip' + (on ? ' on' : ''), (k === 'me' ? '自分' : k + 'の端末') + ' ' + (who[k] || 0)); c.dataset.who = k; c.onclick = () => { st.who = Object.assign({}, st.who, { [k]: !on }); save(); }; row2.append(c); });
+    box.append(row2);
+  }
+  pastSources().then(src => {                       // v0.9（R30）：過去の調査（このスマホのほかの業務・読み込んだ戻す用ファイル）。初めは全部オフ
+    if (!src.length || !box.isConnected) return;
+    const on = LS.get('pastOn', {}), row3 = el('div', 'mshow'); row3.append(el('span', 'mlab', '過去'));
+    src.forEach(x => { const c = el('button', 'chip' + (on[x.id] ? ' on' : ''), x.name); c.dataset.past = x.id; c.onclick = () => { const o = LS.get('pastOn', {}); o[x.id] = !o[x.id]; LS.set('pastOn', o); renderMapShow(); if (typeof mainMap !== 'undefined' && mainMap) drawPast(mainMap); }; row3.append(c); });
+    box.append(row3);
+  });
 }
 function drawRecArrows(map) {
   if (!map || typeof L === 'undefined') return;
   if (!map._ra) map._ra = L.layerGroup().addTo(map);
   map._ra.clearLayers();
   Object.values(recs()).forEach(s => {
-    if (s.deleted || s.id === curRec || !recShown(s)) return;
+    if (s.deleted || s.id === curRec || !mapShown(s)) return;
     const a = adopted(s); if (a.lat == null) return;
     if (s.heading == null) L.marker([a.lat, a.lon], { interactive: false, icon: s.cross ? L.divIcon({ className: 'arrowmk', html: '<svg width="44" height="44" viewBox="-22 -22 44 44"><circle r="5" fill="#fff" stroke="#111" stroke-width="2"/></svg><b class="x">📏 ' + esc(recNo(s)) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] }) : L.divIcon({ className: 'arrowmk', html: '<svg width="12" height="12" viewBox="-6 -6 12 12"><circle r="4" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>', iconSize: [12, 12], iconAnchor: [6, 6] }) }).addTo(map._ra);
     else L.marker([a.lat, a.lon], { interactive: false, icon: arrowIcon(s.heading, s.situ, recNo(s), s.cross) }).addTo(map._ra);
   });
   // 遠景近景の枠で撮った写真：その写真を撮った所に、水色の縁＋「遠」「近」の字（色だけに頼らない）
   Object.values(recs()).forEach(s => {
-    if (s.deleted || !recShown(s)) return;
+    if (s.deleted || !mapShown(s)) return;
     s.photos.forEach(pid => {
       const k = s.pk && s.pk[pid]; if (!k || !k.kind) return;
       const p = k.pos || k.gps; if (!p) return;
@@ -4153,7 +4322,7 @@ function setOthers(l) { OTHERS = null; LS.set('others', l || []); }
 function othersList() {
   if (useSync() || XOPS.length) {          // v0.8〜：受け取った調査票から作る（上限なし・撮影方向つき）
     recsAll(); if (RC.oth && OTHERS !== null) return RC.oth;
-    RC.oth = Object.values(RC.all).filter(s => !s.mine && !s.deleted && s.devNo).map(s => { const a = adopted(s); return a.lat == null ? null : { no: s.no, devNo: s.devNo, dev: s.dev, name: s.name || '', at: String(s.created), lat: a.lat, lon: a.lon, target: s.target || '', heading: s.heading == null ? null : Number(s.heading) }; }).filter(Boolean);
+    RC.oth = Object.values(RC.all).filter(s => !s.mine && !s.deleted && s.devNo).map(s => { const a = adopted(s); return a.lat == null ? null : { id: s.id, no: s.no, devNo: s.devNo, dev: s.dev, name: s.name || '', at: String(s.created), lat: a.lat, lon: a.lon, target: s.target || '', heading: s.heading == null ? null : Number(s.heading), cross: !!s.cross, situ: !!s.situ, nocho: !!s.nocho, label: recNo(s) }; }).filter(Boolean);
     OTHERS = RC.oth; return RC.oth;
   }
   if (OTHERS === null) { const me = devId(), mine = devNo(); OTHERS = (LS.get('others', []) || []).filter(o => o.dev ? o.dev !== me : o.devNo !== mine); } return OTHERS;
@@ -4188,15 +4357,17 @@ function drawSiteLayer(map, g) {
   });
   videoMeta().filter(v => v.lat != null).forEach(v => L.marker([v.lat, v.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🎥 ' + esc(String(v.at).slice(11, 16)) + '</span>', iconSize: null }) }).addTo(g));
   (LS.get('konbini', { list: [] }).list || []).forEach(k => L.marker([k.lat, k.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🏪 ' + esc(k.brand) + '</span>', iconSize: null }) }).addTo(g));
-  const oth = othersList(); if (!oth.length) return;
+  const oth = othersList().filter(o => mapDayOK(o.at) && mapWhoOK(false, o.devNo)); if (!oth.length) return;     // v0.9：位置図に出す日・だれ
   const last = {};
-  const rr = Math.PI / 180;
   oth.forEach(o => {
-    if (o.heading != null && isFinite(o.heading)) {        // 撮影方向（v0.8〜）：自分の矢印より細く短い黒の線
-      const h = o.heading * rr, off = (dd, ang) => [o.lat + dd * Math.cos(ang) / 6371000 / rr, o.lon + dd * Math.sin(ang) / (6371000 * Math.cos(o.lat * rr)) / rr];
-      const tip = off(9, h); L.polyline([[o.lat, o.lon], tip], { color: '#111', weight: 2, interactive: false }).addTo(g); L.polyline([off(6, h - 0.4), tip, off(6, h + 0.4)], { color: '#111', weight: 2, interactive: false }).addTo(g);
-    }
-    L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); const k = o.devNo || o.dev; if (!last[k] || o.at > last[k].at) last[k] = o; });
+    const k = o.devNo || o.dev; if (!last[k] || o.at > last[k].at) last[k] = o;
+    if (o.label === undefined) { L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); return; }   // 古い受け付け側から来た点（番号・向きなし）
+    // v0.8.1：自分の票と同じ形（撮影方向の矢印・写真番号「05-12」・ポール横断📏）。ほかの端末の分は黒い矢印＋点線の札。タップでその票を開く（見るだけ）
+    const icon = o.heading != null && isFinite(o.heading) ? arrowIcon(o.heading, o.situ, o.label, o.cross, true)
+      : L.divIcon({ className: 'arrowmk oth', html: '<svg width="44" height="44" viewBox="-22 -22 44 44">' + (o.cross ? '<path d="M-14 0 L14 0" stroke="#fff" stroke-width="7"/><path d="M-14 0 L14 0" stroke="#111" stroke-width="3"/>' : '') + '<circle r="5" fill="#111" stroke="#fff" stroke-width="2"/></svg>' + (o.situ ? '' : o.cross ? '<b class="x">📏 ' + esc(o.label) + '</b>' : '<b>' + esc(o.label) + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
+    const mk = L.marker([o.lat, o.lon], { icon, interactive: !!o.id && map === mainMap, keyboard: false }).addTo(g);
+    if (o.id && map === mainMap) mk.on('click', () => { if (typeof GK !== 'undefined' && GK.mode) return; openRec(o.id, false, { map: true }); });
+  });
   const day = nowIso().slice(0, 10);
   Object.values(last).forEach(o => { if (String(o.at).slice(0, 10) !== day) return;
     L.marker([o.lat, o.lon], { interactive: false, icon: L.divIcon({ className: 'devtag', html: '<span>' + esc((o.devNo ? o.devNo + '機　' : '') + (o.name || '') + '　' + hhmm(o.at)) + '</span>', iconSize: null }) }).addTo(g); });
@@ -4485,6 +4656,26 @@ $('dayEnd').onclick = async () => {
 /* ---------- 写真をドライブへ送る（1枚ずつ。届いたら「送信済み」に） ---------- */
 let uploading = false;
 function b64(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(r.error); r.readAsDataURL(blob); }); }
+/* v0.9：スマホで取り込んだ図面（重ねる図面・図面タブの図面）も、現場フォルダの「図面」へ控えを送る（スマホにしかない状態をなくす）。
+   画像は1回だけ、位置合わせを直したらその分だけ送る。写真と同じく「写真もWi-Fiのときに手で送る」の設定に従う */
+let docSending = false;
+async function uploadDocs() {
+  if (docSending || !CONN || keyBad || !online || !serverVer || verLt(serverVer, '0.9')) return;
+  docSending = true;
+  try {
+    const sent = LS.get('docSent', {}), list = [];
+    uls().forEach(u => list.push({ id: u.id, name: u.name, w: u.w, h: u.h, A: u.A || null }));
+    drawings().forEach(d => (d.pages || []).forEach((pg, i) => list.push({ id: pg.id, name: d.name + ((d.pages || []).length > 1 ? '_' + (i + 1) + 'ページ' : ''), w: pg.w, h: pg.h, A: null })));
+    for (const u of list) {
+      const sig = JSON.stringify(u.A || null), was = sent[u.id];
+      if (was && was.sig === sig) continue;
+      const p = { id: u.id, name: u.name, at: nowIso(), w: u.w, h: u.h, A: u.A, devNo: devNo() };
+      if (!was) { const d = await docDb.get(u.id).catch(() => null); if (!d || !d.blob) continue; p.b64 = await b64(d.blob); }
+      await call('api_doc', p);
+      sent[u.id] = { sig, at: nowIso() }; LS.set('docSent', sent);
+    }
+  } catch (e) {} finally { docSending = false; }
+}
 async function uploadPhotos(force) {
   if (uploading || !CONN || keyBad) return;
   if (SET().photoManual && force !== true && !uploadPhotos.go) { if (typeof renderSendLines === 'function') renderSendLines(); return; }   // 写真もWi-Fiのときに手で送る設定
@@ -4497,10 +4688,12 @@ async function uploadPhotos(force) {
       let data;
       try { data = await b64(p.blob); if (!data) throw new Error('空'); }
       catch (e) { p.broken = true; await idb.put(p); photoError = ''; brokenNote(p); continue; }    // スマホの中で読めなくなった写真（iPhone）：飛ばして知らせる
-      const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: data });
+      const rr = recsAll()[p.rec];
+      const res = await call('api_photo', { pid: p.pid, rec: p.rec, name: p.name, b64: data, at: p.at, devNo: (rr && rr.devNo) || devNo() });     // v0.9：撮った日_機種のフォルダに入れるため
       p.sent = true; p.url = res && res.url || ''; await idb.put(p); photoError = '';
       await refreshPending(); online = true;
     }
+    uploadDocs();
   } catch (e) {
     if (e.server && e.message === 'KEY') keyBad = true; else if (!e.server) online = false;
     photoError = e.server && e.message !== 'KEY' ? e.message : '';      // 受け付け側が写真を受け取れなかった理由（帯に出す）
@@ -4564,7 +4757,7 @@ function showMap() {
     { const mc = mainMap.getContainer(); mc.addEventListener('touchmove', e => { if (mc.classList.contains('gklock') && e.touches.length === 1) e.preventDefault(); }, { passive: false }); }   // 描いている間、指1本で画面が上下に動かないように（iPhone）
     L.control.scale({ imperial: false }).addTo(mainMap);
   }
-  drawTargets(mainMap); drawRecArrows(mainMap); drawMe(); mapDocs(); drawTodoPins(mainMap); gkAttach(mainMap); gkDrawAll(); gkBar();
+  renderMapShow(); drawTargets(mainMap); drawRecArrows(mainMap); drawPast(mainMap); drawMe(); mapDocs(); drawTodoPins(mainMap); gkAttach(mainMap); gkDrawAll(); gkBar();
   setTimeout(() => {
     mainMap.invalidateSize();
     if (mainMap._placed) return; mainMap._placed = true;
@@ -5067,18 +5260,37 @@ setTimeout(() => { if (gkSess().groups.length && !GK.mode) gkCommit(); }, 0);
    図面ごとに表示・非表示（u.on）。一度作った図面の層は使い回す（開くたびに作り直さない＝表示が速い） */
 function docShown() { return uls().filter(u => u.A && u.on !== false); }
 function docBaseOf(map) { return map === mainMap ? mainLayers && mainLayers[mainMap._cur] : map === pickMap ? pickLayers && pickLayers[pickMap._cur] : map && map._base; }
+/* v0.9：重ねた図面の出し入れを速く
+ *  前は出すたびに大きな画像（長い辺4000px）を作り直し、見えていない地図（調査票の小さい地図・位置を選ぶ窓）の分まで作っていたので、iPhoneでは数秒かかった
+ *  → 一度作った図面は残して見せる・隠すだけ／今見えている地図にだけ作る（ほかの地図は開いたときに）／読み込み中は地図の上に知らせる */
+function docBusy(map, d) {
+  map._busy = Math.max(0, (map._busy || 0) + d);
+  let b = map._busyEl; if (!b) { b = map._busyEl = L.DomUtil.create('div', 'docbusy', map.getContainer()); b.textContent = '図面を読み込み中…'; }
+  b.style.display = map._busy ? '' : 'none';
+}
 function syncDocs(map) {
   if (!map || typeof L === 'undefined') return;
   const has = uls().some(u => u.A), on = has && LS.get('mapDocOn', true), want = on ? docShown() : [];
   if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 150;     // 航空写真（200）の下
   map._docs = map._docs || {};
-  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(','), keys = new Set(want.map(key));
-  Object.keys(map._docs).forEach(k => { if (!keys.has(k)) { const o = map._docs[k]; if (o && o !== 'loading') map.removeLayer(o); delete map._docs[k]; } });
+  const visible = map.getContainer().offsetParent !== null;
+  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(','), keys = new Set(want.map(key)), cur = {};
+  uls().filter(u => u.A).forEach(u => cur[key(u)] = true);
+  Object.keys(map._docs).forEach(k => {
+    if (keys.has(k)) return;
+    const o = map._docs[k];
+    if (cur[k]) { if (o && o !== 'loading' && o.setShown) o.setShown(false); return; }           // 出さないだけ：残して隠す
+    if (o && o !== 'loading') map.removeLayer(o); delete map._docs[k];                               // 消した・合わせ直した図面は捨てる
+  });
   want.forEach(async u => {
-    const k = key(u); if (map._docs[k]) return; map._docs[k] = 'loading';
-    const url = await docUrl(u.id); if (map._docs[k] !== 'loading') return;
-    if (!url) { delete map._docs[k]; return; }
-    map._docs[k] = new DocLayer(url, u.w, u.h, u.A, 1, 'docPane').addTo(map);
+    const k = key(u), o = map._docs[k];
+    if (o && o !== 'loading') { o.setShown(true); return; }
+    if (o === 'loading' || !visible) return;
+    map._docs[k] = 'loading'; docBusy(map, 1);
+    const url = await docUrl(u.id);
+    if (map._docs[k] !== 'loading' || !url) { if (map._docs[k] === 'loading') delete map._docs[k]; docBusy(map, -1); return; }
+    const ly = new DocLayer(url, u.w, u.h, u.A, 1, 'docPane'); ly.once('ready', () => docBusy(map, -1));
+    map._docs[k] = ly.addTo(map);
   });
   const base = docBaseOf(map); if (base) base.setOpacity(on && want.length ? LS.get('mapPhotoOp', 50) / 100 : 1);
 }
@@ -5090,10 +5302,10 @@ function mapDocs() {
   $('mapDocRow').classList.toggle('hidden', !all.length); $('mapDocList').classList.toggle('hidden', all.length < 2 || !on);
   $('mapDocOn').checked = on; $('mapPhotoOp').value = LS.get('mapPhotoOp', 50); $('mapPhotoPct').textContent = $('mapPhotoOp').value + '%';
   const box = $('mapDocList'); box.innerHTML = '';
-  all.forEach(u => {           // 図面ごとの表示・非表示（シート）
+  all.forEach((u, i) => {           // 図面ごとの表示・非表示（シート）
     const l = el('label', 'docchk'), c = el('input'); c.type = 'checkbox'; c.checked = u.on !== false; c.dataset.id = u.id;
     c.onchange = () => { ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { on: c.checked }) : x)); syncAllDocs(); };
-    l.append(c, document.createTextNode(u.name || '図面')); box.append(l);
+    l.append(c, document.createTextNode((i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')') + ' ' + (u.name || '図面'))); box.append(l);     // ①②…＝取り込んだ順
   });
   syncAllDocs();
 }
@@ -5314,7 +5526,7 @@ let videoSending = false;
 async function callLong(fn, arg) {           // 動画のかけら用（時間がかかるので長めに待つ）
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 180000);
   try {
-    const r = await fetch(CONN.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key: CONN.key, fn, args: [arg] }), signal: ctl.signal, redirect: 'follow' });
+    const r = await fetch(CONN.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ key: CONN.key, fn, args: [arg] }, CONN.b ? { b: CONN.b } : {})), signal: ctl.signal, redirect: 'follow' });
     const j = await r.json(); if (!j.ok) { const e = new Error(j.error || 'エラー'); e.server = true; throw e; } return j.result;
   } finally { clearTimeout(timer); }
 }
@@ -5345,6 +5557,136 @@ $('videoSend').onclick = () => sendVideos();
 start();
 /* v0.8：しまってある、ほかの端末の調査票を読み込む（読み終わったら一覧・地図を描き直す） */
 loadXops().then(() => { if (XOPS.length) afterSync(); });
+/* v0.9：業務ごとに最後に開いた日を覚える（4月15日のお知らせで「どの現場をいつから開いていないか」を出すため） */
+(() => { const m = LS.get('bizSeen', {}); m[BIZ] = isoDay(); LS.set('bizSeen', m); })();
+/* v0.8.2：チェックの入った「ポール横断」「遠景近景」などを紺色にする（古いAndroidのChromeは :has が効かず、入れても色が変わらなかった）
+   入れ替えたとき・画面を描き直したとき（プログラムで checked を変えたとき）の両方で、.crossrow に on を付け外しする */
+function paintChecks(root) { (root || document).querySelectorAll('.crossrow').forEach(l => { const i = l.querySelector('input[type=checkbox]'); l.classList.toggle('on', !!(i && i.checked)); }); }
+document.addEventListener('change', e => { const l = e.target.closest && e.target.closest('.crossrow'); if (l) paintChecks(l.parentNode || document); }, true);
+['sheetBox', 'srvRec', 'home', 'plotView'].forEach(id => { const r = $(id); if (r) new MutationObserver(() => paintChecks(r)).observe(r, { childList: true, subtree: true }); });     // 開いた窓・画面を作り直したとき
+(() => { const mb = $('modebar'), ml = document.querySelector('.modelabel'); if (!mb || !ml) return; const f = () => ml.classList.toggle('off', mb.classList.contains('hidden')); f(); new MutationObserver(f).observe(mb, { attributes: true, attributeFilter: ['class'] }); })();
+/* ====================== v0.9：過去の調査を重ねる（R30）・戻す用ファイル・業務を終える・4月15日のお知らせ ======================
+ *  過去の調査＝このスマホに残っているほかの業務、または「アプリに戻す用.json」（現場フォルダ。管理用の「戻す用ファイルを作る」で作る）を読み込んだもの
+ *  位置図の「過去」で出し入れ（初めはオフ。オフなら読まない・描かない）。描くのは地図に見えている範囲だけ */
+const refDb = { put: v => idbTx('refs', 'readwrite', st => st.put(v)), all: () => idbTx('refs', 'readonly', st => st.getAll()).then(l => Array.isArray(l) ? l : []), del: k => idbTx('refs', 'readwrite', st => st.delete(k)) };
+let REFS = null; const PAST = {};
+async function pastSources() {
+  const out = [];
+  bizList().filter(b => b.id !== BIZ).forEach(b => out.push({ id: 'biz:' + b.id, name: b.name, kind: 'biz', biz: b.id }));
+  if (REFS === null) REFS = await refDb.all().catch(() => []);
+  REFS.forEach(r => out.push({ id: 'ref:' + r.id, name: r.name + '（' + String(r.made || '').slice(0, 4) + '）', kind: 'ref', ref: r }));
+  return out;
+}
+async function pastData(x) {
+  if (PAST[x.id]) return PAST[x.id];
+  let rows = [];
+  if (x.kind === 'biz') {
+    rows = (bizRaw(x.biz, 'srv:ops', []) || []).slice();
+    try { const ids = new Set(rows.map(o => o.id)); ((await idbTx('xops', 'readonly', st => st.getAll())) || []).forEach(o => { if ((o.biz || '') === x.biz && o.op && !ids.has(o.id)) rows.push(o.op); }); } catch (e) {}
+  } else rows = (x.ref.survey || []).map(r => ({ at: r.at, rec: r.rec, action: r.action, data: r.data || {}, id: r.id }));
+  const recs = Object.values(reduceSurvey(rows)).filter(s => !s.deleted);
+  recs.forEach(s => { s.pos = adopted(s); });
+  return (PAST[x.id] = { recs, src: x });
+}
+async function drawPast(map) {
+  if (!map || typeof L === 'undefined') return;
+  if (!map._past) { map._past = L.layerGroup().addTo(map); map.on('moveend', () => drawPast(map)); }
+  const on = LS.get('pastOn', {}), src = (await pastSources()).filter(x => on[x.id]);
+  map._past.clearLayers(); syncPastDocs(map, src);
+  if (!src.length) return;
+  const bb = map.getBounds().pad(0.5);
+  for (const x of src) {
+    const d = await pastData(x);
+    if (x.kind === 'ref') (x.ref.targets || []).forEach(t => { if (t.pts && t.pts.length >= 2) (t.shape === 'poly' ? L.polygon : L.polyline)(t.pts, { color: '#8a8f94', weight: 3, dashArray: '6 6', fill: false, interactive: false }).addTo(map._past); });
+    d.recs.forEach(s => {
+      const a = s.pos; if (a.lat == null || !bb.contains([a.lat, a.lon])) return;
+      const lab = "'" + String(s.created).slice(2, 4) + ' ' + recNo(s);
+      const icon = s.heading != null ? arrowIcon(s.heading, s.situ, lab, s.cross, 'past') : L.divIcon({ className: 'arrowmk past', html: '<svg width="44" height="44" viewBox="-22 -22 44 44"><circle r="5" fill="#8a8f94" stroke="#fff" stroke-width="2"/></svg><b>' + esc(lab) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] });
+      const mk = L.marker([a.lat, a.lon], { icon, keyboard: false, interactive: map === mainMap }).addTo(map._past);
+      if (map === mainMap) mk.on('click', () => { if (typeof GK !== 'undefined' && GK.mode) return; pastSheet(x, s); });
+    });
+  }
+}
+/* 読み込んだ戻す用ファイルの図面（位置合わせ済み）も、出しているあいだは重ねる */
+function syncPastDocs(map, src) {
+  map._pdocs = map._pdocs || {};
+  const want = {}; src.filter(x => x.kind === 'ref').forEach(x => (x.ref.docs || []).forEach(d => { if (d.A && x.ref.docImgs && x.ref.docImgs[d.id]) want[x.id + '|' + d.id] = { d, b64: x.ref.docImgs[d.id] }; }));
+  Object.keys(map._pdocs).forEach(k => { if (!want[k]) { map.removeLayer(map._pdocs[k]); delete map._pdocs[k]; } });
+  Object.keys(want).forEach(k => { if (map._pdocs[k]) return; const w = want[k]; map._pdocs[k] = new DocLayer('data:image/jpeg;base64,' + w.b64, w.d.w, w.d.h, w.d.A, .55, 'docPane').addTo(map); });
+}
+async function pastSheet(x, s) {
+  let url = '';
+  const pid = s.photos[0];
+  if (pid && x.kind === 'ref' && x.ref.thumbs && x.ref.thumbs[pid]) url = 'data:image/jpeg;base64,' + x.ref.thumbs[pid];
+  else if (pid) { const p = await idb.get(pid).catch(() => null); if (p && p.blob) url = URL.createObjectURL(p.blob); else { const t = await thumbGet(pid); if (t) url = URL.createObjectURL(new Blob([t.buf], { type: t.mime || 'image/jpeg' })); } }
+  sheet(box => {
+    box.append(el('h3', '', '過去の調査：' + x.name));
+    if (url) { const im = el('img', 'bigph'); im.src = url; im.alt = '写真'; box.append(im); } else box.append(el('p', '', '（写真はこのスマホにありません）'));
+    const t = el('div', 'warnbox'); t.style.cssText = 'background:#f1f4f6;border-color:#c9d1d7;color:#16303f';
+    [('No.' + recNo(s) + '　' + String(s.shotAt || s.created).replace('T', ' ').slice(0, 16) + (s.name ? '　' + s.name : '')), [s.kind, s.target, s.plot && '区画 ' + s.plot].filter(Boolean).join('　'), s.text || '（内容なし）']
+      .forEach(v => { if (v) { const d = el('div', '', v); d.style.whiteSpace = 'pre-wrap'; t.append(d); } });
+    box.append(t);
+    const c = el('button', 'btn sub', '閉じる'); c.onclick = () => sheet(null); box.append(c);
+  });
+}
+/* ⚙の業務：戻す用ファイルを読み込む（一式から戻す）・読み込んだものを外す */
+function refSection(box) {
+  box.append(el('h3', '', '過去の調査（戻す用ファイル）'));
+  const p0 = el('p', '', '何年か前の調査を、位置図の「過去」に重ねて見られます。現場フォルダの「アプリに戻す用.json」（管理用の「戻す用ファイルを作る」で作ったもの）を選んでください。'); p0.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(p0);
+  const inp = el('input'); inp.type = 'file'; inp.accept = '.json,application/json'; inp.className = 'hidden'; inp.id = 'refFile';
+  inp.onchange = async () => { const f = inp.files[0]; if (!f) return; const r = await refImport(await f.text()); toast(r.ok ? '「' + r.name + '」を読み込みました（位置図の「過去」から出せます）' : r.error); if (r.ok) { sheet(null); } };
+  const b = el('button', 'btn sub', '📂 一式から戻す（戻す用ファイルを読み込む）'); b.id = 'refBtn'; b.onclick = () => { inp.value = ''; inp.click(); };
+  box.append(inp, b);
+  refDb.all().catch(() => []).then(l => l.forEach(r => {
+    const row = el('div', 'setrow'); row.append(el('span', '', r.name + '（' + String(r.made || '').slice(0, 10) + '・写真 ' + Object.keys(r.thumbs || {}).length + '枚）'));
+    const rm = el('button', 'minibtn', '外す'); rm.onclick = async () => { await refDb.del(r.id); REFS = null; delete PAST['ref:' + r.id]; row.remove(); toast('外しました'); }; row.append(rm);
+    box.insertBefore(row, b);
+  }));
+}
+async function refImport(text) {
+  let j = null; try { j = JSON.parse(text); } catch (e) { return { ok: false, error: '読めませんでした（戻す用ファイルではありません）' }; }
+  if (!j || j.kind !== '戻す用' || !Array.isArray(j.survey)) return { ok: false, error: '戻す用ファイルではありません（現場フォルダの「アプリに戻す用.json」を選んでください）' };
+  const name = (j.biz && j.biz.name) || j.sheet || '過去の調査', id = 'r' + planHash(name + '|' + j.made + '|' + j.survey.length);
+  try { await refDb.put({ id, name, made: j.made, survey: j.survey, photos: j.photos || {}, thumbs: j.thumbs || {}, targets: j.targets || [], docs: j.docs || [], docImgs: j.docImgs || {}, site: j.site || {} }); }
+  catch (e) { return { ok: false, error: 'スマホに保存できませんでした（空き容量を確かめてください）' }; }
+  REFS = null; delete PAST['ref:' + id];
+  return { ok: true, name, id };
+}
+/* 業務を終える（今開いている業務でも）：送れていない記録がないのを確かめてから、その業務の分をこのスマホから消す */
+function bizFinish(b) {
+  const n = queue.length + (typeof photoPending === 'number' ? photoPending : 0) + LS.get('rejected', []).length + (typeof videoPending === 'function' ? videoPending().length : 0);
+  sheet(bx => {
+    bx.append(el('h3', '', '「' + b.name + '」を終えますか？'));
+    if (n) { bx.append(el('p', '', 'まだ送れていない記録・写真が ' + n + ' 件あります。電波のある所で送り終わってから終えてください（HOMEの数字が0になったら）。')); const c = el('button', 'btn acc', '閉じる'); c.onclick = () => sheet(null); bx.append(c); return; }
+    bx.append(el('p', '', 'この業務の記録・写真・動画・図面・受け取った分を、このスマホから消します。スプレッドシートと現場フォルダの記録は消えません。終わった現場は、現場フォルダを社内サーバーへ移してください。'));
+    const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
+    const yes = el('button', 'btn danger', '終える（このスマホから消す）'); yes.id = 'bizFinishYes';
+    yes.onclick = async () => { const other = bizList().find(x => x.id !== b.id); try { await clearPhotos(); } catch (e) {} bizRemove(b); sheet(null); bizSwitch(other ? other.id : (b.id === '' ? 'b' + Date.now().toString(36) : '')); };
+    bx.append(no, yes);
+  });
+}
+/* 毎年4月15日のお知らせ：その日以降に初めて開いたとき、年に1回「過去の現場がこのスマホに残っています」 */
+function notice415(now) {
+  now = now || new Date();
+  const y = now.getFullYear(); if (now < new Date(y, 3, 15) || LS.get('notice415', 0) === y) return false;
+  const list = bizList(); if (list.length < 2 && !list.some(b => b.id !== BIZ)) { LS.set('notice415', y); return false; }
+  LS.set('notice415', y);
+  const seen = LS.get('bizSeen', {});
+  sheet(box => {
+    box.append(el('h3', '', '📅 過去の現場がこのスマホに残っています'));
+    const p0 = el('p', '', '年に1回のお知らせです。終わった現場は、現場フォルダを社内サーバーへ移したうえで、ここで外せます（スプレッドシートと現場フォルダの記録は消えません）。消すかどうかはご自分で決めてください。'); p0.style.fontSize = '13px'; box.append(p0);
+    list.sort((a, b) => String(seen[a.id] || '') < String(seen[b.id] || '') ? -1 : 1).forEach(b => {
+      const r = el('div', 'setrow'), cur = b.id === BIZ, left = el('div');
+      left.append(el('b', '', (cur ? '● ' : '') + b.name), el('div', '', '最後に開いた日：' + (seen[b.id] || '不明') + (b.pending ? '・送信待ち ' + b.pending + '件' : '')));
+      left.lastChild.style.cssText = 'font-size:12px;color:var(--mute)'; r.append(left);
+      if (!cur && !b.pending) { const rm = el('button', 'minibtn', '外す'); rm.onclick = () => { bizRemove(b); r.remove(); toast('外しました'); }; r.append(rm); }
+      box.append(r);
+    });
+    const ok = el('button', 'btn acc', 'そのまま（来年また知らせる）'); ok.id = 'n415ok'; ok.onclick = () => sheet(null); box.append(ok);
+  });
+  return true;
+}
+setTimeout(() => { try { if (CONN && $('sheet').classList.contains('hidden')) notice415(); } catch (e) {} }, 2500);
 </script>
 </body>
 </html>
