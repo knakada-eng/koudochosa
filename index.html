@@ -34,11 +34,11 @@
   #videoLine, #photoLine { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#eef3f6; font-size:13px; }
   #videoLine.hidden, #photoLine.hidden { display:none; }
   #videoLine .btn, #photoLine .btn { min-width:0; padding:10px 12px; font-size:14px; }
-  #dock { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(8px + env(safe-area-inset-bottom,0px)); z-index:40; display:flex; gap:18px; padding:9px 16px;
+  #dock { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(8px + env(safe-area-inset-bottom,0px)); z-index:40; display:flex; gap:10px; padding:8px 12px;
           background:rgba(225,228,224,.82); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-radius:30px; box-shadow:0 2px 12px rgba(0,0,0,.18); }
   #dock.hidden, body.kpon #dock { display:none; }
-  #dock .dk { position:relative; width:58px; height:58px; padding:0; border:0; background:none; border-radius:14px; }
-  #dock .dk img { width:58px; height:58px; display:block; border-radius:14px; }
+  #dock .dk { position:relative; width:54px; height:54px; padding:0; border:0; background:none; border-radius:14px; }     /* v0.10：5つ（今日やることもレギュラー） */
+  #dock .dk img { width:54px; height:54px; display:block; border-radius:14px; }
   #dock .dk.on::after { content:''; position:absolute; left:16px; right:16px; bottom:-7px; height:4px; border-radius:2px; background:#16303f; }
   #dock .dk:active img { transform:scale(.94); }
   #dock .badge { position:absolute; top:-8px; right:-10px; min-width:24px; height:24px; padding:0 6px; border-radius:12px; background:#e53935; color:#fff; font-size:14px; font-weight:bold; line-height:24px; text-align:center; box-shadow:0 0 0 2px #fff; }
@@ -46,7 +46,8 @@
   #dock .dk.hidden { display:none; }
   #dock .dklab { position:absolute; left:50%; bottom:-3px; transform:translateX(-50%); background:#16303f; color:#fff; font-size:10px; font-weight:bold; line-height:15px; padding:0 5px; border-radius:7px; white-space:nowrap; pointer-events:none; }
   #dock .dklab.hidden { display:none; }
-  #dock .dkemo { display:flex; align-items:center; justify-content:center; width:58px; height:58px; border-radius:14px; background:#eceff1; font-size:32px; }
+  #dock .dkemo { display:flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:14px; background:#eceff1; font-size:30px; }
+  #dock .dktodo { background:#fff6d6; } #dock .todoBadge { background:#16303f; }
   body.hasdock main { padding-bottom:calc(120px + env(safe-area-inset-bottom,0px)); }
   body.hasdock .toast { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
   body.hasdock .undo { bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
@@ -114,7 +115,7 @@
   .daybar button { flex:1; min-height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:15px; font-weight:bold; color:#16303f; padding:6px 8px; }
   .daybar .todon { display:inline-block; min-width:22px; padding:0 6px; border-radius:11px; background:#16303f; color:#fff; font-size:13px; line-height:22px; }
   .daybar .todon:empty { display:none; }
-  #dayEndTop { flex:0 0 auto; }
+  #dayEndTop, #prepTop { flex:0 0 auto; } .daybar { flex-wrap:wrap; } #prepTop { font-size:14px; }
   #dayEndTop.late { background:#16303f; color:#fff; border-color:#16303f; }
   .todorow { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
   .todorow .tx { flex:1; min-width:0; } .todorow .tx b { display:block; font-size:16px; } .todorow .tx small { display:block; font-size:12px; color:var(--mute); }
@@ -219,7 +220,7 @@
   #recLock.hidden, #recEditing.hidden { display:none; }
   #recLock div { flex:1; min-width:0; } #recLock .btn { flex:0 0 auto; width:auto; margin:0; background:#fff; color:#16303f; }
   #recEditing { margin:0 0 10px; padding:6px 12px; border-radius:10px; background:var(--warnbg); color:var(--warn); font-size:13px; font-weight:bold; }
-  #srvRec.ro .rofix > *, #srvRec.ro .rofix { pointer-events:none; } #srvRec.ro .card.rofix { pointer-events:auto; } #srvRec.ro .card.rofix > * { pointer-events:none; }
+  #srvRec.ro .rofix > * { pointer-events:none; } #srvRec.ro .rofix { pointer-events:auto; }   /* 見るだけの票：中は押せない。押すと「見るだけ」の一言（v0.10：カード以外も） */
   #srvRec.ro .rofix { opacity:.78; } #srvRec.ro .rohide, #srvRec.ro #recAddPhoto { display:none; }
   .cloudph { display:flex; align-items:center; justify-content:center; text-align:center; background:#e8eef3; color:#16303f; font-size:12px; border-radius:8px; min-height:54px; }
   .reccard .noimg { display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--mute); }
@@ -235,8 +236,12 @@
   .fnslot.empty { border-style:solid; color:#1764b5; }
   .fnslot.add { min-height:44px; font-size:14px; background:#fff; }
   .arrowmk b.fn { border:3px solid #7fd3ff; font-weight:bold; }
-  .arrowmk.oth b { border:1.5px dashed #16303f; background:#f1f4f6; }
-  .arrowmk.past b { border:1.5px solid #8a8f94; background:#eceeef; color:#555; } .arrowmk.oth b.x { border:2px dashed #fff; background:#16303f; }
+  #docInfo { white-space:pre-line; } #docInfo.docwarn { color:#b3261e; font-weight:bold; }
+  .docinf { margin-left:6px; border:1px solid var(--line); background:#fff; border-radius:8px; font-size:11px; padding:1px 6px; color:var(--mute); }
+  #crossSum { display:block; width:100%; text-align:left; margin:0 0 8px; padding:7px 10px; border:2px solid #16303f; border-radius:10px; background:#eef2f5; color:#16303f; font-size:14px; font-weight:bold; }
+  #crossSum.on { background:#16303f; color:#fff; } #crossSum.hidden { display:none; }
+  .arrowmk.oth b { border:1.5px dashed #e4007f; background:#fff0f8; color:#8a0050; }
+  .arrowmk.past b { border:1.5px solid #8a8f94; background:#eceeef; color:#555; } .arrowmk.oth b.x { border:2px dashed #fff; background:#b30064; color:#fff; }
   .brokenph { height:120px; min-width:120px; padding:6px 10px; border-radius:8px; background:#e8eef3; color:#16303f; border:2px dashed #16303f; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; font-weight:bold; line-height:1.4; cursor:pointer; }
   .brokenph.bad { background:#fff; border-color:#b00020; color:#b00020; }
   .reccard .brokenph { width:72px; height:54px; min-width:0; padding:2px; font-size:9px; border-width:1px; }
@@ -369,7 +374,7 @@
   <section id="srvList" class="hidden">
     <div id="bizLine" style="font-size:12px;color:var(--mute);margin:-4px 0 6px"></div>
     <input type="file" id="srvFile" accept="image/*" capture="environment" class="hidden">
-    <div class="daybar"><button type="button" class="todobtn" id="todoBtn">📝 今日やること <b class="todon"></b></button><button type="button" id="dayEndTop">🏁 今日の調査を終える</button></div>
+    <div class="daybar"><button type="button" class="todobtn" id="todoBtn">📝 今日やること <b class="todon"></b></button><button type="button" id="dayEndTop">🏁 今日の調査を終える</button><button type="button" id="prepTop">🧰 明日の準備</button></div>
     <div id="gpsState" class="gpsline">位置：取得中…</div>
     <button id="headWarn" class="hidden" type="button">🧭 方位（撮影方向）が止まっています。ここを押すと使えます</button>
     <div class="btnrow" style="margin-top:4px"><button class="btn sub" id="srvSitu">📷 状況写真<small>続けて撮る</small></button><button class="btn sub" id="srvNocho">📒 野帳<small>控え・台帳に出さない</small></button><button class="btn sub" id="srvVideo">🎥 動画<small>Wi-Fiで送る</small></button></div>
@@ -387,6 +392,7 @@
       <div class="chips" id="srvDayF" style="margin-bottom:6px"></div>
       <div class="chips kinds" id="srvFilter" style="margin-bottom:8px"></div>
       <div class="chips" id="srvCatF" style="margin-bottom:8px"></div>
+      <button type="button" id="crossSum" class="hidden"></button>
       <div class="reclist" id="srvItems"></div>
     </div>
     <button class="btn acc wide" id="dayEnd" style="margin-top:4px">🏁 今日の調査を終える<small>送信を確かめる</small></button>
@@ -445,14 +451,14 @@
       <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
       <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
       <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
-      <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
+      <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="mapBiz">📷 写真の所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
         <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
-        <button class="btn sub" id="planBtn">計画を取り込む<small>計画入りのPDF</small></button>
+        <button class="btn go" id="planBtn">📄 図面を取り込む<small>PDF・画像。計画入りならそのまま重なる</small></button>
       </div>
-      <input type="file" id="planFile" multiple class="hidden">
+      <input type="file" id="planFile" accept="application/pdf,image/*,.json,.geojson,.txt" multiple class="hidden">
       <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
     </div>
   </section>
@@ -542,7 +548,7 @@
   <div id="areaSearch"><input type="search" id="areaQ" placeholder="地名・座標　例：砺波市五郎丸" autocomplete="off" enterkeyhint="search"><button id="areaFind" aria-label="探す">🔍</button></div><div id="areaWrap"><div id="areaMap"></div><div class="cross" id="areaCross"></div></div>
   <div id="areaBar">
     <div class="seg" id="areaTask"><button data-t="tiles" class="on">航空写真を保存</button><button data-t="tgt">対象を描く</button></div>
-    <div class="seg" id="areaSeg"><button data-m="poly" class="on">囲む</button><button data-m="line">線に沿って</button><button data-m="circle">円</button></div>
+    <div class="seg" id="areaSeg"><button data-m="view" class="on">見ている範囲</button><button data-m="poly">囲む</button><button data-m="line">線に沿って</button><button data-m="circle">円</button></div>
     <div id="areaHint"></div>
     <div class="chips" id="areaOpt"></div>
     <input type="text" id="areaName" placeholder="範囲の名前（任意。例：第7号用水路）" autocomplete="off">
@@ -563,7 +569,7 @@
     <div class="btnrow"><button class="btn sub" id="docRot">⟳ 図面を回す（90°）</button><button class="btn sub" id="docMe">📍 今いる所へ</button><button class="btn go" id="docHere">📍 今いる所を合わせ点に</button></div>
     <div class="btnrow"><button class="btn sub" id="docView">重ねて見る</button><button class="btn go" id="docSave">この位置で保存</button></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:14px">図面の濃さ <input type="range" id="docOp" min="10" max="100" value="55" style="flex:1"></label>
-    <div class="btnrow"><button class="btn sub" id="docExtract">極太線を抜き出す（試作）</button><button class="btn dangerline" id="docDel">この図面を消す…</button></div>
+    <div class="btnrow"><button class="btn sub hidden" id="docExtract">極太線を抜き出す（試作）</button><button class="btn dangerline" id="docDel">この図面を消す…</button></div>
     <input type="file" id="docFile" accept="application/pdf,image/*" class="hidden">
   </div>
 </div>
@@ -579,6 +585,7 @@
   <button id="dockDraw" class="dk"><img src="dock-zumen.png" alt="図面"></button>
   <button id="dockNocho" class="dk hidden"><span class="dkemo">📒</span><span class="dklab">野帳</span></button>
   <button id="dockMap" class="dk"><img src="dock-map.png" alt="位置図"></button>
+  <button id="dockTodo" class="dk" aria-label="今日やること"><span class="dkemo dktodo">📝</span><span class="dklab">やること</span><span class="badge todoBadge hidden" id="dockTodoN"></span></button>
 </nav>
 <div id="viewer" class="hidden">
   <div id="vwTop"><button id="vwClose">✕ 閉じる</button><span id="vwName"></span><span id="vwPage"></span></div>
@@ -686,7 +693,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.9β';
+const VERSION = 'v0.10β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -989,6 +996,7 @@ function sendTodo(action, data) {
 function renderTodoBar() {
   const n = todosOpen().length;
   document.querySelectorAll('.todon').forEach(b => b.textContent = n ? String(n) : '');
+  const dn = $('dockTodoN'); if (dn) { dn.textContent = n ? String(n) : ''; dn.classList.toggle('hidden', !n); }      // v0.10：タブバーの「やること」に残りの数
   const late = new Date().getHours() >= 15; const e = $('dayEndTop'); if (e) e.classList.toggle('late', late);
   if (typeof mainMap !== 'undefined' && mainMap) drawTodoPins(mainMap);
 }
@@ -1047,6 +1055,7 @@ function drawTodoPins(map) {
 }
 $('todoBtn').onclick = () => todoSheet();
 $('todoBtn2').onclick = () => todoSheet();
+$('dockTodo').onclick = () => todoSheet();          // v0.10：タブバーから今日やることを見る・足す
 $('dayEndTop').onclick = () => $('dayEnd').click();
 
 /* その日最初に開いたとき：名前（必須）・機種番号（未設定のときだけ）・持ち物メモ */
@@ -1717,6 +1726,7 @@ async function syncSrv(force) {
     }
   } catch (e) {} finally { syncing = false; }
   if (got) afterSync();
+  pullShared();
   return got;
 }
 function afterSync() {
@@ -1922,6 +1932,8 @@ function listThumbs(box) {
   listObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { listObs.unobserve(e.target); load(e.target); } }), { rootMargin: '300px' });
   box.querySelectorAll('img[data-pid]').forEach(im => { if (!im.src) listObs.observe(im); });
 }
+let crossOnly = false;
+$('crossSum').onclick = () => { crossOnly = !crossOnly; renderList(); };
 async function renderList() {
   if (typeof renderSendLines === 'function') renderSendLines();
   const pool = Object.values(recsAll()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
@@ -1930,11 +1942,20 @@ async function renderList() {
   renderDayFilter(every);
   const ofDay = every.filter(dayOK);
   renderKindFilter(ofDay); renderCatFilter(ofDay);
-  const all = every.filter(recShown);
+  let all = every.filter(recShown);
+  // v0.10（R23）：ポール横断のまとめ。押すと横断だけに絞る（もう一度押すと戻す）。横断がなければ出さない
+  const xs = all.filter(s => s.cross), cs = $('crossSum');
+  if (!xs.length) { crossOnly = false; cs.classList.add('hidden'); }
+  else {
+    const nos = xs.slice().reverse().map(recNo);
+    cs.textContent = '📏 ポール横断 ' + xs.length + 'か所：' + (nos.length > 12 ? nos.slice(0, 12).join('、') + '…' : nos.join('、')) + (crossOnly ? '　（横断だけ表示中・押すと戻す）' : '');
+    cs.classList.remove('hidden'); cs.classList.toggle('on', crossOnly);
+    if (crossOnly) all = xs;
+  }
   $('srvCount').textContent = all.length !== every.length ? all.length + '／' + every.length : all.length;
   const box = $('srvItems');
   if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">' + (every.length ? 'この絞り込みでは調査票がありません（上のボタンで日付・工種を切り替え）。' : 'まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。') + '</span>'; return; }
-  const me = worker(), sig = JSON.stringify([dayF().v, whoF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s), s.mine, (s.xed || []).length]; }));
+  const me = worker(), sig = JSON.stringify([crossOnly, dayF().v, whoF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s), s.mine, (s.xed || []).length]; }));
   if (sig !== listSig || !box.querySelector('.reccard')) {
     listSig = sig; box.innerHTML = '';
     for (const s of all) {
@@ -2663,7 +2684,7 @@ function curToken() {
 /* この現場で前に書いた行（履歴）。分類が同じ調査票の1行目を先に。多く書いた形・新しい順（v0.7〜） */
 function histLines(prefix, lineIdx) {
   const cur = recsAll()[curRec], cat = cur && cur.cat, f = fold(prefix), cnt = {}, last = {}, sameCat = {};
-  Object.values(recs()).forEach(s => {
+  Object.values(recsAll()).forEach(s => {                         // v0.10：ほかの端末で書いた形も候補に（共有のスマホ・新しいスマホでも履歴が効く）
     if (s.deleted || s.id === curRec || !s.text) return;
     s.text.split('\n').slice(0, 3).forEach((l, i) => {
       l = l.trim(); if (!l || MARK.test(l)) return;
@@ -2829,7 +2850,14 @@ $('recRoute').onchange = () => setRoute($('recRoute').value);
 /* ---- 対象物の分類（v0.7〜）：ボタンで選ぶ。「＋追加」で書いたものは次からこの現場のボタン ---- */
 const CAT_DEF = ['吐口', '水口', '取水桝', '分水', '搬入路', '横断暗渠'];
 function catList() { return CAT_DEF.concat((LS.get('cats', []) || []).filter(k => !CAT_DEF.includes(k))); }
-function setCat(k) { recordSrv('内容', curRec, { field: '分類', value: k }); renderCats(); renderSugg(); }
+function setCat(k) {
+  recordSrv('内容', curRec, { field: '分類', value: k }); renderCats();
+  // v0.10：分類を押したとき、調査内容の1行目が空なら分類の名前を入れる（続きは自分で入力。2回目からは同じ分類の履歴が候補に出る）
+  const t = ta(), v = t.value, nl = v.indexOf('\n'), first = nl < 0 ? v : v.slice(0, nl);
+  if (k && !first.trim() && !recLocked(curRec)) {
+    t.value = k + ' ' + (nl < 0 ? '' : v.slice(nl)); t.focus(); t.setSelectionRange(k.length + 1, k.length + 1); textChanged();
+  } else renderSugg();
+}
 function renderCats() {
   const box = $('recCat'); box.innerHTML = ''; const s = recsAll()[curRec]; if (!s) return;
   catList().forEach(k => { const c = el('button', 'chip' + (s.cat === k ? ' on' : ''), k); c.type = 'button'; c.onclick = () => setCat(s.cat === k ? '' : k); box.append(c); });
@@ -2900,7 +2928,7 @@ $('gear').onclick = () => sheet(box => {
   row('ほかの端末の写真（ここ3日分）を先に受け取っておく（外すと、開いたときだけ受け取る。通信量の節約）', 'xph', 'checkbox');
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
   box.append(el('h3', '', '試験中'));
-  const dr = el('button', 'btn sub', '📄 図面の下敷き・位置合わせ（PCで使うのがおすすめ）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
+  const dr = el('button', 'btn sub', '📄 図面の位置合わせ（取り込んだ図面を直す）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
   const r2 = el('div', 'setrow'); r2.append(el('span', '', '候補の並び（使った回数）を最初に戻す'));
   const rb = el('button', 'minibtn', '戻す'); rb.onclick = () => { LS.del('tplUse'); toast('使った回数を消しました'); }; r2.append(rb); box.append(r2);
   const close = el('button', 'btn acc', '閉じる'); close.onclick = () => { sheet(null); if (curRec) { $('recSame').classList.toggle('hidden', !SET().same); renderSugg(); } }; box.append(close);
@@ -2969,12 +2997,16 @@ $('pickLayer').onclick = () => {
 function tileXY(lat, lon, z) { const n = 2 ** z, r = Math.PI / 180; return [Math.floor((lon + 180) / 360 * n), Math.floor((1 - Math.log(Math.tan(lat * r) + 1 / Math.cos(lat * r)) / Math.PI) / 2 * n)]; }
 /* 範囲の形：囲む（外周の角をタップ）／線に沿って（水路など。両側に幅を取る）／円（十字が中心）
    保存するのは、範囲に少しでもかかるタイルすべて → 囲んだ枠より少し広くなるが、狭くはならない */
-const AREA = { task: 'tiles', kind: '', mode: 'poly', pts: [], line: 100, circle: 600, margin: 30, busy: false, fromId: null };
+const AREA = { task: 'tiles', kind: '', mode: 'view', pts: [], line: 100, circle: 600, margin: 30, busy: false, fromId: null };
 let areaMap = null, areaLayers = null, areaG = null, areaSaved = null;
 const KB_PER_TILE = 25;
 function tileLL(x, y, z) { const n = 2 ** z; return [Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI, x / n * 360 - 180]; }
 function areaBuf() { return AREA.mode === 'line' ? AREA.line : AREA.mode === 'circle' ? AREA.circle : AREA.margin; }
 function areaShape() {
+  if (AREA.mode === 'view') {        // v0.10：今見ている画面の範囲（囲まなくてよい）。履歴には四角の「囲む」として残す
+    if (!areaMap) return null; const b = areaMap.getBounds(), n = b.getNorth(), s = b.getSouth(), w = b.getWest(), e = b.getEast();
+    return { mode: 'poly', pts: [[n, w], [n, e], [s, e], [s, w]], buf: 0, view: true };
+  }
   if (AREA.mode === 'circle') { if (!areaMap) return null; const c = areaMap.getCenter(); return { mode: 'circle', pts: [[c.lat, c.lng]], buf: AREA.circle }; }
   if (AREA.mode === 'poly' && AREA.pts.length < 3) return null;
   if (AREA.mode === 'line' && AREA.pts.length < 1) return null;
@@ -3034,19 +3066,20 @@ function areaDraw() {
   areaG.clearLayers();
   const sty = { color: '#16303f', weight: 3 }, pts = AREA.pts;
   const sh = areaShape(), tiles = sh ? areaTiles(sh) : [];
-  const z18 = tiles.filter(t => t.z === 18);
+  const z18 = AREA.mode === 'view' ? [] : tiles.filter(t => t.z === 18);      // 見ている範囲は画面全部なので色は塗らない
   if (z18.length && z18.length <= 3000) z18.forEach(t => L.rectangle([tileLL(t.x, t.y, 18), tileLL(t.x + 1, t.y + 1, 18)], { stroke: false, fillColor: '#7e8cf0', fillOpacity: .28, interactive: false }).addTo(areaG));
   if (AREA.mode === 'circle') { const c = areaMap.getCenter(); L.circle(c, { radius: AREA.circle, ...sty, fill: false, interactive: false }).addTo(areaG); }
+  else if (AREA.mode === 'view') {}
   else {
     if (pts.length >= 2) (AREA.mode === 'poly' ? L.polygon(pts, { ...sty, fill: false, interactive: false }) : L.polyline(pts, { ...sty, interactive: false })).addTo(areaG);
     pts.forEach((p, i) => { const last = i === pts.length - 1; L.circleMarker(p, { radius: last ? 9 : 5, color: '#fff', weight: last ? 4 : 2, fillColor: '#16303f', fillOpacity: 1, interactive: false }).addTo(areaG); });
   }
-  const hint = { poly: '外周の角を順にタップして囲んでください（3点以上）。囲んだ線の外側30mまで含めます。', line: '水路・道路に沿って、曲がり角ごとにタップしてください。両側に下の幅を取ります。', circle: '地図を動かして、十字を現場の真ん中に合わせてください。' }[AREA.mode];
+  const hint = { view: '保存したい所が画面に全部入るように地図を動かして、「この範囲を保存」を押してください。画面の範囲を、現場で拡大して見る細かさまでまとめて保存します。', poly: '外周の角を順にタップして囲んでください（3点以上）。囲んだ線の外側30mまで含めます。', line: '水路・道路に沿って、曲がり角ごとにタップしてください。両側に下の幅を取ります。', circle: '地図を動かして、十字を現場の真ん中に合わせてください。' }[AREA.mode];
   $('areaHint').textContent = hint;
   $('areaCross').style.display = AREA.mode === 'circle' ? '' : 'none';
-  $('areaUndo').disabled = $('areaClear').disabled = AREA.mode === 'circle' || !pts.length;
+  $('areaUndo').disabled = $('areaClear').disabled = AREA.mode === 'circle' || AREA.mode === 'view' || !pts.length;
   $('areaSave').disabled = AREA.busy || !tiles.length;
-  if (!AREA.busy) $('areaInfo').textContent = tiles.length ? '保存する範囲：約' + tiles.length + '枚・約' + Math.max(1, Math.round(tiles.length * KB_PER_TILE / 1024)) + 'MB（色の付いた所）' : (AREA.mode === 'poly' && pts.length ? 'あと' + (3 - pts.length) + '点' : '');
+  if (!AREA.busy) $('areaInfo').textContent = tiles.length ? '保存する範囲：約' + tiles.length + '枚・約' + Math.max(1, Math.round(tiles.length * KB_PER_TILE / 1024)) + 'MB' + (AREA.mode === 'view' ? '（今見ている画面）' + (tiles.length > 8000 ? '　広すぎます。少し拡大してください' : '') : '（色の付いた所）') : (AREA.mode === 'poly' && pts.length ? 'あと' + (3 - pts.length) + '点' : '');
 }
 function areaOpts() {
   if (AREA.task === 'tgt') return tgtOpts();
@@ -3055,13 +3088,14 @@ function areaOpts() {
   if (AREA.mode === 'line') [50, 100, 200].forEach(w => add('片側' + w + 'm', AREA.line === w, () => { AREA.line = w; }));
   if (AREA.mode === 'circle') [300, 600, 1000].forEach(w => add('半径' + (w >= 1000 ? w / 1000 + 'km' : w + 'm'), AREA.circle === w, () => { AREA.circle = w; }));
 }
-/* 保存した範囲の履歴。航空写真は30日で自動的に消すが、範囲（線・囲み・円）は履歴に残り、いつでも取り直せる */
-const KEEP_DAYS = 30, DAY = 86400000;
+/* 保存した範囲の履歴。保存ボタンで取った航空写真は150日で自動的に消す（v0.10。前は30日。地図で見ただけの所は今までどおり30日）
+   範囲（見ている範囲・線・囲み・円）は履歴に残り、いつでも取り直せる */
+const KEEP_DAYS = 150, DAY = 86400000;
 function areasAll() { return LS.get('tileAreas', []); }
 function areasSet(l) { LS.set('tileAreas', l); }
 function areaAlive(a) { return a.alive && a.exp > Date.now(); }
-function areaLabel(a) { return (a.name || { poly: '囲んだ範囲', line: '線に沿った範囲', circle: '円の範囲' }[a.mode]); }
-function areaKind(a) { return a.mode === 'poly' ? '囲む' : a.mode === 'line' ? '線・片側' + a.buf + 'm' : '円・半径' + a.buf + 'm'; }
+function areaLabel(a) { return (a.name || (a.view ? '見ていた範囲' : '') || { poly: '囲んだ範囲', line: '線に沿った範囲', circle: '円の範囲' }[a.mode]); }
+function areaKind(a) { return a.view ? '見ている範囲' : a.mode === 'poly' ? '囲む' : a.mode === 'line' ? '線・片側' + a.buf + 'm' : '円・半径' + a.buf + 'm'; }
 function md(ms) { const d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate(); }
 /* 期限切れの範囲の航空写真を消す（ほかの有効な範囲と重なる所は残す） */
 async function areaCleanup(force) {
@@ -3115,8 +3149,8 @@ function openArea(task) {
     areaMap = L.map('areaMap', { zoomControl: true }); areaLayers = baseLayers(); areaLayers.photo.addTo(areaMap); areaMap._cur = 'photo';
     areaSaved = L.layerGroup().addTo(areaMap); areaG = L.layerGroup().addTo(areaMap);
     L.control.scale({ imperial: false }).addTo(areaMap);
-    areaMap.on('click', e => { if (AREA.busy || (AREA.mode === 'circle' && AREA.task !== 'tgt')) return; AREA.pts.push([e.latlng.lat, e.latlng.lng]); areaDraw(); });
-    areaMap.on('moveend', () => { if (AREA.mode === 'circle' && AREA.task !== 'tgt') areaDraw(); });
+    areaMap.on('click', e => { if (AREA.busy || ((AREA.mode === 'circle' || AREA.mode === 'view') && AREA.task !== 'tgt')) return; AREA.pts.push([e.latlng.lat, e.latlng.lng]); areaDraw(); });
+    areaMap.on('moveend', () => { if ((AREA.mode === 'circle' || AREA.mode === 'view') && AREA.task !== 'tgt') areaDraw(); });
   }
   const f = freshFix(600), saved = areasAll(), last = saved[saved.length - 1];
   const c = f ? [f.lat, f.lon] : last ? last.pts[0] : [36.7, 137.0];
@@ -3152,11 +3186,11 @@ async function areaRun(sh, tiles, fromId) {
   if (ok) {
     const list = areasAll(); let a = fromId && list.find(x => x.id === fromId);
     if (!a) { a = { id: 'a' + now.toString(36) }; list.push(a); }
-    Object.assign(a, { name, mode: sh.mode, pts: sh.pts, buf: sh.buf, n: tiles.length, at: now, exp: now + KEEP_DAYS * DAY, alive: true });
-    areasSet(list);
+    Object.assign(a, { name, mode: sh.mode, pts: sh.pts, buf: sh.buf, view: !!sh.view, n: tiles.length, at: now, exp: now + KEEP_DAYS * DAY, alive: true });
+    areasSet(list); shareArea(a);                // v0.10：範囲をほかのスマホにも知らせる
     konbiniFetch(sh).catch(() => {});        // 熱中症・トイレ対策：近くのコンビニも一緒に保存
   }
-  if (sh.mode !== 'circle') AREA.pts = [];
+  if (sh.mode !== 'circle' && !sh.view) AREA.pts = [];
   AREA.fromId = null; $('areaName').value = '';
   areaSavedDraw(); areaDraw();
   const msg = ng ? '保存 ' + ok + '枚・失敗 ' + ng + '枚（電波のある所で、履歴から「もう一度保存」してください）' : '保存しました（' + ok + '枚・' + md(now + KEEP_DAYS * DAY) + 'まで）。薄い青紫の範囲が保存済みです';
@@ -3194,7 +3228,7 @@ $('areaHist').onclick = () => {
       const see = el('button', 'btn sub', '地図で見る'); see.onclick = () => { sheet(null); areaLoad(a); };
       const again = el('button', 'btn go', 'もう一度保存'); again.onclick = () => { sheet(null); areaLoad(a); areaStart({ mode: a.mode, pts: a.pts, buf: a.buf }, a.id); };
       const del = el('button', 'btn dangerline', '履歴から消す');
-      del.onclick = async () => { areasSet(areasAll().filter(x => x.id !== a.id)); await areaCleanup(true); toast('履歴から消しました'); $('areaHist').onclick(); };
+      del.onclick = async () => { areasSet(areasAll().filter(x => x.id !== a.id)); shareArea(a, true); await areaCleanup(true); toast('履歴から消しました'); $('areaHist').onclick(); };
       r.append(see, again, del); c.append(r); wrap.append(c);
     });
     box.append(wrap);
@@ -3570,9 +3604,11 @@ function areaTaskUI() {
   const tgt = AREA.task === 'tgt';
   document.querySelectorAll('#areaTask button').forEach(x => x.classList.toggle('on', x.dataset.t === AREA.task));
   document.querySelector('#areaSeg button[data-m=circle]').classList.toggle('hidden', tgt);
+  document.querySelector('#areaSeg button[data-m=view]').classList.toggle('hidden', tgt);
   document.querySelector('#areaSeg button[data-m=line]').textContent = tgt ? '線（水路・道路）' : '線に沿って';
   document.querySelector('#areaSeg button[data-m=poly]').textContent = tgt ? '囲む（池・区画）' : '囲む';
-  if (tgt && AREA.mode === 'circle') AREA.mode = 'line';
+  if (tgt && (AREA.mode === 'circle' || AREA.mode === 'view')) AREA.mode = 'line';
+  if (!tgt && AREA.mode !== 'view' && !AREA.pts.length) AREA.mode = 'view';       // 航空写真の保存は「見ている範囲」から
   document.querySelectorAll('#areaSeg button').forEach(x => x.classList.toggle('on', x.dataset.m === AREA.mode));
   $('areaName').placeholder = tgt ? '対象の名前（例：第13号用水路、区画なら 2-1）' : '範囲の名前（任意。例：第7号用水路）';
   $('areaSave').textContent = tgt ? 'この対象を登録' : 'この範囲を保存';
@@ -3816,6 +3852,24 @@ const docDb = {
   del: k => idbTx('docs', 'readwrite', st => st.delete(k))
 };
 const docUrls = {};
+/* v0.10：地図に重ねるときは軽い画像（長い辺2400px）を使う。位置合わせの画面と「図面」タブは元の細かさのまま。
+   スマホが広げて持つ大きさが約3分の1になり、図面を重ねたままカメラを開いても落ちにくくする（作るのは最初の1回だけ） */
+const LIGHT_PX = 2400;
+async function docLightUrl(id) {
+  const k = id + '@m'; if (docUrls[k]) return docUrls[k];
+  try {
+    const m = await docDb.get(id + 'm').catch(() => null); if (m && m.blob) return (docUrls[k] = URL.createObjectURL(m.blob));
+    const d = await docDb.get(id).catch(() => null); if (!d || !d.blob) return '';
+    const bm = await createImageBitmap(d.blob), big = Math.max(bm.width, bm.height);
+    if (big <= LIGHT_PX) { if (bm.close) bm.close(); return docUrl(id); }
+    const f = LIGHT_PX / big, c = document.createElement('canvas'); c.width = Math.round(bm.width * f); c.height = Math.round(bm.height * f);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(bm, 0, 0, c.width, c.height); if (bm.close) bm.close();
+    const type = /png/.test(d.blob.type) ? 'image/png' : 'image/jpeg', blob = await new Promise(r => c.toBlob(r, type, 0.9)); c.width = c.height = 0;
+    if (!blob) return docUrl(id);
+    await docDb.put({ id: id + 'm', blob, kind: 'light' }).catch(() => {});
+    return (docUrls[k] = URL.createObjectURL(blob));
+  } catch (e) { return docUrl(id); }
+}
 async function docUrl(id) { if (docUrls[id]) return docUrls[id]; const d = await docDb.get(id).catch(() => null); return d && d.blob ? (docUrls[id] = URL.createObjectURL(d.blob)) : ''; }     // ない図面（消した・ほかの端末で取り込んだ）は空
 /* PDF（1ページ目または選んだページ）を画像にする。pdf.js はこのときだけ読み込む */
 function loadPdfJs() {
@@ -3995,6 +4049,17 @@ function docClickGeo(e) {
   if (!last || last.geo) { toast('先に上の図面で点をタップしてください'); return; }
   last.geo = [e.latlng.lat, e.latlng.lng]; docUi();
 }
+/* v0.10：一番合っていない点を探す。1点ずつ外して残りで合わせ、残りがいちばんよく合う（3点なら外した点がいちばん離れる）点 */
+function docWorst() {
+  const ok = DOC.pairs.map((p, i) => ({ p, i })).filter(x => x.p.geo); if (ok.length < 3) return -1;
+  let worst = -1, best = Infinity;               // 外したときに、残りの点がいちばんよく合う点＝合っていない点
+  ok.forEach(x => {
+    const rest = ok.filter(y => y !== x).map(y => y.p), f = fitAffine(rest); if (!f) return;
+    const q = imgToLL(f.A, x.p.img[0], x.p.img[1]), off = distM(q[0], q[1], x.p.geo[0], x.p.geo[1]), score = rest.length >= 3 ? f.rms : -off;
+    if (score < best) { best = score; worst = x.i; }
+  });
+  return worst;
+}
 function docFit() { const ok = DOC.pairs.filter(p => p.geo); return ok.length >= 2 ? fitAffine(ok) : null; }
 function docUi() {
   const has = !!DOC.cur, done = DOC.pairs.filter(p => p.geo).length, last = DOC.pairs[DOC.pairs.length - 1];
@@ -4013,7 +4078,10 @@ function docUi() {
   else if (last && !last.geo) t = '点' + DOC.pairs.length + '：同じ場所を下の航空写真でタップしてください（その点に立っているなら「📍 今いる所を合わせ点に」）。';
   else if (done < 2) t = '図面と航空写真の同じ場所（交差点・幹線水路の角など、今も変わらない所）を、上→下の順にタップ。あと' + (2 - done) + '点。';
   else t = '合わせた点 ' + done + (done < 3 ? '（3点目を入れると、ずれを確かめられます）' : done < 4 ? '（4点以上でゆがみも合わせます）' : '（ゆがみも合わせています）') + '。ずれ：平均 ' + fit.rms.toFixed(1) + 'm／最大 ' + Math.max(...fit.res).toFixed(1) + 'm。図面1画素＝' + fit.scale.toFixed(2) + 'm';
-  $('docInfo').textContent = t;
+  // v0.10：ずれが大きいとき（10m以上）は、一番合っていない点を知らせる（3点以上のときだけ分かる）
+  let warn = false;
+  if (fit && done >= 3) { const mx = Math.max(...fit.res); if (mx >= 10) { const i = docWorst(); t += '\n⚠ ずれが大きいです。' + (i >= 0 ? '点' + (i + 1) + 'が合っていないかもしれません（「1つ戻す」で外して打ち直す）' : 'どれかの点が合っていないかもしれません'); warn = true; } }
+  $('docInfo').textContent = t; $('docInfo').classList.toggle('docwarn', warn);
   $('docView').textContent = DOC.view ? '位置合わせに戻る' : '重ねて見る';
   $('docView').disabled = !fit;
   $('docSave').disabled = !fit;
@@ -4039,8 +4107,8 @@ function askPages(n, name) {
     box.append(ok, no);
   }));
 }
-$('docFile').onchange = async () => {
-  const file = $('docFile').files[0]; if (!file) return;
+$('docFile').onchange = () => { const f = $('docFile').files[0]; if (f) docImportFile(f); };
+async function docImportFile(file) {
   $('docInfo').textContent = '図面を読み込んでいます…';
   try {
     const n = await pdfPages(file), base = file.name.replace(/\.[^.]+$/, '');
@@ -4056,7 +4124,7 @@ $('docFile').onchange = async () => {
     DOC.cur = null; await docSelect(last);
     if (pages.length > 1) toast(pages.length + 'ページを取り込みました。「図面の一覧」から1枚ずつ位置を合わせてください');
   } catch (e) { $('docInfo').textContent = '読み込めませんでした：' + (e.message || e); }
-};
+}
 $('docPick').onclick = () => sheet(box => {
   box.append(el('h3', '', '図面の一覧'));
   const l = uls(); if (!l.length) box.append(el('p', '', 'まだありません'));
@@ -4090,15 +4158,15 @@ $('docOp').oninput = () => { if (DOC.ov) DOC.ov.setOpacity(Number($('docOp').val
 $('docSave').onclick = () => {
   const fit = docFit(); if (!fit) return;
   const l = uls(), u = l.find(x => x.id === DOC.cur.id);
-  Object.assign(u, { pairs: DOC.pairs.filter(p => p.geo), A: fit.A, op: Number($('docOp').value) / 100, rms: fit.rms, on: true }); ulsSet(l); DOC.cur = u;
-  toast('位置を保存しました。「対象を描く」画面で下敷きになります'); docUi();
+  Object.assign(u, { pairs: DOC.pairs.filter(p => p.geo), A: fit.A, op: Number($('docOp').value) / 100, rms: fit.rms, on: true, alAt: nowIso(), alBy: worker() || (CONN && CONN.name) || '' }); ulsSet(l); DOC.cur = u;
+  toast(fit.res.length < 3 ? '位置を保存しました。3点目を入れると、合わせ間違いに気づけます' : '位置を保存しました'); docUi();
 };
 $('docDel').onclick = () => sheet(bx => {
   bx.append(el('h3', '', '⚠ 図面「' + DOC.cur.name + '」を消しますか？'));
   bx.append(el('p', '', 'この端末から図面の画像と位置合わせが消えます。描いた対象は消えません。'));
   const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
   const yes = el('button', 'btn danger', '消す');
-  yes.onclick = async () => { sheet(null); const id = DOC.cur.id; ulsSet(uls().filter(x => x.id !== id)); await docDb.del(id).catch(() => {}); if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer); if (DOC.ov) DOC.geoMap.removeLayer(DOC.ov); DOC.ov = null; DOC.cur = null; DOC.pairs = []; const l = uls(); if (l.length) docSelect(l[l.length - 1].id); else docUi(); };
+  yes.onclick = async () => { sheet(null); const id = DOC.cur.id; ulsSet(uls().filter(x => x.id !== id)); await docDb.del(id).catch(() => {}); await docDb.del(id + 'm').catch(() => {}); LS.set('docsDropped', (LS.get('docsDropped', []) || []).concat([id])); if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer); if (DOC.ov) DOC.geoMap.removeLayer(DOC.ov); DOC.ov = null; DOC.cur = null; DOC.pairs = []; const l = uls(); if (l.length) docSelect(l[l.length - 1].id); else docUi(); };
   bx.append(no, yes);
 });
 $('docClose').onclick = () => { $('doc').classList.add('hidden'); };
@@ -4229,8 +4297,9 @@ $('situEnd').onclick = () => $('situBar').classList.add('hidden');
 $('situAgain').onclick = () => $('srvSitu').click();
 
 /* ---- 撮影方向の小さな矢印（地図に、調査票ごとに）。状況写真は細い矢印、調査票は太い矢印＋番号 ---- */
-function arrowIcon(h, situ, no, cross, other) {      // other：ほかの端末の票（黒い矢印・点線の札。自分の票は白い矢印）／'past'＝過去の調査（灰色）
-  const w = situ ? 2.2 : 3.6, len = situ ? 16 : 20, ec = other ? '#fff' : '#111', fc = other === 'past' ? '#8a8f94' : other ? '#111' : '#fff';
+const OTH = '#e4007f';                                 // ほかの端末の色（v0.10：黒は田んぼの深緑の航空写真に沈むのでマゼンタに）
+function arrowIcon(h, situ, no, cross, other) {      // other：ほかの端末の票（マゼンタの矢印・点線の札。自分の票は白い矢印）／'past'＝過去の調査（灰色）
+  const w = situ ? 2.2 : 3.6, len = situ ? 16 : 20, ec = other ? '#fff' : '#111', fc = other === 'past' ? '#8a8f94' : other ? OTH : '#fff';
   const svg = '<svg width="44" height="44" viewBox="-22 -22 44 44" style="transform:rotate(' + h + 'deg)"><g stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="' + ec + '" stroke-width="' + (w + 2.5) + '" fill="none"/>' +
     '<path d="M0 0 L0 ' + (-len) + ' M-5 ' + (-len + 6) + ' L0 ' + (-len) + ' L5 ' + (-len + 6) + '" stroke="' + fc + '" stroke-width="' + w + '" fill="none"/>' +
@@ -4364,7 +4433,7 @@ function drawSiteLayer(map, g) {
     if (o.label === undefined) { L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); return; }   // 古い受け付け側から来た点（番号・向きなし）
     // v0.8.1：自分の票と同じ形（撮影方向の矢印・写真番号「05-12」・ポール横断📏）。ほかの端末の分は黒い矢印＋点線の札。タップでその票を開く（見るだけ）
     const icon = o.heading != null && isFinite(o.heading) ? arrowIcon(o.heading, o.situ, o.label, o.cross, true)
-      : L.divIcon({ className: 'arrowmk oth', html: '<svg width="44" height="44" viewBox="-22 -22 44 44">' + (o.cross ? '<path d="M-14 0 L14 0" stroke="#fff" stroke-width="7"/><path d="M-14 0 L14 0" stroke="#111" stroke-width="3"/>' : '') + '<circle r="5" fill="#111" stroke="#fff" stroke-width="2"/></svg>' + (o.situ ? '' : o.cross ? '<b class="x">📏 ' + esc(o.label) + '</b>' : '<b>' + esc(o.label) + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
+      : L.divIcon({ className: 'arrowmk oth', html: '<svg width="44" height="44" viewBox="-22 -22 44 44">' + (o.cross ? '<path d="M-14 0 L14 0" stroke="#fff" stroke-width="7"/><path d="M-14 0 L14 0" stroke="#111" stroke-width="3"/>' : '') + '<circle r="5" fill="' + OTH + '" stroke="#fff" stroke-width="2"/></svg>' + (o.situ ? '' : o.cross ? '<b class="x">📏 ' + esc(o.label) + '</b>' : '<b>' + esc(o.label) + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
     const mk = L.marker([o.lat, o.lon], { icon, interactive: !!o.id && map === mainMap, keyboard: false }).addTo(g);
     if (o.id && map === mainMap) mk.on('click', () => { if (typeof GK !== 'undefined' && GK.mode) return; openRec(o.id, false, { map: true }); });
   });
@@ -4505,6 +4574,7 @@ $('konbiniBtn').onclick = () => konbiniSheet();
 
 /* ====================== 明日の準備チェック（⚙） ====================== */
 function prepSheet() {
+  if (shareOK() && Date.now() - shareAt > 60000) pullShared(true).then(() => { if ($('prepSave') && (docsWaiting().length || areasWaiting().length)) prepSheet(); });
   sheet(box => {
     box.append(el('h3', '', '🧰 明日の準備チェック'));
     const row = (ok, text, btn) => { const r = el('div', 'setrow'); const t = el('span', '', (ok ? '✓ ' : '⚠ ') + text); t.style.color = ok ? 'var(--ok)' : 'var(--warn)'; t.style.fontWeight = 'bold'; r.append(t); if (btn) r.append(btn); box.append(r); };
@@ -4513,6 +4583,11 @@ function prepSheet() {
     const alive = areasAll().filter(areaAlive);
     const tb = el('button', 'minibtn', alive.length ? '追加する' : '保存する'); tb.onclick = () => { sheet(null); openArea('tiles'); };
     row(alive.length > 0, alive.length ? '航空写真：' + alive.length + '範囲を保存済み（早いもので ' + md(Math.min(...alive.map(a => a.exp))) + ' まで）' : 'この現場の航空写真がまだ保存されていません', tb);
+    const dn = uls().filter(u => u.A).length, db = el('button', 'minibtn', dn ? '追加する' : '取り込む'); db.onclick = () => { sheet(null); $('planFile').value = ''; $('planFile').click(); };     // v0.10
+    row(dn > 0, dn ? '図面：' + dn + '枚を位置合わせ済み（位置図に重なります）' : '重ねる図面はまだありません（なくても調査はできます）', db);
+    const dw = docsWaiting().length, aw = areasWaiting().length;          // v0.10：ほかのスマホで重ねた図面・保存した範囲
+    if (dw) { const b = el('button', 'minibtn', '受け取る'); b.onclick = async () => { sheet(null); await takeRemoteDocs(); prepSheet(); }; row(false, 'ほかのスマホで重ねた図面が ' + dw + '枚あります（位置合わせ済みで届きます）', b); }
+    if (aw) { const b = el('button', 'minibtn', 'このスマホにも保存'); b.onclick = async () => { sheet(null); await saveRemoteAreas(); prepSheet(); }; row(false, 'ほかのスマホで航空写真を保存した範囲が ' + aw + 'か所あります', b); }
     const kb = (LS.get('konbini', { list: [] }).list || []).length;
     const kbb = el('button', 'minibtn', '取り直す'); kbb.onclick = async () => { const a = areasAll().filter(areaAlive); if (!a.length) { toast('先に航空写真の範囲を保存してください'); return; } try { let n = 0; for (const x of a) n += await konbiniFetch(x); toast('コンビニを取り直しました'); prepSheet(); } catch (e) { toast('取り直せませんでした（電波のある所で）'); } };
     row(kb > 0, kb ? 'コンビニ ' + kb + '店を保存済み' : 'コンビニはまだ（航空写真を保存すると一緒に取ります）', kbb);
@@ -4617,6 +4692,7 @@ function cheer(sm, wx) {
   if (sm.dist >= 5000) msg += pickOne(CHEER.walk);
   return msg + pickOne(CHEER.rest);
 }
+$('prepTop').onclick = () => prepSheet();
 $('dayEnd').onclick = async () => {
   sheet(box => { box.append(el('h3', '', '送信を確かめています…')); box.append(el('p', '', 'まだ届いていない記録・写真を送っています。')); });
   flush(); uploadPhotos();
@@ -4649,6 +4725,7 @@ $('dayEnd').onclick = async () => {
     const p = el('p', 'daymsg', cheer(sm, wx)); box.append(p);
     box.append(el('p', '', '✓ 今日の記録と写真は、すべてスプレッドシートとドライブに届いています。')); box.lastChild.style.cssText = 'font-size:13px;color:var(--ok)';
     box.append(el('p', '', '移動距離（調査延長）は撮影した場所をつないだ長さです（12時〜13時の昼休みと、車での移動は入れません）。カロリーは、歩く分に50mごとのスクワット3回分を足した1mあたりの値に、調査延長を掛けた目安です（体重60kgとして計算）。')); box.lastChild.style.cssText = 'font-size:11px;color:var(--mute)';
+    const pr = el('button', 'btn sub', '🧰 明日の準備へ（航空写真・図面）'); pr.id = 'sumPrep'; pr.onclick = () => prepSheet(); box.append(pr);    // v0.10：終えたら続けて明日の準備
     const c = el('button', 'btn acc', '閉じる'); c.onclick = () => sheet(null); box.append(c);
   });
 };
@@ -4658,18 +4735,123 @@ let uploading = false;
 function b64(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(r.error); r.readAsDataURL(blob); }); }
 /* v0.9：スマホで取り込んだ図面（重ねる図面・図面タブの図面）も、現場フォルダの「図面」へ控えを送る（スマホにしかない状態をなくす）。
    画像は1回だけ、位置合わせを直したらその分だけ送る。写真と同じく「写真もWi-Fiのときに手で送る」の設定に従う */
+/* ---------- v0.10：図面と位置合わせ・航空写真の範囲を、同じ業務のほかのスマホと共有 ----------
+   1台で重ねて位置を合わせれば、ほかのスマホも同じ位置合わせで重なる（班ごとの合わせ方の差でずれない）。
+   誰かが直したら全員の分も新しい位置合わせになる。前の位置合わせには戻せる。図面の画像は数MBあるので、
+   「写真もWi-Fiのときに手で送る」にしているスマホは、押したときだけ受け取る */
+const SHARE_SERVER = '0.10';
+function shareOK() { return !!CONN && online && !keyBad && !!serverVer && !verLt(serverVer, SHARE_SERVER); }
+let shareAt = 0, sharing = false;
+const tms = v => { const t = Date.parse(v || ''); return isFinite(t) ? t : 0; };
+function docsRemote() { return LS.get('docsRemote', []) || []; }
+function docsWaiting() { const have = new Set(uls().map(u => u.id)), drop = new Set(LS.get('docsDropped', []) || []); return docsRemote().filter(d => d.A && !have.has(d.id) && !drop.has(d.id)); }
+function areasRemote() { return LS.get('areasRemote', []) || []; }
+function areasWaiting() { return areasRemote().filter(r => !areasAll().some(a => a.id === r.id && areaAlive(a))); }
+function whoAt(who, at) { const t = tms(at); return (who || '') + (t ? ' ' + md(t) : ''); }
+async function pullShared(force) {
+  if (sharing || !shareOK()) return;
+  if (!force && Date.now() - shareAt < 600000) return;
+  sharing = true; shareAt = Date.now();
+  try {
+    await pushAreas();
+    const r = await call('api_docs'); if (r && Array.isArray(r.docs)) { LS.set('docsRemote', r.docs); await applyRemoteDocs(!SET().photoManual); }
+    const a = await call('api_areas'); if (a && Array.isArray(a.areas)) LS.set('areasRemote', a.areas);
+  } catch (e) {} finally { sharing = false; }
+}
+/* ほかのスマホが直した位置合わせを取り入れる。まだない図面は受け取る（getImgs：画像も受け取るか） */
+async function applyRemoteDocs(getImgs) {
+  const sent = LS.get('docSent', {}), msgs = []; let changed = false;
+  const l = uls();
+  docsRemote().forEach(d => {
+    const u = l.find(x => x.id === d.id); if (!u || !d.A) return;
+    if (JSON.stringify(u.A || null) === JSON.stringify(d.A) || tms(d.at) <= tms(u.alAt)) return;
+    Object.assign(u, { A: d.A, pairs: Array.isArray(d.pairs) ? d.pairs : u.pairs, alAt: d.at, alBy: d.who }); changed = true;
+    sent[u.id] = { sig: JSON.stringify(d.A), at: nowIso() };            // 受け取った位置合わせは送り返さない
+    msgs.push('「' + (u.name || '図面') + '」の位置が直されました（' + whoAt(d.who, d.at) + '）');
+  });
+  if (changed) { ulsSet(l); LS.set('docSent', sent); }
+  if (getImgs) for (const d of docsWaiting()) { if (await fetchRemoteDoc(d)) { changed = true; msgs.push('図面「' + (d.name || '図面') + '」を受け取りました（' + whoAt(d.who, d.at) + 'が重ねたもの）'); } }
+  if (changed) { try { if (mainMap) mapDocs(); else syncAllDocs(); } catch (e) {} }
+  if (msgs.length) toast(msgs.length > 1 ? msgs[0] + ' ほか' + (msgs.length - 1) + '件' : msgs[0]);
+  return changed;
+}
+async function fetchRemoteDoc(d) {
+  try {
+    const r = await callLong('api_docGet', d.id); if (!r || !r.b64) return false;
+    const bin = atob(r.b64), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const blob = new Blob([arr], { type: r.mime || 'image/jpeg' });
+    let w = d.w, h = d.h; if (!w || !h) { const bm = await createImageBitmap(blob); w = bm.width; h = bm.height; if (bm.close) bm.close(); }
+    await docDb.put({ id: d.id, blob, w, h, texts: [] });
+    const l = uls().filter(x => x.id !== d.id); l.push({ id: d.id, name: d.name || '図面', w, h, pairs: Array.isArray(d.pairs) ? d.pairs : [], A: d.A, op: .55, on: true, alAt: d.at, alBy: d.who, from: d.who }); ulsSet(l);
+    const sent = LS.get('docSent', {}); sent[d.id] = { sig: JSON.stringify(d.A), at: nowIso() }; LS.set('docSent', sent);
+    return true;
+  } catch (e) { return false; }
+}
+async function takeRemoteDocs() {
+  if (!shareOK()) { toast('電波のある所で押してください'); return; }
+  toast('図面を受け取っています…'); shareAt = 0; await pullShared(true);
+  const n0 = docsWaiting().length; await applyRemoteDocs(true);
+  if (!docsWaiting().length && !n0) toast('ほかのスマホの図面は、もう全部入っています');
+}
+/* 図面ごとの「誰がいつ合わせたか」と、前の位置合わせに戻す */
+function docInfoSheet(u) {
+  sheet(box => {
+    box.append(el('h3', '', '📄 ' + (u.name || '図面')));
+    box.append(el('p', '', u.alBy || u.alAt ? '今の位置合わせ：' + whoAt(u.alBy, u.alAt) : '今の位置合わせ：このスマホで合わせたもの'));
+    const d = docsRemote().find(x => x.id === u.id), hist = d && Array.isArray(d.hist) ? d.hist.filter(h => JSON.stringify(h.A) !== JSON.stringify(u.A)) : [];
+    if (hist.length) {
+      box.append(el('p', '', '前の位置合わせ（押すと、ほかのスマホもその位置に戻ります）'));
+      hist.forEach(h => { const b = el('button', 'btn sub', '↩ ' + whoAt(h.who, h.at) + ' の位置合わせに戻す'); b.onclick = () => {
+        const l = uls(), x = l.find(y => y.id === u.id); if (!x) return;
+        Object.assign(x, { A: h.A, pairs: Array.isArray(h.pairs) ? h.pairs : x.pairs, alAt: nowIso(), alBy: worker() || (CONN && CONN.name) || '' }); ulsSet(l);
+        sheet(null); mapDocs(); uploadDocs(); toast('前の位置合わせに戻しました');
+      }; box.append(b); });
+    } else box.append(el('p', '', '前の位置合わせはありません（電波のある所で開くと、ほかのスマホで合わせた記録を受け取ります）'));
+    const fix = el('button', 'btn sub', '📄 位置合わせの画面で直す'); fix.onclick = async () => { sheet(null); await openDoc(); docSelect(u.id); }; box.append(fix);
+    const c = el('button', 'btn acc', '閉じる'); c.onclick = () => sheet(null); box.append(c);
+  });
+}
+/* 航空写真を保存した範囲：保存したら共有、ほかのスマホの範囲は押すだけで保存 */
+function shareArea(a, del) {
+  const q = LS.get('areaUnsent', {}) || {}; q[a.id] = { id: a.id, name: a.name || '', mode: a.mode, view: !!a.view, pts: a.pts, buf: a.buf, at: nowIso(), del: !!del }; LS.set('areaUnsent', q);
+  pushAreas();
+}
+async function pushAreas() {
+  if (!shareOK()) return;
+  const q = LS.get('areaUnsent', {}) || {};
+  for (const k of Object.keys(q)) { try { await call('api_area', q[k]); delete q[k]; LS.set('areaUnsent', q); } catch (e) { if (e.server && /不明な操作/.test(e.message)) return; break; } }
+}
+async function saveRemoteAreas() {
+  const list = areasWaiting(); if (!list.length) { toast('ほかのスマホの範囲は、もう全部保存しています'); return; }
+  if (!('caches' in window)) { toast('この端末では保存できません'); return; }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  const cache = await caches.open('tiles-v1'); let ok = 0, ng = 0, k = 0;
+  for (const r of list) {
+    k++; const sh = { mode: r.mode, pts: r.pts, buf: r.buf }, tiles = areaTiles(sh); if (tiles.length > 8000) { ng++; continue; }
+    let i = 0, got = 0;
+    const work = async () => { while (i < tiles.length) { const u = tileUrl(tiles[i++]); try { if (await cache.match(u)) got++; else { const res = await fetch(u, { mode: 'cors' }); if (res.ok) { await cache.put(u, res); got++; } else ng++; } } catch (e) { ng++; } if ((i & 31) === 0) toast('航空写真を保存中… ' + k + '／' + list.length + 'か所（' + i + '／' + tiles.length + '枚）'); } };
+    await Promise.all([work(), work(), work(), work()]);
+    if (got) {
+      const now = Date.now(), all = areasAll().filter(x => x.id !== r.id);
+      all.push({ id: r.id, name: r.name || '', mode: r.mode, pts: r.pts, buf: r.buf, view: !!r.view, n: tiles.length, at: now, exp: now + KEEP_DAYS * DAY, alive: true, from: r.who }); areasSet(all); ok++;
+      konbiniFetch(sh).catch(() => {});
+    }
+  }
+  if (areaSaved) areaSavedDraw();
+  toast(ng ? ok + 'か所を保存（失敗 ' + ng + '枚。電波のある所でもう一度）' : ok + 'か所の航空写真を保存しました（' + md(Date.now() + KEEP_DAYS * DAY) + 'まで）');
+}
 let docSending = false;
 async function uploadDocs() {
   if (docSending || !CONN || keyBad || !online || !serverVer || verLt(serverVer, '0.9')) return;
   docSending = true;
   try {
     const sent = LS.get('docSent', {}), list = [];
-    uls().forEach(u => list.push({ id: u.id, name: u.name, w: u.w, h: u.h, A: u.A || null }));
+    uls().forEach(u => list.push({ id: u.id, name: u.name, w: u.w, h: u.h, A: u.A || null, pairs: (u.pairs || []).filter(q => q.img && q.geo).map(q => ({ img: q.img, geo: q.geo })), at: u.alAt }));
     drawings().forEach(d => (d.pages || []).forEach((pg, i) => list.push({ id: pg.id, name: d.name + ((d.pages || []).length > 1 ? '_' + (i + 1) + 'ページ' : ''), w: pg.w, h: pg.h, A: null })));
     for (const u of list) {
       const sig = JSON.stringify(u.A || null), was = sent[u.id];
       if (was && was.sig === sig) continue;
-      const p = { id: u.id, name: u.name, at: nowIso(), w: u.w, h: u.h, A: u.A, devNo: devNo() };
+      const p = { id: u.id, name: u.name, at: u.at || nowIso(), w: u.w, h: u.h, A: u.A, pairs: u.pairs, devNo: devNo() };
       if (!was) { const d = await docDb.get(u.id).catch(() => null); if (!d || !d.blob) continue; p.b64 = await b64(d.blob); }
       await call('api_doc', p);
       sent[u.id] = { sig, at: nowIso() }; LS.set('docSent', sent);
@@ -4773,6 +4955,17 @@ function drawMe() {
   else meMark.setLatLng([f.lat, f.lon]);
 }
 $('mapLayer').onclick = () => { const to = mainMap._cur === 'photo' ? 'std' : 'photo'; mainMap.removeLayer(mainLayers[mainMap._cur]); mainLayers[to].addTo(mainMap); mainMap._cur = to; $('mapLayer').textContent = to === 'photo' ? '地形図にする' : '航空写真にする'; mapDocs(); };
+/* v0.10：この業務の写真（ほかの機種の分も）が全部入る所へ飛ぶ。写真がまだなければ、対象・保存した航空写真の範囲・図面へ。
+   画面をずらして探さなくてよい（通り道の航空写真を読まないので通信量も減る） */
+function bizBounds() {
+  const pts = [];
+  Object.values(recsAll()).forEach(s => { if (s.deleted) return; const a = adopted(s); if (a && a.lat != null && isFinite(a.lat)) pts.push([a.lat, a.lon]); });
+  if (!pts.length) tgts().forEach(t => (t.pts || []).forEach(p => pts.push(p)));
+  if (!pts.length) areasAll().filter(areaAlive).forEach(a => a.pts.forEach(p => pts.push(p)));
+  if (!pts.length) uls().filter(u => u.A).forEach(u => { try { [[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].forEach(([x, y]) => { const q = imgToLL(u.A, x, y); pts.push([q.lat != null ? q.lat : q[0], q.lng != null ? q.lng : q[1]]); }); } catch (e) {} });
+  return pts.length ? L.latLngBounds(pts) : null;
+}
+$('mapBiz').onclick = () => { const b = bizBounds(); if (!b) { toast('この業務の写真・対象・保存した範囲がまだありません'); return; } mainMap.fitBounds(b.pad(0.15), { maxZoom: 18 }); };
 $('mapHere').onclick = () => { const f = freshFix(120); if (f) { mainMap.setView([f.lat, f.lon], Math.max(mainMap.getZoom(), 18)); drawMe(); } else toast('今の位置が取れていません'); };
 
 /* ====================== 現地の書き込み：図面チェック（✓・✎）と作図 ======================
@@ -5279,7 +5472,8 @@ function syncDocs(map) {
   Object.keys(map._docs).forEach(k => {
     if (keys.has(k)) return;
     const o = map._docs[k];
-    if (cur[k]) { if (o && o !== 'loading' && o.setShown) o.setShown(false); return; }           // 出さないだけ：残して隠す
+    if (cur[k] && map === mainMap) { if (o && o !== 'loading' && o.setShown) o.setShown(false); return; }   // 位置図は出さないだけ：残して隠す（すぐ戻せる）
+    // 調査票の小さい地図・位置を選ぶ窓では、隠した図面はメモリから外す（v0.10）
     if (o && o !== 'loading') map.removeLayer(o); delete map._docs[k];                               // 消した・合わせ直した図面は捨てる
   });
   want.forEach(async u => {
@@ -5287,7 +5481,7 @@ function syncDocs(map) {
     if (o && o !== 'loading') { o.setShown(true); return; }
     if (o === 'loading' || !visible) return;
     map._docs[k] = 'loading'; docBusy(map, 1);
-    const url = await docUrl(u.id);
+    const url = await docLightUrl(u.id);
     if (map._docs[k] !== 'loading' || !url) { if (map._docs[k] === 'loading') delete map._docs[k]; docBusy(map, -1); return; }
     const ly = new DocLayer(url, u.w, u.h, u.A, 1, 'docPane'); ly.once('ready', () => docBusy(map, -1));
     map._docs[k] = ly.addTo(map);
@@ -5299,15 +5493,19 @@ function mapPhotoApply() { $('mapPhotoPct').textContent = Number($('mapPhotoOp')
 function mapDocs() {
   if (!mainMap || typeof L === 'undefined') return;
   const all = uls().filter(u => u.A), on = !!all.length && LS.get('mapDocOn', true);
-  $('mapDocRow').classList.toggle('hidden', !all.length); $('mapDocList').classList.toggle('hidden', all.length < 2 || !on);
+  $('mapDocRow').classList.toggle('hidden', !all.length); $('mapDocList').classList.toggle('hidden', !all.length || !on);      // v0.10：1枚でも出す（誰がいつ合わせたか・前に戻す）
   $('mapDocOn').checked = on; $('mapPhotoOp').value = LS.get('mapPhotoOp', 50); $('mapPhotoPct').textContent = $('mapPhotoOp').value + '%';
   const box = $('mapDocList'); box.innerHTML = '';
   all.forEach((u, i) => {           // 図面ごとの表示・非表示（シート）
     const l = el('label', 'docchk'), c = el('input'); c.type = 'checkbox'; c.checked = u.on !== false; c.dataset.id = u.id;
     c.onchange = () => { ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { on: c.checked }) : x)); syncAllDocs(); };
-    l.append(c, document.createTextNode((i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')') + ' ' + (u.name || '図面'))); box.append(l);     // ①②…＝取り込んだ順
+    l.append(c, document.createTextNode((i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')') + ' ' + (u.name || '図面')));     // ①②…＝取り込んだ順
+    const inf = el('button', 'docinf', u.alBy ? whoAt(u.alBy, u.alAt) : 'ⓘ'); inf.type = 'button'; inf.onclick = e => { e.preventDefault(); e.stopPropagation(); docInfoSheet(u); }; l.append(inf);   // v0.10：誰がいつ合わせたか・前に戻す
+    box.append(l);
   });
-  syncAllDocs();
+  const dw = docsWaiting().length;
+  if (dw) { const b = el('button', 'btn sub', '📄 ほかのスマホで重ねた図面を受け取る（' + dw + '枚）'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); box.append(b); box.classList.remove('hidden'); $('mapDocRow').classList.remove('hidden'); }
+  syncAllDocs(); pullShared();
 }
 $('mapDocOn').onchange = () => { LS.set('mapDocOn', $('mapDocOn').checked); mapDocs(); };
 $('mapPhotoOp').oninput = () => { LS.set('mapPhotoOp', Number($('mapPhotoOp').value)); mapPhotoApply(); };
@@ -5338,7 +5536,21 @@ function planTargets(gj) {
   return out;
 }
 $('planBtn').onclick = () => { $('planFile').value = ''; $('planFile').click(); };
-$('planFile').onchange = () => planImport([...$('planFile').files]);
+/* v0.10：図面の入口を1つに。計画入りのPDF（または計画のデータ）ならそのまま位置が合った状態で重なる。
+   ふつうのPDF・画像なら、位置合わせの画面を開いて取り込む（2〜3点合わせて「この位置で保存」） */
+$('planFile').onchange = async () => {
+  const files = [...$('planFile').files]; if (!files.length) return;
+  let plan = false, doc = null;
+  for (const f of files) {
+    const isPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name), isImg = /^image\//i.test(f.type) || /\.(jpe?g|png)$/i.test(f.name);
+    if (isPdf) { if (!doc) doc = f; if (!plan) plan = !!(await planFromPdf(f).catch(() => null)); }
+    else if (isImg) { if (!doc) doc = f; }
+    else plan = true;
+  }
+  if (plan) return planImport(files);
+  if (!doc) { toast('読み込めませんでした'); return; }
+  await openDoc(); docImportFile(doc);
+};
 /* 計画入りのPDF：会社で図面PDFの中に計画のデータ（.json）を添付しておく。PDF1つで線・名前・図面が入る（LINE・メールで送れる） */
 async function planFromPdf(f) {
   const lib = await loadPdfJs(), pdf = await lib.getDocument({ data: await f.arrayBuffer() }).promise, att = await pdf.getAttachments();
@@ -5381,6 +5593,7 @@ async function planImport(files) {
             const id = 'u' + planHash((u0.name || doc.name) + ((u0.page || 1) > 1 ? '#' + u0.page : ''));      // 1ページ目は前の版と同じID（取り込み直しても重ならない）
             await docDb.put({ id, blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] });
             if (docUrls[id]) { URL.revokeObjectURL(docUrls[id]); delete docUrls[id]; }
+            if (docUrls[id + '@m']) { URL.revokeObjectURL(docUrls[id + '@m']); delete docUrls[id + '@m']; } await docDb.del(id + 'm').catch(() => {});      // 軽い画像も作り直す
             ulsSet(uls().filter(u => u.id !== id).concat([{ id, name: String(u0.name || doc.name), w: im.w, h: im.h, pairs, A: fit.A, op: .55, on: true, rms: fit.rms }]));
             n++;
           } catch (e) { docMsg = '（図面が読み込めないページがありました：' + (e.message || e) + '）'; }
