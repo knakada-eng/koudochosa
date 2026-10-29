@@ -585,7 +585,7 @@
   <button id="dockDraw" class="dk"><img src="dock-zumen.png" alt="図面"></button>
   <button id="dockNocho" class="dk hidden"><span class="dkemo">📒</span><span class="dklab">野帳</span></button>
   <button id="dockMap" class="dk"><img src="dock-map.png" alt="位置図"></button>
-  <button id="dockTodo" class="dk" aria-label="今日やること"><span class="dkemo dktodo">📝</span><span class="dklab">やること</span><span class="badge todoBadge hidden" id="dockTodoN"></span></button>
+  <button id="dockTodo" class="dk" aria-label="今日やること"><img src="dock-todo.png" alt="やること"><span class="badge todoBadge hidden" id="dockTodoN"></span></button>
 </nav>
 <div id="viewer" class="hidden">
   <div id="vwTop"><button id="vwClose">✕ 閉じる</button><span id="vwName"></span><span id="vwPage"></span></div>
@@ -693,7 +693,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10β';
+const VERSION = 'v0.10.1β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -4891,11 +4891,11 @@ async function uploadPhotos(force) {
 /* ====================== 下のドック：HOME・撮る・図面・位置図 ======================
    撮るは画面に合わせて中身が変わる（耕土厚の区画の中なら次の作業写真、それ以外は調査票の撮影） */
 function dockOn(id) { ['dockHome', 'srvNew', 'dockDraw', 'dockNocho', 'dockMap'].forEach(x => { const e = $(x); if (e) e.classList.toggle('on', x === id); }); dockMode(); }
-/* 耕土厚の調査中のドック：HOME → 作業写真（下に「次：○○」）→ 野帳 → 位置図。調査写真は区画の「＋ 写真を足す」から。
+/* ドック：どの作業項目でも HOME・撮る・図面・位置図・やること（v0.10.1）。耕土厚の調査中は「撮る」が作業写真（下に「次：○○」）。調査写真は区画の「＋ 写真を足す」から。
    作業写真は最後に開いた区画のもの（位置図を見ていても、その区画の次の作業写真になる） */
 function kdMode() { return LS.get('mode', 'koudo') !== 'srv'; }
 function dockMode() {
-  const k = kdMode(); $('dockDraw').classList.toggle('hidden', k); $('dockNocho').classList.toggle('hidden', !k);
+  const k = kdMode(); $('dockDraw').classList.remove('hidden'); $('dockNocho').classList.add('hidden');     // v0.10.1：タブバーは作業項目（工種）によらず共通（耕土厚でも図面を出す。野帳は区画の画面の「📒 野帳」から）
   const lab = $('dockNext'); if (!lab) return;
   if (!k) { lab.classList.add('hidden'); return; }
   let t = '';
