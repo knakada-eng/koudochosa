@@ -87,7 +87,18 @@
   .gkng span { color:#d50000; font-size:16px; }
   .gkln span { color:#4a148c; font-size:13px; background:rgba(255,255,255,.85); border-radius:6px; padding:0 4px; text-shadow:none; }
   .gkhit span { display:inline-block; transform:translate(-50%,-50%); background:rgba(255,255,0,.0); }
-  #mapDocList { display:flex; flex-wrap:wrap; gap:6px 14px; margin:-2px 0 8px; font-size:13px; }
+  #mapDocList { display:flex; flex-direction:column; gap:6px; margin:6px 0 2px; font-size:13px; }
+  #docPanel { border:2px solid #2e7d32; background:#eef7ee; border-radius:12px; padding:8px; margin-bottom:10px; }
+  #docPanel #planBtn { width:100%; margin:0; padding:6px 10px; min-height:0; font-size:15px; }
+  #docPanel #planBtn small { display:inline; margin:0 0 0 6px; font-size:11px; }
+  #docPanel #mapDocRow { margin:8px 0 0; }
+  #mapDocList .docrow { display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #c8e0c8; border-radius:10px; padding:5px 8px; }
+  #mapDocList .docrow .nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:40%; }
+  #mapDocList .docrow input[type=range] { flex:1; min-width:60px; width:auto; height:22px; }
+  #mapDocList .docrow b { min-width:2.6em; text-align:right; font-size:12px; }
+  #mapDocList .docrow.unal { color:var(--mute); } #mapDocList .docrow.unal .minibtn { margin-left:auto; }
+  #mapDocList .docfoot { display:flex; gap:6px; } #mapDocList .docfoot .btn { margin:0; padding:6px 10px; min-height:0; font-size:13px; }
+  .devpick { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; }
   #mapDocList.hidden { display:none; }
   #mapShow .mshow { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
   #mapShow .mlab { font-size:12px; color:var(--mute); font-weight:bold; min-width:2.6em; }
@@ -446,8 +457,13 @@
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
       <div id="mapShow"></div>
-      <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab">航空写真</span><input type="range" id="mapPhotoOp" min="0" max="100" step="5" value="50"><b id="mapPhotoPct">50%</b></div>
-      <div id="mapDocList" class="hidden"></div>
+      <!-- v0.10.2：図面の欄（取り込む・重ねる図面と濃さ・ほかの端末から受け取る）。航空写真はいつも100%で、図面をその上に透かして重ねる -->
+      <div id="docPanel">
+        <button class="btn go" id="planBtn">📄 図面を取り込む<small>PDF・画像</small></button>
+        <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab" id="mapDocNote"></span></div>
+        <div id="mapDocList" class="hidden"></div>
+        <input type="range" id="mapPhotoOp" class="hidden" min="0" max="100" value="100"><b id="mapPhotoPct" class="hidden"></b>
+      </div>
       <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
       <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
       <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
@@ -456,7 +472,6 @@
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
         <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
-        <button class="btn go" id="planBtn">📄 図面を取り込む<small>PDF・画像。計画入りならそのまま重なる</small></button>
       </div>
       <input type="file" id="planFile" accept="application/pdf,image/*,.json,.geojson,.txt" multiple class="hidden">
       <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
@@ -693,7 +708,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.1β';
+const VERSION = 'v0.10.2β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -2959,7 +2974,7 @@ function openPicker(opt, cb) {
   $('pickMove').classList.toggle('hidden', !pick.lockPos);
   // 図面を重ねているときは、窓の中で航空写真の濃さを変えられる
   const docOn = uls().some(u => u.A) && LS.get('mapDocOn', true);
-  $('pickOpRow').classList.toggle('hidden', !docOn); $('pickOp').value = LS.get('mapPhotoOp', 50); $('pickOpPct').textContent = $('pickOp').value + '%';
+  $('pickOpRow').classList.add('hidden');     // v0.10.2：航空写真はいつも100%（図面ごとの濃さは位置図の図面の欄で） $('pickOp').value = LS.get('mapPhotoOp', 50); $('pickOpPct').textContent = $('pickOp').value + '%';
 }
 function pickUnlock() { if (!pickMap) return; pickMap.dragging.enable(); pickMap.options.touchZoom = true; pickMap.options.doubleClickZoom = true; pickMap.options.scrollWheelZoom = true; }
 $('pickMove').onclick = () => { if (!pick) return; pick.lockPos = false; pickUnlock(); $('pickMove').classList.add('hidden'); $('pickHint').textContent = '地図をずらして十字を撮影した場所へ。向きは矢印の先の○を回す'; toast('位置も動かせます'); };
@@ -4160,6 +4175,7 @@ $('docSave').onclick = () => {
   const l = uls(), u = l.find(x => x.id === DOC.cur.id);
   Object.assign(u, { pairs: DOC.pairs.filter(p => p.geo), A: fit.A, op: Number($('docOp').value) / 100, rms: fit.rms, on: true, alAt: nowIso(), alBy: worker() || (CONN && CONN.name) || '' }); ulsSet(l); DOC.cur = u;
   toast(fit.res.length < 3 ? '位置を保存しました。3点目を入れると、合わせ間違いに気づけます' : '位置を保存しました'); docUi();
+  shareChoice(u.id);           // v0.10.2：ほかの端末に配るかを選ぶ
 };
 $('docDel').onclick = () => sheet(bx => {
   bx.append(el('h3', '', '⚠ 図面「' + DOC.cur.name + '」を消しますか？'));
@@ -4744,7 +4760,7 @@ function shareOK() { return !!CONN && online && !keyBad && !!serverVer && !verLt
 let shareAt = 0, sharing = false;
 const tms = v => { const t = Date.parse(v || ''); return isFinite(t) ? t : 0; };
 function docsRemote() { return LS.get('docsRemote', []) || []; }
-function docsWaiting() { const have = new Set(uls().map(u => u.id)), drop = new Set(LS.get('docsDropped', []) || []); return docsRemote().filter(d => d.A && !have.has(d.id) && !drop.has(d.id)); }
+function docsWaiting() { const have = new Set(uls().map(u => u.id)), drop = new Set(LS.get('docsDropped', []) || []); return docsRemote().filter(d => d.A && docForMe(d) && !have.has(d.id) && !drop.has(d.id)); }
 function areasRemote() { return LS.get('areasRemote', []) || []; }
 function areasWaiting() { return areasRemote().filter(r => !areasAll().some(a => a.id === r.id && areaAlive(a))); }
 function whoAt(who, at) { const t = tms(at); return (who || '') + (t ? ' ' + md(t) : ''); }
@@ -4754,7 +4770,7 @@ async function pullShared(force) {
   sharing = true; shareAt = Date.now();
   try {
     await pushAreas();
-    const r = await call('api_docs'); if (r && Array.isArray(r.docs)) { LS.set('docsRemote', r.docs); await applyRemoteDocs(!SET().photoManual); }
+    const r = await call('api_docs', devNo()); if (r && Array.isArray(r.docs)) { LS.set('docsRemote', r.docs); await applyRemoteDocs(!SET().photoManual); }
     const a = await call('api_areas'); if (a && Array.isArray(a.areas)) LS.set('areasRemote', a.areas);
   } catch (e) {} finally { sharing = false; }
 }
@@ -4763,7 +4779,7 @@ async function applyRemoteDocs(getImgs) {
   const sent = LS.get('docSent', {}), msgs = []; let changed = false;
   const l = uls();
   docsRemote().forEach(d => {
-    const u = l.find(x => x.id === d.id); if (!u || !d.A) return;
+    const u = l.find(x => x.id === d.id); if (!u || !d.A || !docForMe(d)) return;
     if (JSON.stringify(u.A || null) === JSON.stringify(d.A) || tms(d.at) <= tms(u.alAt)) return;
     Object.assign(u, { A: d.A, pairs: Array.isArray(d.pairs) ? d.pairs : u.pairs, alAt: d.at, alBy: d.who }); changed = true;
     sent[u.id] = { sig: JSON.stringify(d.A), at: nowIso() };            // 受け取った位置合わせは送り返さない
@@ -4797,7 +4813,8 @@ async function takeRemoteDocs() {
 function docInfoSheet(u) {
   sheet(box => {
     box.append(el('h3', '', '📄 ' + (u.name || '図面')));
-    box.append(el('p', '', u.alBy || u.alAt ? '今の位置合わせ：' + whoAt(u.alBy, u.alAt) : '今の位置合わせ：このスマホで合わせたもの'));
+    box.append(el('p', '', (u.alBy || u.alAt ? '今の位置合わせ：' + whoAt(u.alBy, u.alAt) : '今の位置合わせ：このスマホで合わせたもの') + '／' + shareLabel(u)));
+    const sh = el('button', 'btn acc', '📤 ほかの端末に配る・配らない…'); sh.id = 'docShareBtn'; sh.onclick = () => shareChoice(u.id); box.append(sh);
     const d = docsRemote().find(x => x.id === u.id), hist = d && Array.isArray(d.hist) ? d.hist.filter(h => JSON.stringify(h.A) !== JSON.stringify(u.A)) : [];
     if (hist.length) {
       box.append(el('p', '', '前の位置合わせ（押すと、ほかのスマホもその位置に戻ります）'));
@@ -4840,18 +4857,62 @@ async function saveRemoteAreas() {
   if (areaSaved) areaSavedDraw();
   toast(ng ? ok + 'か所を保存（失敗 ' + ng + '枚。電波のある所でもう一度）' : ok + 'か所の航空写真を保存しました（' + md(Date.now() + KEEP_DAYS * DAY) + 'まで）');
 }
+/* v0.10.2：位置合わせを配る相手を選ぶ（全員／相手を選ぶ／このスマホだけ）。u.share = 'all' | 'none' | ['02','05'] */
+const TO_SERVER = '0.10.2';
+function toOK() { return !!serverVer && !verLt(serverVer, TO_SERVER); }
+function shareLabel(u) { const v = u.share; return v === 'none' ? 'このスマホだけ' : Array.isArray(v) ? v.map(n => n + '機').join('・') + 'に配布' : '全員に配布'; }
+function bizDevices() {          // この業務で記録のある端末（自分以外）。名前は一番新しい記録の作業者
+  const me = devNo(), out = {};
+  Object.values(recsAll()).forEach(s => { const n = s.devNo; if (!n || n === me) return; const o = out[n] || (out[n] = { no: n, name: '', at: '' }); if (String(s.created || '') >= o.at) { o.at = String(s.created || ''); o.name = s.name || o.name; } });
+  docsRemote().forEach(d => { const m = String(d.who || '').match(/^(.*)（(\d+)）$/); if (m && m[2] !== me && !out[m[2]]) out[m[2]] = { no: m[2], name: m[1], at: '' }; });
+  return Object.values(out).sort((a, b) => a.no < b.no ? -1 : 1);
+}
+function shareSet(id, v) {
+  const l = uls(), u = l.find(x => x.id === id); if (!u) return;
+  u.share = v; ulsSet(l); uploadDocs(); try { mapDocs(); } catch (e) {}
+  toast(v === 'none' ? 'このスマホだけで使います（ほかの端末には配りません）' : shareOK() ? '「' + (u.name || '図面') + '」を' + shareLabel(u).replace(/に配布$/, '') + 'に配ります' : '電波が戻ったら配ります');
+}
+function shareChoice(id) {
+  const u = uls().find(x => x.id === id); if (!u || !u.A) return;
+  sheet(box => {
+    box.append(el('h3', '', '📤 この位置合わせを、ほかの端末にも配りますか？'));
+    box.append(el('p', '', '配ると、同じ業務のほかの端末にも「' + (u.name || '図面') + '」が位置合わせ済みで届きます（Wi-Fiのとき）。今：' + shareLabel(u)));
+    const all = el('button', 'btn acc', '全員に配る'); all.id = 'shareAll'; all.onclick = () => { sheet(null); shareSet(id, 'all'); };
+    const pick = el('button', 'btn sub', '相手を選んで配る…'); pick.id = 'sharePick'; pick.onclick = () => sharePick(id);
+    if (!toOK()) { pick.disabled = true; pick.textContent = '相手を選んで配る（受け付け側を0.10.2に上げると使えます）'; }
+    const none = el('button', 'btn sub', 'このスマホだけ（配らない）'); none.id = 'shareNone'; none.onclick = () => { sheet(null); shareSet(id, 'none'); };
+    box.append(all, pick, none);
+    const n = el('p', '', '「このスマホだけ」でも、ドライブの「図面」フォルダには控えが残ります。あとから図面の一覧の ⓘ で配れます。'); n.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(n);
+  });
+}
+function sharePick(id) {
+  const u = uls().find(x => x.id === id); if (!u) return;
+  const devs = bizDevices(), sel = new Set(Array.isArray(u.share) ? u.share : []);
+  sheet(box => {
+    box.append(el('h3', '', '配る相手を選ぶ'));
+    if (!devs.length) box.append(el('p', '', 'まだほかの端末の記録がありません。「全員に配る」にすると、あとから入った端末にも届きます。'));
+    const w = el('div', 'devpick');
+    devs.forEach(d => { const c = el('button', 'chip' + (sel.has(d.no) ? ' on' : ''), d.no + '機' + (d.name ? '（' + d.name + '）' : '')); c.dataset.no = d.no; c.onclick = () => { sel.has(d.no) ? sel.delete(d.no) : sel.add(d.no); c.classList.toggle('on', sel.has(d.no)); }; w.append(c); });
+    box.append(w);
+    const ok = el('button', 'btn acc', 'この相手に配る'); ok.id = 'sharePickOk'; ok.onclick = () => { if (!sel.size) { toast('相手を選んでください'); return; } sheet(null); shareSet(id, [...sel].sort()); };
+    const back = el('button', 'btn sub', '戻る'); back.onclick = () => shareChoice(id);
+    box.append(ok, back);
+  });
+}
+function docForMe(d) { return d.to !== 'none' && (!Array.isArray(d.to) || d.to.includes(devNo())); }
 let docSending = false;
 async function uploadDocs() {
   if (docSending || !CONN || keyBad || !online || !serverVer || verLt(serverVer, '0.9')) return;
   docSending = true;
   try {
     const sent = LS.get('docSent', {}), list = [];
-    uls().forEach(u => list.push({ id: u.id, name: u.name, w: u.w, h: u.h, A: u.A || null, pairs: (u.pairs || []).filter(q => q.img && q.geo).map(q => ({ img: q.img, geo: q.geo })), at: u.alAt }));
+    uls().forEach(u => list.push({ id: u.id, name: u.name, w: u.w, h: u.h, A: u.A || null, pairs: (u.pairs || []).filter(q => q.img && q.geo).map(q => ({ img: q.img, geo: q.geo })), at: u.alAt, share: u.share || 'all' }));
     drawings().forEach(d => (d.pages || []).forEach((pg, i) => list.push({ id: pg.id, name: d.name + ((d.pages || []).length > 1 ? '_' + (i + 1) + 'ページ' : ''), w: pg.w, h: pg.h, A: null })));
     for (const u of list) {
-      const sig = JSON.stringify(u.A || null), was = sent[u.id];
+      const sig = JSON.stringify(u.A || null) + (u.share && u.share !== 'all' ? '|' + JSON.stringify(u.share) : ''), was = sent[u.id];
       if (was && was.sig === sig) continue;
       const p = { id: u.id, name: u.name, at: u.at || nowIso(), w: u.w, h: u.h, A: u.A, pairs: u.pairs, devNo: devNo() };
+      if (u.share && u.share !== 'all') { if (toOK()) p.to = u.share; else if (u.share === 'none') { p.A = null; p.pairs = null; } }     // v0.10.2：配る相手（古い受け付け側では「配らない」だけ。位置合わせを送らない）
       if (!was) { const d = await docDb.get(u.id).catch(() => null); if (!d || !d.blob) continue; p.b64 = await b64(d.blob); }
       await call('api_doc', p);
       sent[u.id] = { sig, at: nowIso() }; LS.set('docSent', sent);
@@ -5464,7 +5525,7 @@ function docBusy(map, d) {
 function syncDocs(map) {
   if (!map || typeof L === 'undefined') return;
   const has = uls().some(u => u.A), on = has && LS.get('mapDocOn', true), want = on ? docShown() : [];
-  if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 150;     // 航空写真（200）の下
+  if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 250;     // v0.10.2：航空写真（200）の上に、図面ごとの濃さで透かして重ねる（前は下に置いて航空写真を薄くしていた）
   map._docs = map._docs || {};
   const visible = map.getContainer().offsetParent !== null;
   const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(','), keys = new Set(want.map(key)), cur = {};
@@ -5478,37 +5539,58 @@ function syncDocs(map) {
   });
   want.forEach(async u => {
     const k = key(u), o = map._docs[k];
-    if (o && o !== 'loading') { o.setShown(true); return; }
+    if (o && o !== 'loading') { o.setShown(true); if (o.setOpacity) o.setOpacity(docOp(u) / 100); return; }
     if (o === 'loading' || !visible) return;
     map._docs[k] = 'loading'; docBusy(map, 1);
     const url = await docLightUrl(u.id);
     if (map._docs[k] !== 'loading' || !url) { if (map._docs[k] === 'loading') delete map._docs[k]; docBusy(map, -1); return; }
-    const ly = new DocLayer(url, u.w, u.h, u.A, 1, 'docPane'); ly.once('ready', () => docBusy(map, -1));
+    const ly = new DocLayer(url, u.w, u.h, u.A, docOp(u) / 100, 'docPane'); ly.once('ready', () => docBusy(map, -1));
     map._docs[k] = ly.addTo(map);
   });
-  const base = docBaseOf(map); if (base) base.setOpacity(on && want.length ? LS.get('mapPhotoOp', 50) / 100 : 1);
+  const base = docBaseOf(map); if (base) base.setOpacity(1);
 }
 function syncAllDocs() { [mainMap, recMap, pickMap].forEach(m => { if (m) syncDocs(m); }); }
-function mapPhotoApply() { $('mapPhotoPct').textContent = Number($('mapPhotoOp').value) + '%'; syncAllDocs(); }
+function mapPhotoApply() { syncAllDocs(); }     // v0.10.2：航空写真の濃さのつまみはなくした（図面ごとの濃さに）
+/* v0.10.2：図面の欄。図面ごとに「重ねる」と濃さ（0〜100%）。航空写真はいつも100%で、図面をその上に透かして重ねる。
+   位置合わせがまだの図面も出す（押すと位置合わせの画面）。ほかの端末の図面を今すぐ受け取るボタン */
+const DOC_OP_DEF = 60;
+function docOp(u) { const v = Number(u && u.mop); return isFinite(v) && u.mop != null ? Math.max(0, Math.min(100, v)) : DOC_OP_DEF; }
+function docOpApply(id) {
+  const u = uls().find(x => x.id === id); if (!u) return;
+  [mainMap, recMap, pickMap].forEach(m => { if (!m || !m._docs) return; Object.keys(m._docs).forEach(k => { if (k.split(':')[0] === id) { const o = m._docs[k]; if (o && o !== 'loading' && o.setOpacity) o.setOpacity(docOp(u) / 100); } }); });
+}
 function mapDocs() {
   if (!mainMap || typeof L === 'undefined') return;
-  const all = uls().filter(u => u.A), on = !!all.length && LS.get('mapDocOn', true);
-  $('mapDocRow').classList.toggle('hidden', !all.length); $('mapDocList').classList.toggle('hidden', !all.length || !on);      // v0.10：1枚でも出す（誰がいつ合わせたか・前に戻す）
-  $('mapDocOn').checked = on; $('mapPhotoOp').value = LS.get('mapPhotoOp', 50); $('mapPhotoPct').textContent = $('mapPhotoOp').value + '%';
+  const l = uls(), al = l.filter(u => u.A), on = !!al.length && LS.get('mapDocOn', true), dw = docsWaiting().length;
+  $('mapDocRow').classList.toggle('hidden', !l.length);
+  $('mapDocOn').checked = on;
+  $('mapDocNote').textContent = al.length ? '位置合わせ済み ' + al.length + '枚' + (l.length > al.length ? '・まだ ' + (l.length - al.length) + '枚' : '') : (l.length ? '位置合わせがまだの図面だけです' : '');
   const box = $('mapDocList'); box.innerHTML = '';
-  all.forEach((u, i) => {           // 図面ごとの表示・非表示（シート）
-    const l = el('label', 'docchk'), c = el('input'); c.type = 'checkbox'; c.checked = u.on !== false; c.dataset.id = u.id;
+  box.classList.toggle('hidden', !(l.length && (on || l.length > al.length)) && !dw && !shareOK());
+  l.forEach((u, i) => {
+    const no = i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')';      // ①②…＝取り込んだ順
+    const r = el('div', 'docrow' + (u.A ? '' : ' unal')); r.dataset.id = u.id;
+    if (!u.A) {
+      r.append(el('span', 'nm', no + ' ' + (u.name || '図面')), el('span', '', '位置合わせがまだ'));
+      const go = el('button', 'minibtn', '合わせる'); go.onclick = async () => { await openDoc(); docSelect(u.id); }; r.append(go);
+      box.append(r); return;
+    }
+    if (!on) return;
+    const c = el('input'); c.type = 'checkbox'; c.checked = u.on !== false; c.className = 'docon';
     c.onchange = () => { ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { on: c.checked }) : x)); syncAllDocs(); };
-    l.append(c, document.createTextNode((i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')') + ' ' + (u.name || '図面')));     // ①②…＝取り込んだ順
-    const inf = el('button', 'docinf', u.alBy ? whoAt(u.alBy, u.alAt) : 'ⓘ'); inf.type = 'button'; inf.onclick = e => { e.preventDefault(); e.stopPropagation(); docInfoSheet(u); }; l.append(inf);   // v0.10：誰がいつ合わせたか・前に戻す
-    box.append(l);
+    const nm = el('span', 'nm', no + ' ' + (u.name || '図面'));
+    const sl = el('input'); sl.type = 'range'; sl.min = 0; sl.max = 100; sl.step = 5; sl.value = docOp(u); sl.className = 'docop'; sl.setAttribute('aria-label', (u.name || '図面') + 'の濃さ');
+    const pct = el('b', '', docOp(u) + '%');
+    sl.oninput = () => { const v = Number(sl.value); pct.textContent = v + '%'; ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { mop: v }) : x)); docOpApply(u.id); };
+    const inf = el('button', 'docinf', u.alBy ? whoAt(u.alBy, u.alAt) : 'ⓘ'); inf.type = 'button'; inf.onclick = e => { e.preventDefault(); e.stopPropagation(); docInfoSheet(u); };   // 誰がいつ合わせたか・配る・前に戻す
+    r.append(c, nm, sl, pct, inf); box.append(r);
   });
-  const dw = docsWaiting().length;
-  if (dw) { const b = el('button', 'btn sub', '📄 ほかのスマホで重ねた図面を受け取る（' + dw + '枚）'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); box.append(b); box.classList.remove('hidden'); $('mapDocRow').classList.remove('hidden'); }
+  const ft = el('div', 'docfoot');
+  if (shareOK()) { const b = el('button', 'btn sub', dw ? '📥 ほかの端末の図面を受け取る（' + dw + '枚）' : '📥 ほかの端末の図面を今すぐ受け取る'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); ft.append(b); }
+  if (ft.children.length) box.append(ft);
   syncAllDocs(); pullShared();
 }
 $('mapDocOn').onchange = () => { LS.set('mapDocOn', $('mapDocOn').checked); mapDocs(); };
-$('mapPhotoOp').oninput = () => { LS.set('mapPhotoOp', Number($('mapPhotoOp').value)); mapPhotoApply(); };
 
 /* ---- 計画を取り込む：会社で作った「計画対象物」のファイル（.json：線・名前）と、重ねる図面PDF ----
    線と名前は「対象」として登録し、受け付け側を通して同じ業務のスマホ全部に届く。図面の画像はこの端末の中だけ */
