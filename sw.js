@@ -1,6 +1,6 @@
 // 入力画面をスマホに保存して、電波がなくても開けるようにする（Service Worker）
 // 画面を更新したら VERSION を変える → 次に電波のある所で開いたとき入れ替わる
-const VERSION = 'chosa-v0.10.2';
+const VERSION = 'chosa-v0.10.3';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'leaflet.js', 'leaflet.css', 'layers.png', 'layers-2x.png', 'dock-home.png', 'dock-camera.png', 'dock-zumen.png', 'dock-map.png', 'dock-todo.png'];
 const TILES = 'tiles-v1';            // 「航空写真を前もって保存」で保存した所（範囲ごとに150日（v0.10。前は30日）。画面側で消す）
 const SEEN = 'tiles-seen-';          // 地図で見ただけの所（10日ごとの箱に入れ、30日たった箱から捨てる）

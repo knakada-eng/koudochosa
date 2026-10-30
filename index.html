@@ -88,15 +88,16 @@
   .gkln span { color:#4a148c; font-size:13px; background:rgba(255,255,255,.85); border-radius:6px; padding:0 4px; text-shadow:none; }
   .gkhit span { display:inline-block; transform:translate(-50%,-50%); background:rgba(255,255,0,.0); }
   #mapDocList { display:flex; flex-direction:column; gap:6px; margin:6px 0 2px; font-size:13px; }
+  #docPanel.hidden { display:none; } #mapView { padding-bottom:96px; }     /* 一番下の「図面を取り込む」がタブバーに隠れないように */
   #docPanel { border:2px solid #2e7d32; background:#eef7ee; border-radius:12px; padding:8px; margin-bottom:10px; }
-  #docPanel #planBtn { width:100%; margin:0; padding:6px 10px; min-height:0; font-size:15px; }
-  #docPanel #planBtn small { display:inline; margin:0 0 0 6px; font-size:11px; }
-  #docPanel #mapDocRow { margin:8px 0 0; }
+  #planBtn { width:100%; margin:8px 0 0; padding:6px 10px; min-height:0; font-size:15px; }
+  #planBtn small { display:inline; margin:0 0 0 6px; font-size:11px; }
+  #docPanel #mapDocRow { margin:0; }
   #mapDocList .docrow { display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #c8e0c8; border-radius:10px; padding:5px 8px; }
   #mapDocList .docrow .nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:40%; }
   #mapDocList .docrow input[type=range] { flex:1; min-width:60px; width:auto; height:22px; }
   #mapDocList .docrow b { min-width:2.6em; text-align:right; font-size:12px; }
-  #mapDocList .docrow.unal { color:var(--mute); } #mapDocList .docrow.unal .minibtn { margin-left:auto; }
+  #mapDocList .docrow.off { opacity:.5; } #mapDocList .docrow.unal { color:var(--mute); } #mapDocList .docrow.unal .minibtn { margin-left:auto; }
   #mapDocList .docfoot { display:flex; gap:6px; } #mapDocList .docfoot .btn { margin:0; padding:6px 10px; min-height:0; font-size:13px; }
   .devpick { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; }
   #mapDocList.hidden { display:none; }
@@ -456,23 +457,24 @@
     <div id="gkBar" class="hidden"><div id="gkBtns"></div><div id="gkHint"></div></div>
     <div id="mainMap"></div>
     <div class="card" style="margin-top:8px">
-      <div id="mapShow"></div>
-      <!-- v0.10.2：図面の欄（取り込む・重ねる図面と濃さ・ほかの端末から受け取る）。航空写真はいつも100%で、図面をその上に透かして重ねる -->
+      <!-- v0.10.3：地図のすぐ下に 図面チェック・作図・消しゴム・修正 -->
+      <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
+      <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
+      <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
+      <div id="mapShow" style="margin-top:8px"></div>
+      <!-- v0.10.2：図面の欄（重ねる図面と濃さ・ほかの端末から受け取る）。航空写真はいつも100%で、図面をその上に透かして重ねる。取り込むボタンは一番下（v0.10.3） -->
       <div id="docPanel">
-        <button class="btn go" id="planBtn">📄 図面を取り込む<small>PDF・画像</small></button>
         <div id="mapDocRow" class="hidden"><label><input type="checkbox" id="mapDocOn">図面を重ねる</label><span class="lab" id="mapDocNote"></span></div>
         <div id="mapDocList" class="hidden"></div>
         <input type="range" id="mapPhotoOp" class="hidden" min="0" max="100" value="100"><b id="mapPhotoPct" class="hidden"></b>
       </div>
-      <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
-      <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
-      <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
       <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="mapBiz">📷 写真の所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
         <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
       </div>
+      <button class="btn go wide" id="planBtn">📄 図面を取り込む<small>PDF・画像</small></button>       <!-- v0.10.3：取り込むのは前の日に1回だけなので、一番下へ -->
       <input type="file" id="planFile" accept="application/pdf,image/*,.json,.geojson,.txt" multiple class="hidden">
       <div id="markState" style="font-size:12px;color:var(--mute);margin-top:6px"></div>
     </div>
@@ -708,7 +710,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.2β';
+const VERSION = 'v0.10.3β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -5566,7 +5568,7 @@ function mapDocs() {
   $('mapDocOn').checked = on;
   $('mapDocNote').textContent = al.length ? '位置合わせ済み ' + al.length + '枚' + (l.length > al.length ? '・まだ ' + (l.length - al.length) + '枚' : '') : (l.length ? '位置合わせがまだの図面だけです' : '');
   const box = $('mapDocList'); box.innerHTML = '';
-  box.classList.toggle('hidden', !(l.length && (on || l.length > al.length)) && !dw && !shareOK());
+  box.classList.toggle('hidden', !l.length && !dw && !shareOK());
   l.forEach((u, i) => {
     const no = i < 20 ? String.fromCharCode(0x2460 + i) : '(' + (i + 1) + ')';      // ①②…＝取り込んだ順
     const r = el('div', 'docrow' + (u.A ? '' : ' unal')); r.dataset.id = u.id;
@@ -5575,9 +5577,9 @@ function mapDocs() {
       const go = el('button', 'minibtn', '合わせる'); go.onclick = async () => { await openDoc(); docSelect(u.id); }; r.append(go);
       box.append(r); return;
     }
-    if (!on) return;
+    if (!on) r.classList.add('off');                 // v0.10.3：「図面を重ねる」を外していても一覧には出す（薄く。前は消えて、どこへ行ったか分からなかった）
     const c = el('input'); c.type = 'checkbox'; c.checked = u.on !== false; c.className = 'docon';
-    c.onchange = () => { ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { on: c.checked }) : x)); syncAllDocs(); };
+    c.onchange = () => { ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { on: c.checked }) : x)); if (c.checked && !LS.get('mapDocOn', true)) { LS.set('mapDocOn', true); mapDocs(); } else syncAllDocs(); };   // 1枚にチェックを入れたら「図面を重ねる」も入れる
     const nm = el('span', 'nm', no + ' ' + (u.name || '図面'));
     const sl = el('input'); sl.type = 'range'; sl.min = 0; sl.max = 100; sl.step = 5; sl.value = docOp(u); sl.className = 'docop'; sl.setAttribute('aria-label', (u.name || '図面') + 'の濃さ');
     const pct = el('b', '', docOp(u) + '%');
@@ -5588,6 +5590,7 @@ function mapDocs() {
   const ft = el('div', 'docfoot');
   if (shareOK()) { const b = el('button', 'btn sub', dw ? '📥 ほかの端末の図面を受け取る（' + dw + '枚）' : '📥 ほかの端末の図面を今すぐ受け取る'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); ft.append(b); }
   if (ft.children.length) box.append(ft);
+  $('docPanel').classList.toggle('hidden', $('mapDocRow').classList.contains('hidden') && box.classList.contains('hidden'));     // 図面がなければ緑の欄ごと出さない
   syncAllDocs(); pullShared();
 }
 $('mapDocOn').onchange = () => { LS.set('mapDocOn', $('mapDocOn').checked); mapDocs(); };
