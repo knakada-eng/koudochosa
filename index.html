@@ -461,6 +461,7 @@
       <div class="btnrow" style="margin-top:0"><button class="btn go" id="gkCheck">✓ 図面チェック<small>2回タップ✓・長押し✎</small></button><button class="btn go" id="gkDraw">✏ 作図<small>線・囲み・文字・フリーハンド</small></button></div>
       <div class="btnrow" style="margin-top:6px"><button class="btn sub" id="gkEraseBtn">🧽 消しゴム<small>選んで・なぞって消す</small></button><button class="btn sub" id="gkEditBtn">✎ 修正<small>文字・名前・色・点を直す</small></button></div>
       <label class="gkon"><input type="checkbox" id="gkOn" checked>現地の書き込み（✓・✎・作図）を出す　<span id="gkCount"></span></label>
+      <label class="gkon"><input type="checkbox" id="tgtOn">対象（区画・水路など）を出す</label>
       <div id="mapShow" style="margin-top:8px"></div>
       <!-- v0.10.2：図面の欄（重ねる図面と濃さ・ほかの端末から受け取る）。航空写真はいつも100%で、図面をその上に透かして重ねる。取り込むボタンは一番下（v0.10.3） -->
       <div id="docPanel">
@@ -562,7 +563,7 @@
   <div class="btnrow"><button class="btn sub" id="pickCancel">やめる</button><button class="btn go" id="pickOk">この位置で決定</button></div></div></div>
 <div id="area" class="hidden">
   <!-- 例の「砺波市五郎丸」は、このアプリを最初に作って使った現場。作った人のしるしとして残しているので消さないこと -->
-  <div id="areaSearch"><input type="search" id="areaQ" placeholder="地名・座標　例：砺波市五郎丸" autocomplete="off" enterkeyhint="search"><button id="areaFind" aria-label="探す">🔍</button></div><div id="areaWrap"><div id="areaMap"></div><div class="cross" id="areaCross"></div></div>
+  <div id="areaSearch"><input type="search" id="areaQ" placeholder="地名・座標　例：○○市○○町" autocomplete="off" enterkeyhint="search"><button id="areaFind" aria-label="探す">🔍</button></div><div id="areaWrap"><div id="areaMap"></div><div class="cross" id="areaCross"></div></div>
   <div id="areaBar">
     <div class="seg" id="areaTask"><button data-t="tiles" class="on">航空写真を保存</button><button data-t="tgt">対象を描く</button></div>
     <div class="seg" id="areaSeg"><button data-m="view" class="on">見ている範囲</button><button data-m="poly">囲む</button><button data-m="line">線に沿って</button><button data-m="circle">円</button></div>
@@ -710,7 +711,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.3β';
+const VERSION = 'v0.10.4β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -3411,10 +3412,14 @@ function tgtAttach(map) {
   map._tl = L.layerGroup().addTo(map); map._tlab = L.layerGroup().addTo(map);
   map.on('moveend zoomend', () => placeLabels(map));
 }
+/* v0.10.4：位置図では対象（区画・水路など）をふだん出さない（図面を透かして重ねるので）。「対象を出す」で出す。ほかの地図はいつも出す */
+function isMainMap(m) { try { return !!m && m === mainMap; } catch (e) { return false; } }
+function tgtHidden(map) { return isMainMap(map) && !LS.get('tgtOn', false); }
 function drawTargets(map) {
   if (!map || typeof L === 'undefined') return;
   tgtAttach(map);
   const g = map._tl; g.clearLayers();
+  if (tgtHidden(map)) { drawSiteLayer(map, g); map._tlab.clearLayers(); return; }
   tgts().forEach(t => {
     const st = kst(t.kind), dash = t.reuse ? '12 9' : null;
     if (t.shape === 'poly') {
@@ -3444,6 +3449,7 @@ function clipSeg(p, q, r) {               // 画面の四角に入っている�
 function placeLabels(map) {
   if (!map._tlab || !map._loaded) return;          // 地図の位置が決まる前は出さない（決まると moveend で出す）
   const g = map._tlab; g.clearLayers();
+  if (tgtHidden(map)) return;
   const list = tgts(); if (!list.length) return;
   const sz = map.getSize(), r = { x0: 24, y0: 24, x1: sz.x - 24, y1: sz.y - 24 };
   if (r.x1 <= r.x0 || r.y1 <= r.y0) return;
@@ -5509,6 +5515,7 @@ $('gkDraw').onclick = () => gkMode(GK.mode === 'draw' ? '' : 'draw');
 $('gkEraseBtn').onclick = () => gkMode(GK.mode === 'erase' ? '' : 'erase');
 $('gkEditBtn').onclick = () => gkMode(GK.mode === 'edit' ? '' : 'edit');
 $('gkOn').checked = LS.get('gkOn', true); $('gkOn').onchange = () => { LS.set('gkOn', $('gkOn').checked); gkDrawAll(); };
+$('tgtOn').checked = LS.get('tgtOn', false); $('tgtOn').onchange = () => { LS.set('tgtOn', $('tgtOn').checked); if (mainMap) drawTargets(mainMap); };
 /* アプリを閉じる前の作業が残っていたら、まとめて送る（消えないように） */
 setTimeout(() => { if (gkSess().groups.length && !GK.mode) gkCommit(); }, 0);
 
