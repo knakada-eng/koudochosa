@@ -127,7 +127,7 @@
   .daybar button { flex:1; min-height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:15px; font-weight:bold; color:#16303f; padding:6px 8px; }
   .daybar .todon { display:inline-block; min-width:22px; padding:0 6px; border-radius:11px; background:#16303f; color:#fff; font-size:13px; line-height:22px; }
   .daybar .todon:empty { display:none; }
-  #dayEndTop, #prepTop { flex:0 0 auto; } .daybar { flex-wrap:wrap; } #prepTop { font-size:14px; }
+  .daybar { flex-wrap:wrap; } .daybar button { flex:1 0 auto; white-space:nowrap; } #prepTop { font-size:14px; }   /* v0.10.6：途中で改行しない。入らなければ「今日やること」が1行を使う */
   #dayEndTop.late { background:#16303f; color:#fff; border-color:#16303f; }
   .todorow { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
   .todorow .tx { flex:1; min-width:0; } .todorow .tx b { display:block; font-size:16px; } .todorow .tx small { display:block; font-size:12px; color:var(--mute); }
@@ -352,6 +352,7 @@
   #wait .box { background:#fff; border-radius:14px; padding:18px; width:min(320px,86vw); text-align:center; }
   .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#14232d; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .2s; z-index:50; pointer-events:none; }
   .toast.on { opacity:.95; }
+.mapgo{background:#fff;border:2px solid rgba(0,0,0,.25);border-radius:8px;padding:7px 10px;font-weight:700;font-size:14px;color:#16303f;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer}
 </style>
 </head>
 <body>
@@ -469,7 +470,7 @@
         <div id="mapDocList" class="hidden"></div>
         <input type="range" id="mapPhotoOp" class="hidden" min="0" max="100" value="100"><b id="mapPhotoPct" class="hidden"></b>
       </div>
-      <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="mapBiz">📷 写真の所へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
+      <div class="btnrow"><button class="btn sub" id="mapLayer">地形図にする</button><button class="btn sub" id="mapHere">今の場所へ</button><button class="btn sub" id="mapBiz">📍 現場へ</button><button class="btn sub" id="konbiniBtn">🏪 近くのコンビニ</button></div>
       <div class="btnrow">
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
@@ -711,7 +712,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.4β';
+const VERSION = 'v0.10.6β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -4983,7 +4984,12 @@ function hideMain() { if (typeof GK !== 'undefined' && GK.mode) gkMode(''); ['ho
   d.addEventListener('touchmove', e => { const t = e.touches[0]; if (Math.hypot(t.clientX - sx, t.clientY - sy) > 10) moved = true; }, { passive: true });
   d.addEventListener('click', e => { if (moved || wasScrolling) { e.stopPropagation(); e.preventDefault(); } moved = false; wasScrolling = false; }, true);
 })();
-$('dockHome').onclick = () => { $('viewer').classList.add('hidden'); if (LS.get('mode', 'koudo') === 'srv') showSurvey(); else showHome(); };
+$('dockHome').onclick = () => {
+  // v0.10.6：HOME（一覧）を開いているときにもう一度押すと、いちばん上へ
+  const vis = id => !$(id).classList.contains('hidden');
+  const atHome = !vis('viewer') && !vis('mapView') && !vis('drawView') && ((vis('srvList') && !vis('srvRec')) || (vis('home') && !vis('plotView')));
+  if (atHome && (window.scrollY || document.documentElement.scrollTop) > 0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  $('viewer').classList.add('hidden'); if (LS.get('mode', 'koudo') === 'srv') showSurvey(); else showHome(); };
 $('dockMap').onclick = () => showMap();
 $('dockDraw').onclick = () => showDraw();
 $('dockNocho').onclick = () => { const plot = PLOT && !$('plotView').classList.contains('hidden') ? PLOT : LS.get('kd:lastPlot', ''); nochoFrom = plot ? { plot } : null; $('nochoFile').value = ''; $('nochoFile').click(); };
@@ -5007,6 +5013,9 @@ function showMap() {
     mainMap = L.map('mainMap', { zoomControl: true }); mainLayers = baseLayers(); mainLayers.photo.addTo(mainMap); mainMap._cur = 'photo';
     { const mc = mainMap.getContainer(); mc.addEventListener('touchmove', e => { if (mc.classList.contains('gklock') && e.touches.length === 1) e.preventDefault(); }, { passive: false }); }   // 描いている間、指1本で画面が上下に動かないように（iPhone）
     L.control.scale({ imperial: false }).addTo(mainMap);
+    // v0.10.5：地図の左上（＋－の下）に「📍 現場へ」
+    const GoCtl = L.Control.extend({ options: { position: 'topleft' }, onAdd() { const b = L.DomUtil.create('button', 'mapgo'); b.id = 'mapGo'; b.type = 'button'; b.textContent = '📍 現場へ'; L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', goSite); return b; } });
+    new GoCtl().addTo(mainMap);
   }
   renderMapShow(); drawTargets(mainMap); drawRecArrows(mainMap); drawPast(mainMap); drawMe(); mapDocs(); drawTodoPins(mainMap); gkAttach(mainMap); gkDrawAll(); gkBar();
   setTimeout(() => {
@@ -5034,7 +5043,19 @@ function bizBounds() {
   if (!pts.length) uls().filter(u => u.A).forEach(u => { try { [[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].forEach(([x, y]) => { const q = imgToLL(u.A, x, y); pts.push([q.lat != null ? q.lat : q[0], q.lng != null ? q.lng : q[1]]); }); } catch (e) {} });
   return pts.length ? L.latLngBounds(pts) : null;
 }
-$('mapBiz').onclick = () => { const b = bizBounds(); if (!b) { toast('この業務の写真・対象・保存した範囲がまだありません'); return; } mainMap.fitBounds(b.pad(0.15), { maxZoom: 18 }); };
+/* v0.10.5「📍 現場へ」：写真 → 対象 → 保存した航空写真の範囲 → 位置合わせした図面 の順で行き先を決める。何もなければ航空写真の保存へ案内 */
+function goSite() {
+  const b = bizBounds();
+  if (b) { mainMap.fitBounds(b.pad(0.15), { maxZoom: 18 }); return; }
+  sheet(box => {
+    box.append(el('h3', '', '現場の場所がまだありません'));
+    box.append(el('p', '', '現場の航空写真を保存してください。地名で探して「この範囲を保存」を押すと、そこが「現場」になり、次からこのボタンで飛べます（前の日に、Wi-Fi のある所で）。'));
+    const go = el('button', 'btn acc', '🛰 航空写真を保存する'); go.id = 'goSiteSave'; go.onclick = () => { sheet(null); openArea('tiles'); };
+    const no = el('button', 'btn sub', 'あとで'); no.onclick = () => sheet(null);
+    box.append(go, no);
+  });
+}
+$('mapBiz').onclick = goSite;
 $('mapHere').onclick = () => { const f = freshFix(120); if (f) { mainMap.setView([f.lat, f.lon], Math.max(mainMap.getZoom(), 18)); drawMe(); } else toast('今の位置が取れていません'); };
 
 /* ====================== 現地の書き込み：図面チェック（✓・✎）と作図 ======================
