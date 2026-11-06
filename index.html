@@ -353,6 +353,9 @@
   .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#14232d; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .2s; z-index:50; pointer-events:none; }
   .toast.on { opacity:.95; }
 .mapgo{background:#fff;border:2px solid rgba(0,0,0,.25);border-radius:8px;padding:7px 10px;font-weight:700;font-size:14px;color:#16303f;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer}
+.gkmode .ppi{pointer-events:none!important} .ppcl{background:none;border:0} .ppcl b.ppr{position:absolute;left:50%;top:46px;transform:translateX(-50%);background:#fff;color:#16303f;border:1px solid #16303f;border-radius:6px;font-size:11px;padding:0 4px;line-height:14px;white-space:nowrap}
+.ppcl.oth b.ppr{border:1.5px dashed #e4007f;color:#8a0050;background:#fff0f8}
+.pppop{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pppop img{width:180px;max-height:135px;object-fit:cover;border-radius:6px}
 </style>
 </head>
 <body>
@@ -712,7 +715,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.10β';
+const VERSION = 'v0.10.11β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -4387,9 +4390,11 @@ function drawRecArrows(map) {
   if (!map || typeof L === 'undefined') return;
   if (!map._ra) map._ra = L.layerGroup().addTo(map);
   map._ra.clearLayers();
+  const PPm = isMainMap(map) ? (map._ppOwn = []) : null;     // v0.10.11：位置図は ppRender でまとめて描く（密な所は丸にまとめる・札は重ならない分だけ）
   Object.values(recs()).forEach(s => {
     if (s.deleted || s.id === curRec || !mapShown(s)) return;
     const a = adopted(s); if (a.lat == null) return;
+    if (PPm) { PPm.push({ id: s.id, lat: a.lat, lon: a.lon, h: s.heading, situ: !!s.situ, cross: !!s.cross, label: recNo(s), dev: devNo() || 'me', other: false, at: String(s.created || ''), pid: (s.photos || [])[0] }); return; }
     if (s.heading == null) L.marker([a.lat, a.lon], { interactive: false, icon: s.cross ? L.divIcon({ className: 'arrowmk', html: '<svg width="44" height="44" viewBox="-22 -22 44 44"><circle r="5" fill="#fff" stroke="#111" stroke-width="2"/></svg><b class="x">📏 ' + esc(recNo(s)) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] }) : L.divIcon({ className: 'arrowmk', html: '<svg width="12" height="12" viewBox="-6 -6 12 12"><circle r="4" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>', iconSize: [12, 12], iconAnchor: [6, 6] }) }).addTo(map._ra);
     else L.marker([a.lat, a.lon], { interactive: false, icon: arrowIcon(s.heading, s.situ, recNo(s), s.cross) }).addTo(map._ra);
   });
@@ -4406,6 +4411,95 @@ function drawRecArrows(map) {
       L.marker([p.lat, p.lon], { interactive: false, icon: L.divIcon({ className: 'arrowmk', html: svg + '<b class="fn">' + esc(lab) + '</b>', iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(map._ra);
     });
   });
+  if (PPm) ppRender(map);
+}
+
+/* ---- v0.10.11 位置図の写真の点を見やすく（本人・永井さん：密だと分からん）
+   ・画面の上で 30px 以内の同じ機種の写真は丸1つにまとめる（中に枚数、下に番号の範囲、ふちに撮影方向のひげ）
+   ・まとまらない点は矢印を全部出し、番号の札は重ならない分だけ出す。隠れた点は押すと番号と小さい写真
+   ・丸を押すとその写真が入る所まで寄る。いちばん寄っても重なるときは周りに広げる（本当の位置へ細い線）
+   ・出している機種が1台だけのときは札を「16」のように短く ---- */
+const PP_NEAR = 30;
+function ppShort(lab, one) { if (!one) return lab; const m = String(lab).match(/^\d+-(.+)$/); return m ? m[1] : lab; }
+function ppRender(map) {
+  if (!map || typeof L === 'undefined') return;
+  if (!map._pl) { map._pl = L.layerGroup().addTo(map); map.on('zoomend', () => { map._spider = null; ppRender(map); }); }
+  map._pl.clearLayers();
+  if (!map._loaded) { if (!map._ppWait) { map._ppWait = true; map.whenReady(() => { map._ppWait = false; ppRender(map); }); } return; }   // 地図の位置が決まってから
+  const all = (map._ppOwn || []).concat(map._ppOth || []);
+  if (!all.length) return;
+  const one = new Set(all.map(p => p.dev)).size === 1;
+  all.forEach(p => { const q = map.latLngToLayerPoint([p.lat, p.lon]); p.x = q.x; p.y = q.y; });
+  // 丸にまとめる（機種ごと・撮った順に、近くの丸へ足す）
+  const cl = [];
+  all.slice().sort((a, b) => a.at < b.at ? -1 : 1).forEach(p => {
+    const c = cl.find(c => c.dev === p.dev && Math.hypot(c.x - p.x, c.y - p.y) < PP_NEAR);
+    if (c) { c.m.push(p); c.x = c.m.reduce((t, q) => t + q.x, 0) / c.m.length; c.y = c.m.reduce((t, q) => t + q.y, 0) / c.m.length; }
+    else cl.push({ dev: p.dev, other: p.other, x: p.x, y: p.y, m: [p] });
+  });
+  const boxes = [], hit = b => boxes.some(c => !(b[2] < c[0] || b[0] > c[2] || b[3] < c[1] || b[1] > c[3]));
+  const singles = [];
+  const maxZ = map.getZoom() >= (map.getMaxZoom ? map.getMaxZoom() : 20);
+  cl.forEach(c => {
+    if (c.m.length === 1) { singles.push(c.m[0]); return; }
+    const key = c.m.map(p => p.id).join(',');
+    if (map._spider === key) {         // 広げる
+      const n = c.m.length, R = Math.max(42, n * 9);
+      c.m.forEach((p, i) => {
+        const a = -Math.PI / 2 + 2 * Math.PI * i / n, sx = c.x + R * Math.cos(a), sy = c.y + R * Math.sin(a);
+        const ll = map.layerPointToLatLng([sx, sy]);
+        L.polyline([[p.lat, p.lon], ll], { color: '#16303f', weight: 1, opacity: .8, interactive: false }).addTo(map._pl);
+        L.circleMarker([p.lat, p.lon], { radius: 3, color: '#111', weight: 1, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(map._pl);
+        ppMarker(map, Object.assign({}, p, { lat: ll.lat, lon: ll.lng }), ppShort(p.label, one), true);
+      });
+      boxes.push([c.x - R - 30, c.y - R - 20, c.x + R + 40, c.y + R + 20]);
+      return;
+    }
+    const nums = c.m.map(p => ppShort(p.label, one)), rng = nums[0] + '〜' + ppShort(c.m[c.m.length - 1].label, true);
+    const col = c.other ? OTH : '#16303f';
+    let wh = ''; c.m.forEach(p => { if (p.h == null) return; const a = (p.h - 90) * Math.PI / 180; wh += '<path d="M' + (17 * Math.cos(a)).toFixed(1) + ' ' + (17 * Math.sin(a)).toFixed(1) + ' L' + (25 * Math.cos(a)).toFixed(1) + ' ' + (25 * Math.sin(a)).toFixed(1) + '"/>'; });
+    const html = '<svg width="56" height="56" viewBox="-28 -28 56 56"><g stroke="#fff" stroke-width="4.5" stroke-linecap="round">' + wh + '</g><g stroke="' + col + '" stroke-width="2.2" stroke-linecap="round">' + wh + '</g>' +
+      '<circle r="15" fill="' + col + '" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">' + c.m.length + '</text></svg><b class="ppr">' + esc(rng) + '</b>';
+    const ll = map.layerPointToLatLng([c.x, c.y]);
+    const mk = L.marker(ll, { icon: L.divIcon({ className: 'ppcl ppi' + (c.other ? ' oth' : ''), html, iconSize: [56, 56], iconAnchor: [28, 28] }), keyboard: false, zIndexOffset: 500 }).addTo(map._pl);
+    mk.on('click', () => {
+      if (typeof GK !== 'undefined' && GK.mode) return;
+      const b = L.latLngBounds(c.m.map(p => [p.lat, p.lon]));
+      if (maxZ || map.getBoundsZoom(b.pad(0.4)) <= map.getZoom()) { map._spider = key; ppRender(map); }
+      else map.fitBounds(b.pad(0.4), { maxZoom: map.getMaxZoom ? map.getMaxZoom() : 20 });
+    });
+    boxes.push([c.x - 28, c.y - 28, c.x + 28, c.y + 40]);
+  });
+  // 1枚ずつの点：札は重ならない分だけ（新しい写真から先に）
+  singles.forEach(p => boxes.push([p.x - 6, p.y - 6, p.x + 6, p.y + 6]));
+  const own = boxes.length;
+  singles.slice().sort((a, b) => a.at < b.at ? 1 : -1).forEach(p => {
+    const t = (p.cross ? '📏 ' : '') + ppShort(p.label, one), w = 8 + 7 * String(t).length, b = [p.x + 6, p.y - 20, p.x + 6 + w, p.y - 4];
+    const others = boxes.slice(0, own).filter(c => !(Math.abs((c[0] + c[2]) / 2 - p.x) < 1 && Math.abs((c[1] + c[3]) / 2 - p.y) < 1));
+    const clash = others.some(c => !(b[2] < c[0] || b[0] > c[2] || b[3] < c[1] || b[1] > c[3])) || boxes.slice(own).some(c => !(b[2] < c[0] || b[0] > c[2] || b[3] < c[1] || b[1] > c[3]));
+    const show = p.situ ? false : !clash;
+    if (show) boxes.push(b);
+    ppMarker(map, p, show ? ppShort(p.label, one) : null);
+  });
+}
+function ppMarker(map, p, lab, spread) {
+  let icon;
+  if (p.h != null) icon = arrowIcon(p.h, p.situ, lab == null ? '' : esc(lab), p.cross, p.other);
+  else icon = L.divIcon({ className: 'arrowmk' + (p.other ? ' oth' : ''), html: '<svg width="44" height="44" viewBox="-22 -22 44 44">' + (p.cross ? '<path d="M-14 0 L14 0" stroke="#fff" stroke-width="7"/><path d="M-14 0 L14 0" stroke="#111" stroke-width="3"/>' : '') + '<circle r="5" fill="' + (p.other ? OTH : '#fff') + '" stroke="' + (p.other ? '#fff' : '#111') + '" stroke-width="2"/></svg>' + (lab == null || p.situ ? '' : p.cross ? '<b class="x">📏 ' + esc(lab) + '</b>' : '<b>' + esc(lab) + '</b>'), iconSize: [44, 44], iconAnchor: [22, 22] });
+  if (lab == null || lab === '') icon.options.html = String(icon.options.html).replace(/<b[^>]*>[^<]*<\/b>$/, '');
+  // 札の出ている点：ほかの端末の票は押すとその票（見るだけ）、自分の票は今までどおり押せない。札の隠れた点：押すと番号と小さい写真
+  const hidden = lab == null || lab === '';
+  if (p.id && (hidden || p.other)) icon.options.className += ' ppi';
+  const mk = L.marker([p.lat, p.lon], { icon, keyboard: false, interactive: !!p.id && (hidden || p.other) }).addTo(map._pl);
+  if (p.id && (hidden || p.other)) mk.on('click', () => { if (typeof GK !== 'undefined' && GK.mode) return; if (hidden) ppPop(map, p); else openRec(p.id, false, { map: true }); });
+  return mk;
+}
+function ppPop(map, p) {
+  const box = el('div', 'pppop'); box.append(el('b', '', (p.cross ? '📏 ' : '') + p.label + (p.other ? '（' + p.dev + 'の端末）' : '')));
+  const im = el('img'); im.alt = ''; box.append(im);
+  if (p.pid) thumbUrl(p.pid).then(u => { if (u) im.src = u; else im.remove(); }); else im.remove();
+  const b = el('button', 'btn sub', 'この票を開く'); b.onclick = () => { map.closePopup(); openRec(p.id, false, { map: true }); }; box.append(b);
+  L.popup({ offset: [0, -6], maxWidth: 220 }).setLatLng([p.lat, p.lon]).setContent(box).openOn(map);
 }
 
 /* ====================== 現場責任者・担当範囲・他の機種の進み具合 ======================
@@ -4456,10 +4550,11 @@ function drawSiteLayer(map, g) {
   });
   videoMeta().filter(v => v.lat != null).forEach(v => L.marker([v.lat, v.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🎥 ' + esc(String(v.at).slice(11, 16)) + '</span>', iconSize: null }) }).addTo(g));
   (LS.get('konbini', { list: [] }).list || []).forEach(k => L.marker([k.lat, k.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🏪 ' + esc(k.brand) + '</span>', iconSize: null }) }).addTo(g));
-  const oth = othersList().filter(o => mapDayOK(o.at) && mapWhoOK(false, o.devNo)); if (!oth.length) return;     // v0.9：位置図に出す日・だれ
-  const last = {};
+  const oth = othersList().filter(o => mapDayOK(o.at) && mapWhoOK(false, o.devNo)); if (!oth.length) { if (isMainMap(map)) { map._ppOth = []; ppRender(map); } return; }     // v0.9：位置図に出す日・だれ
+  const last = {}, PPo = isMainMap(map) ? (map._ppOth = []) : null;
   oth.forEach(o => {
     const k = o.devNo || o.dev; if (!last[k] || o.at > last[k].at) last[k] = o;
+    if (PPo && o.label !== undefined) { const r = o.id && recsAll()[o.id]; PPo.push({ id: o.id, lat: o.lat, lon: o.lon, h: o.heading != null && isFinite(o.heading) ? o.heading : null, situ: !!o.situ, cross: !!o.cross, label: o.label, dev: o.devNo || '他', other: true, at: String(o.at || ''), pid: r && r.photos ? r.photos[0] : null }); return; }
     if (o.label === undefined) { L.circleMarker([o.lat, o.lon], { radius: 4, color: '#111', weight: 1.5, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(g); return; }   // 古い受け付け側から来た点（番号・向きなし）
     // v0.8.1：自分の票と同じ形（撮影方向の矢印・写真番号「05-12」・ポール横断📏）。ほかの端末の分は黒い矢印＋点線の札。タップでその票を開く（見るだけ）
     const icon = o.heading != null && isFinite(o.heading) ? arrowIcon(o.heading, o.situ, o.label, o.cross, true)
@@ -4467,6 +4562,7 @@ function drawSiteLayer(map, g) {
     const mk = L.marker([o.lat, o.lon], { icon, interactive: !!o.id && map === mainMap, keyboard: false }).addTo(g);
     if (o.id && map === mainMap) mk.on('click', () => { if (typeof GK !== 'undefined' && GK.mode) return; openRec(o.id, false, { map: true }); });
   });
+  if (PPo) ppRender(map);
   const day = nowIso().slice(0, 10);
   Object.values(last).forEach(o => { if (String(o.at).slice(0, 10) !== day) return;
     L.marker([o.lat, o.lon], { interactive: false, icon: L.divIcon({ className: 'devtag', html: '<span>' + esc((o.devNo ? o.devNo + '機　' : '') + (o.name || '') + '　' + hhmm(o.at)) + '</span>', iconSize: null }) }).addTo(g); });
@@ -5278,6 +5374,7 @@ function gkTapMark(m, e) {
 }
 /* ---- 帯（モードごとのボタン） ---- */
 function gkBar() {
+  if (mainMap) mainMap.getContainer().classList.toggle('gkmode', !!GK.mode);
   const bar = $('gkBar'); bar.classList.toggle('hidden', !GK.mode); const btns = $('gkBtns'); btns.innerHTML = '';
   if (!GK.mode) return;
   const row = () => { const r = el('div', 'gkrow'); btns.append(r); return r; };
@@ -5335,6 +5432,7 @@ function gkLock() {
   const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area' || GK.tool === 'move')) || (GK.mode === 'erase' && GK.etool === 'swipe') || (GK.mode === 'edit' && GK.edMove);
   if (lock) mainMap.dragging.disable(); else mainMap.dragging.enable();
   mainMap.getContainer().classList.toggle('gklock', !!lock); document.body.classList.toggle('gkdrawing', !!lock);
+  mainMap.getContainer().classList.toggle('gkmode', !!GK.mode);    // v0.10.11：作図などの間は写真の点・丸を押せなくする（地図を押したことにする）
 }
 async function gkHere() {
   toast('今の位置を取っています…');
