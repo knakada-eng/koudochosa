@@ -432,7 +432,7 @@
       <div class="field hidden" id="fTarget"><input type="text" id="recTarget" list="tgtNames" autocomplete="off"><datalist id="tgtNames"></datalist></div>
       <div class="field hidden" id="fPlot"><input type="text" id="recPlot" list="plotNames" autocomplete="off"><datalist id="plotNames"></datalist></div>
       <div class="field" id="fText">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label style="margin:0">調査内容（1〜3行目が台帳へ。4行目からは特記）</label><span style="display:flex;gap:6px"><button class="minibtn" id="recMic">🎤 話す</button><button class="minibtn" id="recSame">前と同じ</button></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label style="margin:0">調査内容（1〜3行目が台帳へ。4行目からは特記）</label><span style="display:flex;gap:6px"><button class="minibtn hidden" id="recMic">🎤 話す</button><button class="minibtn" id="recSame">前と同じ</button></span></div>
         <div class="tawrap" style="margin-top:4px"><div class="tabg" id="recBg" aria-hidden="true"></div><textarea id="recText" rows="3" spellcheck="false" autocomplete="off" placeholder="例）始点から下流の状況&#10;F-400B×400H&#10;両岸張ブロック"></textarea></div>
         <div class="lines" id="recLines"></div>
         <div class="sugg" id="sugg"></div>
@@ -712,7 +712,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.8β';
+const VERSION = 'v0.10.10β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -936,6 +936,9 @@ function updateSync() {
   else if (lastError) { s.className = 'err'; s.textContent = '一部保存できませんでした'; }
   else { s.className = ''; s.textContent = '✓ すべて保存済み'; }
 }
+/* v0.10.10：Wi-Fi につながっているか（Android の Chrome は分かる。iPhone は分からないので false） */
+function onWifi() { try { const c = navigator.connection; return !!(c && (c.type === 'wifi' || c.type === 'ethernet')); } catch (e) { return false; } }
+try { if (navigator.connection && navigator.connection.addEventListener) navigator.connection.addEventListener('change', () => { if (onWifi() && typeof uploadPhotos === 'function') { uploadPhotos(); if (typeof renderSendLines === 'function') renderSendLines(); } }); } catch (e) {}
 window.addEventListener('online', () => { online = true; flush(); if (typeof uploadPhotos === 'function') uploadPhotos(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) flush(); });
 
@@ -2943,7 +2946,7 @@ $('gear').onclick = () => sheet(box => {
   row('ひな形を押したら、すぐ専用キーで数字を入れる', 'kpAuto', 'checkbox');
   row('打った文字で候補を出す', 'sugg', 'checkbox');
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
-  row('写真もWi-Fiのときに手で送る（通信量の節約。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
+  row('写真はWi-Fiのときだけ送る（通信量の節約。Androidは Wi-Fi につながると自動で送る。iPhone は「送る」を押す。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
   row('「今ここ」の窓で位置も動かす（外すと向きだけ直す）', 'hereMove', 'checkbox');
   row('ほかの端末の写真（ここ3日分）を先に受け取っておく（外すと、開いたときだけ受け取る。通信量の節約）', 'xph', 'checkbox');
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
@@ -4781,7 +4784,7 @@ async function pullShared(force) {
   sharing = true; shareAt = Date.now();
   try {
     await pushAreas();
-    const r = await call('api_docs', devNo()); if (r && Array.isArray(r.docs)) { LS.set('docsRemote', r.docs); await applyRemoteDocs(!SET().photoManual); }
+    const r = await call('api_docs', devNo()); if (r && Array.isArray(r.docs)) { LS.set('docsRemote', r.docs); await applyRemoteDocs(!SET().photoManual || onWifi()); }
     const a = await call('api_areas'); if (a && Array.isArray(a.areas)) LS.set('areasRemote', a.areas);
   } catch (e) {} finally { sharing = false; }
 }
@@ -4932,7 +4935,7 @@ async function uploadDocs() {
 }
 async function uploadPhotos(force) {
   if (uploading || !CONN || keyBad) return;
-  if (SET().photoManual && force !== true && !uploadPhotos.go) { if (typeof renderSendLines === 'function') renderSendLines(); return; }   // 写真もWi-Fiのときに手で送る設定
+  if (SET().photoManual && force !== true && !uploadPhotos.go && !onWifi()) { if (typeof renderSendLines === 'function') renderSendLines(); return; }   // 写真もWi-Fiのときに手で送る設定
   uploading = true;
   try {
     let list = (await idb.all()).filter(p => !p.sent).sort((a, b) => a.at < b.at ? -1 : 1);
@@ -5842,7 +5845,7 @@ function renderSendLines() {
   const v = videoPending(), mb = Math.round(v.reduce((a, x) => a + (x.size - (x.offset || 0)), 0) / 1048576);
   $('videoLine').classList.toggle('hidden', !v.length || !CONN);
   if (v.length) $('videoMsg').textContent = '🎥 送っていない動画 ' + v.length + '本（約' + mb + 'MB）。Wi-Fiのときに →';
-  const manual = SET().photoManual && photoPending;
+  const manual = SET().photoManual && photoPending && !onWifi();
   $('photoLine').classList.toggle('hidden', !manual);
   if (manual) $('photoMsg').textContent = '📷 送っていない写真 ' + photoPending + '枚。Wi-Fiのときに →';
   updateBadge();
