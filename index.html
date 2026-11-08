@@ -218,7 +218,9 @@
   .plotbtn { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action:manipulation; }
   .plotbtn.new { border-style:dashed; }
   .sheet { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:75; display:flex; align-items:flex-end; justify-content:center; }
-  .sheetbox { background:#fff; width:100%; max-width:640px; border-radius:16px 16px 0 0; padding:16px 16px 22px; max-height:92vh; max-height:92dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .sheetbox { background:#fff; width:100%; max-width:640px; border-radius:16px 16px 0 0; padding:16px 16px 22px; max-height:92vh; max-height:92dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
+  .sheet { overscroll-behavior:contain; }
+  body.sheetopen { overflow:hidden; }
   .sheetbox h3 { margin:0 0 10px; font-size:18px; }
   .sheetbox .btn { width:100%; margin-top:8px; padding:14px; font-size:17px; }
   .sheetbox p { margin:6px 0; font-size:15px; }
@@ -747,7 +749,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.11.2β';
+const VERSION = 'v0.11.3β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -1245,10 +1247,19 @@ function longPress(el, onTap, onLong) {
 /* ---------------- 区画のメニュー（番号を変える・削除） ---------------- */
 function sheet(build) {
   const box = $('sheetBox'); box.innerHTML = ''; sheet.locked = false;
-  if (!build) { $('sheet').classList.add('hidden'); return; }
-  build(box); $('sheet').classList.remove('hidden'); box.scrollTop = 0;
+  if (!build) { $('sheet').classList.add('hidden'); document.body.classList.remove('sheetopen'); sheetMapsHold(false); return; }
+  build(box); $('sheet').classList.remove('hidden'); document.body.classList.add('sheetopen'); sheetMapsHold(true); box.scrollTop = 0;
 }
 $('sheet').addEventListener('click', ev => { if (ev.target === $('sheet') && !sheet.locked) sheet(null); });
+/* v0.11.3：設定などの下の窓を開いている間は、指の動きを下の地図に渡さない（iPhone で地図を触ったあと ⚙ を開くと、窓の中をなぞっても地図が動いて窓がスクロールできなかった）。
+   地図の「なぞる」は document で指の動きを聞いているので、窓の所で止める。窓の外（暗い所）は画面ごと動かさない */
+['touchstart', 'touchmove', 'touchend', 'touchcancel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'mousedown', 'mousemove', 'mouseup', 'wheel'].forEach(t => $('sheet').addEventListener(t, ev => ev.stopPropagation(), { passive: true }));
+$('sheet').addEventListener('touchmove', ev => { if (!$('sheetBox').contains(ev.target)) ev.preventDefault(); }, { passive: false });
+function sheetMapsHold(on) {     // 窓を開いたとき、地図の途中の「なぞる」が残っていたら終わらせる
+  if (!on) return;
+  let ms = []; try { ms = [mainMap, areaMap]; } catch (e) { return; }
+  ms.forEach(m => { const dr = m && m.dragging && m.dragging._draggable; if (dr && dr._moving) try { dr.finishDrag(); } catch (e) {} });
+}
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
 function plotMenu(e) {
