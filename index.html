@@ -16,7 +16,15 @@
           --warn:#a35a00; --warnbg:#fff3df; --err:#b3261e; --errbg:#fde7e5; --acc:#0b5cad; --lock:#eef1f3; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font:16px/1.5 -apple-system, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif; color:var(--fg); background:var(--bg); }
-  header { position:sticky; top:0; z-index:10; background:#16303f; color:#fff; padding:10px 14px; display:flex; align-items:center; gap:10px; }
+  header { position:sticky; top:0; z-index:10; background:#16303f; color:#fff; padding:10px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  #pracBar { flex-basis:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; background:#ffd27a; color:#16303f; font-size:12px; font-weight:bold; margin:2px -14px -10px; padding:6px 14px; }
+  #pracBar.hidden { display:none; }
+  #siteBar { flex-basis:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; background:#2f6fb0; color:#fff; font-size:14px; font-weight:bold; margin:2px -14px -10px; padding:7px 14px; }
+  #siteBar.hidden { display:none; } #siteBar button { background:#fff; color:#16303f; padding:5px 10px; font-size:13px; }
+  #devBar .sitechip { display:inline-block; font-weight:bold; color:#fff; border-radius:12px; padding:2px 10px; margin-right:6px; text-decoration:none; } #pracBar button { background:#16303f; padding:5px 10px; font-size:13px; }
+  #tileBar { position:absolute; left:0; right:0; top:100%; background:#e8f3ec; color:#16303f; font-size:13px; font-weight:bold; padding:5px 14px 7px; border-bottom:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.08); }
+  #tileBar.hidden { display:none; } #tileBar i { display:block; height:5px; background:#cfe3d6; border-radius:3px; margin-top:4px; overflow:hidden; } #tileBar b { display:block; height:100%; width:0; background:#1d7a3a; transition:width .3s; }
+  .tileframe { font-size:12px; color:#1d7a3a; text-align:center; line-height:1.3; text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; white-space:nowrap; }
   header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header button { background:#2c4f63; color:#fff; border:0; border-radius:8px; padding:8px 12px; font-size:15px; }
   #sync { font-size:12px; padding:6px 14px; background:var(--okbg); color:var(--ok); border-bottom:1px solid var(--line); }
@@ -363,6 +371,9 @@
   <button id="back" class="hidden">← 区画</button>
   <h1 id="title">現地調査入力</h1>
   <button id="gear" aria-label="設定" style="font-size:19px;padding:6px 11px">⚙</button>
+  <div id="siteBar" class="hidden"><span id="siteTxt"></span><span><button id="siteGo">切り替える</button> <button id="siteNo" aria-label="このまま">×</button></span></div>     <!-- v0.10.14 -->
+  <div id="pracBar" class="hidden"><span>🔰 練習中（送りません・24時間で消えます）</span><button id="pracMenuBtn">メニュー</button></div>     <!-- v0.10.12 -->
+  <div id="tileBar" class="hidden"><span id="tileTxt"></span><i><b id="tileFill"></b></i></div>     <!-- v0.10.12：図面を貼り付け中（タイルを作っている間） -->
 </header>
 <div id="sync">読み込み中…</div>
 <div id="saveErr" class="hidden">⚠ スマホに保存できませんでした。電波のある所で送れるまで、アプリを閉じないでください（スマホの空き容量も確かめてください）</div>
@@ -378,6 +389,7 @@
       <p style="font-size:15px;margin:0 0 8px">管理する人から届いた<b>接続コード</b>を貼り付けて「登録」を押してください。</p>
       <textarea id="connCode" rows="4" style="width:100%;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px" placeholder="ここに接続コードを貼り付け"></textarea>
       <button class="btn acc wide" id="connGo">登録</button>
+      <button class="btn sub wide" id="pracGo" style="margin-top:14px">🔰 練習モードで試す（登録なし・何も送りません）</button>
       <p id="connMsg" style="font-size:14px;color:var(--err)"></p>
       <p id="bizBackP" class="hidden" style="font-size:14px"><a href="#" id="bizBack">← 前の業務に戻る</a></p>
     </div>
@@ -583,7 +595,7 @@
     <button class="linkbtn" id="areaWipe">保存した航空写真を全部消す…</button>
   </div></div>
 <div id="doc" class="hidden">
-  <div id="docTop"><b>図面の下敷き（試験中）</b><span id="docName"></span><button id="docClose">閉じる</button></div>
+  <div id="docTop"><b>図面の取り込みと位置合わせ</b><span id="docName"></span><button id="docClose">閉じる</button></div>
   <div id="docPanes"><div id="docImg"></div><div id="docMap"></div></div>
   <div id="docBar">
     <div id="docInfo"></div>
@@ -592,7 +604,7 @@
     <div class="btnrow"><button class="btn sub" id="docView">重ねて見る</button><button class="btn go" id="docSave">この位置で保存</button></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:14px">図面の濃さ <input type="range" id="docOp" min="10" max="100" value="55" style="flex:1"></label>
     <div class="btnrow"><button class="btn sub hidden" id="docExtract">極太線を抜き出す（試作）</button><button class="btn dangerline" id="docDel">この図面を消す…</button></div>
-    <input type="file" id="docFile" accept="application/pdf,image/*" class="hidden">
+    <input type="file" id="docFile" accept="application/pdf,image/*,.json,.geojson,.txt" class="hidden">
   </div>
 </div>
 <div id="micBox" class="hidden"><div class="box"><div style="font-size:20px;font-weight:bold">🎤 マイクに向かって話してください</div><div id="micText"></div><button class="btn acc wide" id="micStop">話し終わった</button></div></div>
@@ -652,6 +664,12 @@
     setItem(k, v) { v = String(v); STORE.set(k, v); mirror(k, v); pend.set(k, v); later(); },
     removeItem(k) { STORE.delete(k); mirror(k, null); pend.set(k, null); later(); },
     keys: () => [...STORE.keys()],
+    reload: pre => new Promise(res => {          // v0.10.14：ほかの画面（送るだけの画面）が書いた分を読み直す（その業務の分だけ）
+      if (!db) return res();
+      try { const g = db.transaction('kv', 'readonly').objectStore('kv').getAll(IDBKeyRange.bound(pre, pre + '\uffff'));
+        g.onsuccess = () => { [...STORE.keys()].filter(k => k.startsWith(pre) && !pend.has(k)).forEach(k => STORE.delete(k)); (g.result || []).forEach(r => { if (!pend.has(r.k)) STORE.set(r.k, r.v); }); res(); };
+        g.onerror = () => res(); } catch (e) { res(); }
+    }),
     flush, failed: () => bad, kind: () => db ? 'idb' : 'ls',
     size: () => { let n = 0; STORE.forEach((v, k) => n += v.length + k.length); return n; }
   };
@@ -693,9 +711,11 @@
 const $ = id => document.getElementById(id);
 /* 業務（スプレッドシート）ごとに記録を分けて持つ。最初の業務は今までどおりの置き場所（BIZ = ''）
    業務にかかわらず共通のもの：設定・候補の回数・自分の候補・工種の追加・入力者・業務の一覧 */
-const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today', 'bizSeen', 'notice415']);
-let BIZ = (() => { try { return JSON.parse(KV.getItem('chosa:biz')) || ''; } catch (e) { return ''; } })();
+const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today', 'bizSeen', 'notice415', 'pracAt', 'pracBack', 'todaySites', 'siteBoxes', 'siteSkip']);
+const SENDBIZ = (() => { try { return new URLSearchParams(location.search).get('sendbiz'); } catch (e) { return null; } })();     // v0.10.14：ほかの現場の送信待ちを送るだけの見えない画面
+let BIZ = SENDBIZ !== null ? SENDBIZ : (() => { try { return JSON.parse(KV.getItem('chosa:biz')) || ''; } catch (e) { return ''; } })();
 const PFX = (b = BIZ) => 'chosa:' + (b ? b + '|' : '');
+const PRAC = 'pr', isPrac = () => BIZ === PRAC;          // v0.10.12：練習モード（業務の1つとして持つ。何も送らない）
 const lsKey = k => GLOBAL_KEYS.has(k) ? 'chosa:' + k : PFX() + k;
 const LS = {
   get(k, d) { try { const v = KV.getItem(lsKey(k)); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -715,15 +735,17 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.11β';
+const VERSION = 'v0.10.14β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
 let CONN = LS.get('conn', null);        // { api: 受け付け口のURL, key: 合言葉, name: 登録した名前 }
 let keyBad = false;                      // 合言葉が止められた・間違っている
-async function call(fn, ...args) {
+async function call(fn, ...args) { return callIn(30000, fn, ...args); }
+async function callIn(ms, fn, ...args) {          // v0.10.13：待つ時間を決めて呼ぶ（起動時の設定の取り直しは短く）
   if (!CONN) throw new Error('未登録');
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+  if (CONN.api === 'practice:') return window.pracCall(fn, ...args);      // v0.10.12：練習モードは外へ出さない（設定だけこのスマホで作る）
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
   try {
     // text/plain で送る（Googleの受け付け口に、別の場所の画面から送るための決まった形）
     const r = await fetch(CONN.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -929,6 +951,7 @@ function updateBadge() {
 function updateSync() {
   updateBadge();
   const s = $('sync');
+  if (isPrac()) { s.className = 'hold'; s.textContent = '🔰 練習中：何も送りません（このスマホの中だけ）'; return; }
   const ph = (typeof photoPending === 'number' && photoPending) ? '・写真 ' + photoPending + '枚' : '';
   if (!keyBad && !queue.length && ph && typeof photoError === 'string' && photoError) { s.className = 'err'; s.textContent = '写真を送れません（スマホに残っています）：' + photoError + ' ' + ph.slice(1); return; }
   if (!keyBad && !queue.length && ph) { s.className = 'wait'; s.textContent = (online ? '送信中… ' : '送信待ち（スマホに保存済み）') + ph.slice(1); return; }
@@ -963,6 +986,10 @@ function renderDevBar() {
   const b = $('devBar'); if (!CONN || !devNo()) { b.classList.add('hidden'); return; }
   b.classList.remove('hidden'); b.innerHTML = '';
   const boss = siteState().boss, w = worker();
+  if (typeof realBiz === 'function' && !isPrac() && realBiz().length >= 2) {      // v0.10.14：今の現場名（現場ごとの色）。押すと切り替え
+    const sc = el('a', 'sitechip', '📍 ' + bizLabel(BIZ)); sc.href = '#'; sc.id = 'siteChip'; sc.style.background = 'hsl(' + bizHue(BIZ) + ',55%,38%)';
+    sc.onclick = ev => { ev.preventDefault(); siteListSheet(); }; b.append(sc);
+  }
   b.append(el('span', '', devNo() + '機｜作業者：' + (w || '（未入力）') + (boss && w && boss === w ? '（現場責任者）' : '')));
   const ch = el('a', '', '作業者を替える'); ch.href = '#'; ch.onclick = ev => { ev.preventDefault(); dailySheet(true); }; b.append(ch);
 }
@@ -1106,6 +1133,7 @@ function dailySheet(change) {
       const n2 = el('div', '', '写真番号は「' + noInp.value + '-1」のように、機種番号から始まります。会社のスマホなら、本体に貼った番号と同じにしてください。'); n2.style.cssText = 'font-size:12px;color:var(--mute)';
       box.append(l2, noInp, n2);
     }
+    const pick = change || typeof todayPickBox !== 'function' ? null : todayPickBox(box);     // v0.10.14：今日行く現場
     const memo = change ? null : memoBox(box);
     if (!change) {          // 前回から残っているやること（毎朝ここを必ず通るので、見落とさない）
       const open = todosOpen();
@@ -1130,13 +1158,14 @@ function dailySheet(change) {
       if (noInp || !devSent) sendDev();
       sheet(null); renderDevBar(); toast(change ? '作業者を ' + name + ' にしました' : name + ' さん、今日もよろしくお願いします');
       if (typeof renderSiteBits === 'function') renderSiteBits();
+      if (pick) { const ids = pick.get(); LS.set('todaySites', { d: today(), ids }); if (ids.length && !ids.includes(BIZ)) { toast('「' + bizLabel(ids[0]) + '」に切り替えます'); setTimeout(() => bizSwitch(ids[0]), 600); } }
     };
     box.append(go);
     if (change) { const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no); }
     setTimeout(() => inp.focus(), 100);
   });
 }
-function needDaily() { return CONN && (!worker() || !devNo()); }
+function needDaily() { return SENDBIZ === null && CONN && (!worker() || !devNo()); }
 function checkDaily() { if (needDaily() && $('sheet').classList.contains('hidden')) dailySheet(false); renderDevBar(); }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && CONN && CFG) checkDaily(); });
 /* 受け付け側から来た設定（機種番号の提案・現場設定・持ち物メモ・他の機種の撮影位置） */
@@ -1544,10 +1573,11 @@ async function start() {
   if (!CONN) { showSetup(); return; }
   $('connInfo').textContent = '登録：' + (CONN.name || '');
   $('ver').textContent = VERSION;
-  try {
-    CFG = await call('api_getConfig'); LS.set('cfg', CFG); online = true; mergeTargets(CFG.targets); noteServer(CFG.ver); applyServerExtras();
-    // 区画の一覧はサーバーの値を正とする（送信待ちの分は画面に出すときに足す）
-    Object.keys(CFG.visited || {}).forEach(t => LS.set('plots:' + t, CFG.visited[t]));
+  /* v0.10.13：前にしまった設定があれば、それですぐ画面を出し、設定の取り直しは裏で（電波が弱い所で開くと、最大30秒なにも出なかった）。
+     初めて（設定がまだない）ときだけ、今までどおり取れるまで待つ */
+  if (CFG && CFG.types && CFG.types.length && !isPrac()) setTimeout(() => cfgRefresh(true), 0);
+  else try {
+    await cfgGet(30000);
   } catch (e) {
     if (e.server && e.message === 'KEY') { keyBad = true; } else online = false;
     if (!CFG) { $('sync').className = 'err'; $('sync').textContent = keyBad ? 'このスマホの合言葉が使えません。管理する人に連絡してください。' : '接続できません。最初の1回は電波のある場所で開いてください。'; return; }
@@ -1565,9 +1595,34 @@ async function start() {
   checkDaily();
   flush(); updateSync();
 }
+/* v0.10.13：設定を取り直して当てる。区画の一覧はサーバーの値を正とする（送信待ちの分は画面に出すときに足す） */
+async function cfgGet(ms) {
+  const c = await callIn(ms, 'api_getConfig');
+  CFG = c; LS.set('cfg', CFG); online = true; mergeTargets(CFG.targets); noteServer(CFG.ver); applyServerExtras();
+  Object.keys(CFG.visited || {}).forEach(t => LS.set('plots:' + t, CFG.visited[t]));
+  return c;
+}
+let cfgStale = false;
+async function cfgRefresh(boot) {
+  if (!CONN || isPrac()) return;
+  const before = JSON.stringify([CFG && CFG.types, CFG && CFG.plots, CFG && CFG.visited, CFG && CFG.progress]), tBefore = JSON.stringify(CFG && CFG.targets || []);
+  try {
+    await cfgGet(boot ? 8000 : 30000); cfgStale = false;
+    const now = JSON.stringify([CFG.types, CFG.plots, CFG.visited, CFG.progress]);
+    if (now !== before && !$('home').classList.contains('hidden') && document.activeElement === document.body) showHome();     // 一覧が変わっていて、ホームを見ている（入力中でない）ときだけ描き直す
+    if (JSON.stringify(CFG.targets || []) !== tBefore && typeof drawTargets === 'function' && typeof mainMap !== 'undefined' && mainMap && !(typeof GK !== 'undefined' && GK.mode)) try { drawTargets(mainMap); } catch (e) {}     // 対象が変わったときだけ（作図中は描き直さない）
+    flush(); updateSync(); if (typeof uploadPhotos === 'function') uploadPhotos();     // 写真・図面の送信は受け付け側の版が分かってから
+    if (typeof renderList === 'function' && !$('srvList').classList.contains('hidden')) try { renderList(); startProgress(); } catch (e) {}     // 調査票の一覧を見ていれば、受け付け側の版に合わせて描き直す
+  } catch (e) {
+    cfgStale = true;
+    if (e.server && e.message === 'KEY') { keyBad = true; } else online = false;
+    updateSync();
+  }
+}
+window.addEventListener('online', () => { if (cfgStale) cfgRefresh(false); });     // 電波が戻ったら取り直す
 // start() は調査票の部分（下のscript）を読み込んだあとに呼ぶ
 // 画面をスマホに保存して、電波がなくても開けるようにする
-if ('serviceWorker' in navigator) { const reg = () => navigator.serviceWorker.register('sw.js').catch(() => {}); if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg); }
+if ('serviceWorker' in navigator && SENDBIZ === null) { const reg = () => navigator.serviceWorker.register('sw.js').catch(() => {}); if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg); }
 </script>
 <script type="text/x-chosa">
 "use strict";
@@ -1586,8 +1641,8 @@ let lastFix = null, geoWatch = null, heading = null, headingOn = false, curRec =
 const idb = (() => {
   let dbp = null;
   const open = () => dbp || (dbp = new Promise((res, rej) => {
-    const r = indexedDB.open('chosa', 5);
-    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('xops')) db.createObjectStore('xops', { keyPath: 'id' }); if (!db.objectStoreNames.contains('refs')) db.createObjectStore('refs', { keyPath: 'id' }); };
+    const r = indexedDB.open('chosa', 6);     // v0.10.12：図面のタイル（tiles）を足した
+    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'vid' }); if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs', { keyPath: 'pid' }); if (!db.objectStoreNames.contains('xops')) db.createObjectStore('xops', { keyPath: 'id' }); if (!db.objectStoreNames.contains('refs')) db.createObjectStore('refs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('tiles')) db.createObjectStore('tiles', { keyPath: 'k' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
   const txs = async (store, mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); };
@@ -1611,7 +1666,7 @@ async function clearPhotos() {
   LS.del('srv:ops'); LS.del('srv:no'); LS.del('srv:offset'); LS.del('videos');
   try { await xopsClear(); await thumbsClear(); } catch (e) {}
 }
-async function refreshPending() { try { photoPending = (await idb.all()).filter(p => !p.sent).length; } catch (e) { photoPending = 0; } updateSync(); if (typeof renderSendLines === 'function' && CONN) renderSendLines(); }
+async function refreshPending() { try { photoPending = (await idb.all()).filter(p => !p.sent).length; } catch (e) { photoPending = 0; } updateSync(); if (typeof pracCheck10 === 'function') pracCheck10(photoPending); if (typeof renderSendLines === 'function' && CONN) renderSendLines(); }
 const urlCache = {};
 async function photoUrl(pid) { if (urlCache[pid]) return urlCache[pid]; const p = await idb.get(pid).catch(() => null); if (!p || !p.blob) return p ? '' : thumbUrl(pid); return (urlCache[pid] = URL.createObjectURL(p.blob)); }
 /* 写真の表示：スマホの中の写真が読めないとき（iPhoneでまれに起きる）は「?」にせず、
@@ -1789,13 +1844,16 @@ async function fetchPhoto(pid, full) {
 async function thumbsClear() { try { const l = await idbTx('thumbs', 'readonly', st => st.getAllKeys()); const mine = []; for (const k of l || []) { const t = await thumbGet(k); if (!t || (t.biz || '') === BIZ) mine.push(k); } if (mine.length) await idbTx('thumbs', 'readwrite', st => { mine.forEach(k => st.delete(k)); }); } catch (e) {} }
 /* 先に取っておく：ほかの端末の、ここ3日の票の写真（⚙で止められる。止めると開いたときだけ受け取る） */
 let prefetching = false;
+/* v0.10.12：先に受け取るのは「随時」ならいつでも、「Wi-Fi 接続時のみ」（はじめはこちら）なら Wi-Fi のときだけ。開いた写真はどちらでもその場で受け取る */
+function xphNow() { return SET().xph === 'all' || onWifi(); }
+try { if (navigator.connection) navigator.connection.addEventListener('change', () => { try { prefetchThumbs(); } catch (e) {} }); } catch (e) {}
 async function prefetchThumbs() {
-  if (prefetching || !SET().xph || !online || !useSync()) return;
+  if (prefetching || !xphNow() || !online || !useSync()) return;
   prefetching = true;
   try {
     const since = new Date(Date.now() - 3 * 86400000), lim = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
     const want = Object.values(recsAll()).filter(s => !s.mine && !s.deleted && recDay(s) >= lim).flatMap(s => s.photos);
-    for (const pid of want) { if (!online || !SET().xph) break; if (urlCache[pid] || await thumbGet(pid)) continue; await thumbUrl(pid); }
+    for (const pid of want) { if (!online || !xphNow()) break; if (urlCache[pid] || await thumbGet(pid)) continue; await thumbUrl(pid); }
   } finally { prefetching = false; }
 }
 /* ---------- 他の端末の票・別の日の票は「見るだけ」で開く。「✎ この票を直す」で直せる ----------
@@ -2539,7 +2597,7 @@ $('nochoFile').onchange = async () => {
    ・打った文字で候補（ひな形）が出る。並びは使った回数の多い順
    ・ひな形の ○ は数字を入れる所、◇ は選ぶ所。専用キーの［次へ］で次の ○ へ
    ・⚙ で細かい設定 */
-const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true, hereMove: true, xph: true };
+const SET_DEF = { kp: true, kpAuto: true, same: true, lim: 25, sugg: true, hereMove: true, xph: 'wifi' };
 function SET() { return Object.assign({}, SET_DEF, LS.get('set', {})); }
 function setSet(k, v) { const o = LS.get('set', {}); o[k] = v; LS.set('set', o); }
 
@@ -2951,10 +3009,13 @@ $('gear').onclick = () => sheet(box => {
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
   row('写真はWi-Fiのときだけ送る（通信量の節約。Androidは Wi-Fi につながると自動で送る。iPhone は「送る」を押す。ふつうは撮ったらすぐ自動で送る）', 'photoManual', 'checkbox');
   row('「今ここ」の窓で位置も動かす（外すと向きだけ直す）', 'hereMove', 'checkbox');
-  row('ほかの端末の写真（ここ3日分）を先に受け取っておく（外すと、開いたときだけ受け取る。通信量の節約）', 'xph', 'checkbox');
+  // v0.10.12：他班の写真は「随時」か「Wi-Fi 接続時のみ」の2択（前はチェック1つで、外すと何が起きるか分かりにくかった）
+  { const r = el('div', 'setrow'); r.style.cssText = 'flex-direction:column;align-items:flex-start;gap:8px'; r.append(el('span', '', '他班の写真')); const g = el('div', 'chips'); g.id = 'xphPick';
+    const cur = SET().xph === 'all' ? 'all' : 'wifi';
+    [['all', '随時受け取る'], ['wifi', 'Wi-Fi 接続時のみ受け取る']].forEach(([v, t]) => { const c = el('button', 'chip' + (cur === v ? ' on' : ''), t); c.dataset.v = v; c.onclick = () => { setSet('xph', v); g.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === c)); prefetchThumbs(); }; g.append(c); });
+    r.append(g); box.append(r); }
   row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
-  box.append(el('h3', '', '試験中'));
-  const dr = el('button', 'btn sub', '📄 図面の位置合わせ（取り込んだ図面を直す）'); dr.onclick = () => { sheet(null); openDoc(); }; box.append(dr);
+  // v0.10.12：「試験中」の見出しと「図面の位置合わせ」はなくした（位置図の「図面を取り込む」から同じ画面が開く）
   const r2 = el('div', 'setrow'); r2.append(el('span', '', '候補の並び（使った回数）を最初に戻す'));
   const rb = el('button', 'minibtn', '戻す'); rb.onclick = () => { LS.del('tplUse'); toast('使った回数を消しました'); }; r2.append(rb); box.append(r2);
   const close = el('button', 'btn acc', '閉じる'); close.onclick = () => { sheet(null); if (curRec) { $('recSame').classList.toggle('hidden', !SET().same); renderSugg(); } }; box.append(close);
@@ -3702,7 +3763,8 @@ function bizRemove(b) {
   LS.set('bizList', LS.get('bizList', []).filter(x => x.id !== b.id));
   const seen = LS.get('bizSeen', {}); delete seen[b.id]; LS.set('bizSeen', seen);
   idb.every().then(l => l.filter(p => (p.biz || '') === b.id).forEach(p => idb.del(p.pid))).catch(() => {});
-  ['xops', 'thumbs', 'docs'].forEach(store => idbTx(store, 'readonly', st => st.getAll()).then(l => { const ks = (l || []).filter(x => (x.biz || '') === b.id).map(x => x.id || x.pid); if (ks.length) idbTx(store, 'readwrite', st => { ks.forEach(k => st.delete(k)); }); }).catch(() => {}));
+  // v0.10.12：1件ずつ見て消す（前は図面を全部まとめて読み込んでいて、図面が多いと重かった）。図面のタイルも消す
+  ['xops', 'thumbs', 'docs', 'tiles'].forEach(store => idbTx(store, 'readwrite', st => { const q = st.openCursor(); q.onsuccess = () => { const c = q.result; if (!c) return; if ((c.value && c.value.biz || '') === b.id) c.delete(); c.continue(); }; }).catch(() => {}));
   vids.forEach(v => { try { vdb.del(v); } catch (e) {} });
 }
 function bizSection(box) {
@@ -3719,7 +3781,7 @@ function bizSection(box) {
       const rm = el('button', 'minibtn', '外す…');
       rm.onclick = () => sheet(bx => {
         bx.append(el('h3', '', '⚠「' + b.name + '」をこのスマホから外しますか？'));
-        bx.append(el('p', '', b.pending ? 'まだ送れていない入力が ' + b.pending + ' 件あります。外すと送れなくなります。先に切り替えて、電波のある所で送ってから外してください。' : 'このスマホに残っているこの業務の記録と写真を消します。スプレッドシートの記録は消えません。接続コードがあれば、また追加できます。'));
+        bx.append(el('p', '', b.pending ? 'まだ送れていない入力が ' + b.pending + ' 件あります。外すと送れなくなります。先に切り替えて、電波のある所で送ってから外してください。' : 'このスマホに残っているこの業務の記録と写真を消します。位置図の「過去」からも消えます。スプレッドシートの記録は消えません。接続コードがあれば、また追加できます（過去として見るだけなら、戻す用ファイルを読み込んでください）。'));
         const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
         bx.append(no);
         if (!b.pending) { const yes = el('button', 'btn danger', '外す'); yes.onclick = () => { bizRemove(b); sheet(null); toast('外しました'); }; bx.append(yes); }
@@ -3729,6 +3791,7 @@ function bizSection(box) {
     r.append(btns); box.append(r);
   });
   const add = el('button', 'btn sub', '＋ 業務を追加（接続コードを入れる）'); add.onclick = () => { sheet(null); bizAdd(); }; box.append(add);
+  if (!isPrac()) { const pr = el('button', 'btn sub', '🔰 練習モード（何をしても大丈夫・何も送らない）'); pr.id = 'pracFromSet'; pr.onclick = () => { sheet(null); pracEnter(); }; box.append(pr); }     // v0.10.12
   refSection(box);
 }
 /* 調査の種類（スプレッドシートの「業務設定」で決める）：施設調査なら 対象・工種 を上に、現況調査なら 区画 を上に */
@@ -3902,6 +3965,156 @@ async function docLightUrl(id) {
   } catch (e) { return docUrl(id); }
 }
 async function docUrl(id) { if (docUrls[id]) return docUrls[id]; const d = await docDb.get(id).catch(() => null); return d && d.blob ? (docUrls[id] = URL.createObjectURL(d.blob)) : ''; }     // ない図面（消した・ほかの端末で取り込んだ）は空
+/* ====================== v0.10.12：図面のタイル（航空写真と同じ持ち方） ======================
+ *  前は図面を1枚の大きな画像のまま地図に貼っていたので、1枚で約16MB（重ねるためにもう1つ写し）×枚数ぶんメモリを使い、
+ *  同じ業務に図面が増えるとスマホのブラウザが落ちた（画面の外・遠くの現場の図面も全部広げていた）。
+ *  → 位置合わせが済んだ図面を、256pxの正方形（タイル）に切って拡大段階ごとにこのスマホにしまい、地図には見えている所のタイルだけ出す。
+ *    何十枚あっても、メモリに乗るのは画面1枚分くらい。寄ると細かいタイルに替わるので、前より文字がくっきりする。
+ *  ・作るのは位置合わせが済んだとき・合わせ直したとき（ほかの端末で合わせ直した図面を受け取ったときも）。作っている間は枠と名前だけ出す
+ *  ・撮影中（カメラを開いている間）と、画面が隠れている間は休む。アプリを閉じたら、次に開いたとき残りの図面から作る
+ *  ・使う人に見せる言葉は「図面を貼り付け中」（タイルという言葉は出さない） */
+const TILE_R = 6378137 * Math.PI;
+const TILE = { busy: false, total: 0, done: 0, frac: 0, name: '', skip: new Set(), camAt: 0, pausedCam: false };
+function tileVer(u) { return planHash(u.A.map(v => Math.round(v * 1e3)).join(',') + '|' + u.w + 'x' + u.h); }
+function tileMeta() { return LS.get('docTiles', {}) || {}; }
+function tileReady(u) { const m = tileMeta()[u.id]; return !!(u && u.A && m && m.v === tileVer(u)); }
+/* 図面の画素(u,v) → 拡大段階 z の地図全体の画素(X,Y)：X = a u + c v + e、Y = b u + d v + f（A はメルカトルのm） */
+function tileGeom(u, z) { const s = 256 * Math.pow(2, z) / (2 * TILE_R), A = u.A; return { a: s * A[0], c: s * A[1], e: s * (A[2] + TILE_R), b: -s * A[3], d: -s * A[4], f: s * (TILE_R - A[5]) }; }
+function tileQuad(u, g) { return [[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].map(([x, y]) => [g.a * x + g.c * y + g.e, g.b * x + g.d * y + g.f]); }
+/* 図面（平行四辺形）にかかるタイルだけ（四角の外側の、図面のない所のタイルは作らない） */
+function tileList(u, g) {
+  const P = tileQuad(u, g), xs = P.map(p => p[0]), ys = P.map(p => p[1]);
+  const x0 = Math.floor(Math.min(...xs) / 256), x1 = Math.floor(Math.max(...xs) / 256), y0 = Math.floor(Math.min(...ys) / 256), y1 = Math.floor(Math.max(...ys) / 256);
+  const axes = [[1, 0], [0, 1], [P[0][1] - P[1][1], P[1][0] - P[0][0]], [P[0][1] - P[3][1], P[3][0] - P[0][0]]];
+  const proj = (pts, ax) => { let lo = Infinity, hi = -Infinity; pts.forEach(p => { const v = p[0] * ax[0] + p[1] * ax[1]; if (v < lo) lo = v; if (v > hi) hi = v; }); return [lo, hi]; };
+  const out = [];
+  for (let tx = x0; tx <= x1; tx++) for (let ty = y0; ty <= y1; ty++) {
+    const R = [[tx * 256, ty * 256], [tx * 256 + 256, ty * 256], [tx * 256 + 256, ty * 256 + 256], [tx * 256, ty * 256 + 256]];
+    if (axes.every(ax => { const a = proj(P, ax), b = proj(R, ax); return a[1] > b[0] && b[1] > a[0]; })) out.push([tx, ty]);
+  }
+  return { list: out, ext: Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) };
+}
+function tileLevels(u) {
+  const sc = Math.sqrt(Math.abs(u.A[0] * u.A[4] - u.A[1] * u.A[3]));          // 図面1画素がメルカトルで何m
+  const top = Math.max(1, Math.min(21, Math.round(Math.log2(2 * TILE_R / (256 * sc))))), out = [];
+  for (let z = top; z >= Math.max(1, top - 12); z--) { const g = tileGeom(u, z), t = tileList(u, g); out.push({ z, g, list: t.list }); if (t.ext <= 256) break; }
+  return out;
+}
+const tileDb = {
+  get: k => idbTx('tiles', 'readonly', st => st.get(k)).catch(() => null),
+  putMany: l => l.length ? idbTx('tiles', 'readwrite', st => { l.forEach(v => st.put(v)); }) : Promise.resolve(),
+  drop: id => idbTx('tiles', 'readwrite', st => st.delete(IDBKeyRange.bound(id + '|', id + '|￿'))).catch(() => {})
+};
+/* 撮影中は休む：カメラの入口（capture の付いた input）を押してから、選び終わる・やめる・画面に戻るまで */
+function tileCamWatch() {
+  document.querySelectorAll('input[type=file][capture]').forEach(i => {
+    if (i._tw) return; i._tw = true;
+    i.addEventListener('click', () => { TILE.camAt = Date.now(); });
+    const end = () => setTimeout(() => { TILE.camAt = 0; }, 1500);
+    i.addEventListener('change', end); i.addEventListener('cancel', end);
+  });
+}
+window.addEventListener('focus', () => { if (TILE.camAt) setTimeout(() => { TILE.camAt = 0; }, 1500); });
+function tileCamBusy() { return TILE.camAt && Date.now() - TILE.camAt < 5 * 60000; }
+async function tileWait() {
+  for (;;) {
+    const cam = tileCamBusy(), hid = document.hidden;
+    if (!cam && !hid) { if (TILE.pausedCam) { TILE.pausedCam = false; tileBarUi(); } return; }
+    if (cam && !TILE.pausedCam) { TILE.pausedCam = true; tileBarUi(); }
+    await new Promise(r => setTimeout(r, 600));
+  }
+}
+function tileBarUi() {
+  const b = $('tileBar'); if (!b) return;
+  if (!TILE.busy || !TILE.total) { b.classList.add('hidden'); return; }
+  b.classList.remove('hidden');
+  $('tileTxt').textContent = TILE.pausedCam ? '図面の貼り付けは撮影のあとで続けます' : '図面を貼り付け中…　' + Math.min(TILE.total, TILE.done + 1) + '／' + TILE.total;
+  $('tileFill').style.width = Math.round(Math.min(1, (TILE.done + TILE.frac) / TILE.total) * 100) + '%';
+}
+/* 1枚分のタイルを作る。引いた段階では、元の図面を半分ずつ縮めてから切る（細い線が消えないように） */
+async function tileBuild(u, biz0) {
+  const d = await docDb.get(u.id).catch(() => null); if (!d || !d.blob) return false;
+  const v = tileVer(u), levels = tileLevels(u), total = levels.reduce((s, l) => s + l.list.length, 0) || 1;
+  await tileDb.drop(u.id);
+  let src = await createImageBitmap(d.blob), k = src.width / u.w, n = 0, buf = [];
+  const c = document.createElement('canvas'); c.width = c.height = 256; const ctx = c.getContext('2d');
+  try {
+    for (const lv of levels) {
+      const g = lv.g, per = Math.sqrt(Math.abs(g.a * g.d - g.b * g.c));            // 図面1画素がタイルで何画素
+      while (k / per > 2.5 && src.width > 128) {                                     // 元の図面を半分に縮める
+        const w = Math.max(1, Math.round(src.width / 2)), h = Math.max(1, Math.round(src.height / 2)), hc = document.createElement('canvas'); hc.width = w; hc.height = h;
+        const hg = hc.getContext('2d'); hg.imageSmoothingQuality = 'high'; hg.drawImage(src, 0, 0, w, h);
+        const nb = await createImageBitmap(hc); hc.width = hc.height = 0; if (src.close) src.close(); src = nb; k = src.width / u.w;
+      }
+      for (const [tx, ty] of lv.list) {
+        await tileWait(); if (BIZ !== biz0) return false;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, 256, 256);
+        ctx.setTransform(g.a / k, g.b / k, g.c / k, g.d / k, g.e - 256 * tx, g.f - 256 * ty);
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(src, 0, 0);
+        const b = await new Promise(r => c.toBlob(r, 'image/png'));
+        if (b) buf.push({ k: u.id + '|' + v + '|' + lv.z + '/' + tx + '/' + ty, biz: biz0, buf: await b.arrayBuffer(), mime: 'image/png' });     // iPhone対策でバイト列でしまう
+        if (buf.length >= 16) { await tileDb.putMany(buf); buf = []; }
+        n++; TILE.frac = n / total; if (n % 4 === 0) tileBarUi();
+      }
+    }
+    await tileDb.putMany(buf);
+  } finally { if (src && src.close) src.close(); c.width = c.height = 0; }
+  if (BIZ !== biz0) return false;
+  const m = tileMeta(); m[u.id] = { v, z0: levels[levels.length - 1].z, z1: levels[0].z, n: total, at: nowIso() }; LS.set('docTiles', m);
+  return true;
+}
+/* 位置合わせ済みでタイルがまだ（または古い）図面を、重ねている図面から順に作る。1つずつ。消した図面のタイルは捨てる */
+async function tileKick() {
+  if (TILE.busy || typeof L === 'undefined' || !window.idbTx) return;
+  TILE.busy = true; const biz0 = BIZ; TILE.total = 0; TILE.done = 0; TILE.frac = 0; let made = 0;
+  try {
+    const ids = new Set(uls().map(u => u.id)), m = tileMeta(); let pruned = false;
+    for (const id of Object.keys(m)) if (!ids.has(id)) { await tileDb.drop(id); delete m[id]; pruned = true; }
+    if (pruned) LS.set('docTiles', m);
+    for (;;) {
+      if (BIZ !== biz0) break;
+      const need = uls().filter(u => u.A && !tileReady(u) && !TILE.skip.has(u.id + tileVer(u))).sort((a, b) => (b.on !== false) - (a.on !== false));
+      if (!need.length) break;
+      TILE.total = TILE.done + need.length; TILE.frac = 0; tileBarUi();
+      const u = need[0], ok = await tileBuild(u, biz0).catch(e => { console.warn('tile', e); return false; });
+      if (!ok) TILE.skip.add(u.id + tileVer(u)); else made++;          // 画像がまだない（ほかの端末の図面を受け取っていない）ものは、受け取ってから
+      TILE.done++; TILE.frac = 0; tileBarUi();
+      if (ok) syncAllDocs();
+    }
+  } finally {
+    TILE.busy = false; tileBarUi();
+    if (made && BIZ === biz0) { tileToast('図面の貼り付けが終わりました'); syncAllDocs(); }
+  }
+}
+function tileToast(t, n = 0) { if ($('toast').classList.contains('on') && n < 8) setTimeout(() => tileToast(t, n + 1), 900); else toast(t); }     // ほかのお知らせ（位置が直されました 等）を消さない
+/* 地図の層：見えている所のタイルだけ、この端末から出す（出し終えた・外れたタイルはすぐ手放す） */
+const TileDocLayer = L.GridLayer ? L.GridLayer.extend({
+  initialize(u, op, pane) {
+    const m = tileMeta()[u.id], b = L.latLngBounds([[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].map(p => imgToLL(u.A, p[0], p[1])));
+    this._pre = u.id + '|' + m.v + '|';
+    L.GridLayer.prototype.initialize.call(this, { pane: pane || 'docPane', opacity: op, bounds: b, minNativeZoom: Math.min(m.z0, 20), maxNativeZoom: Math.min(m.z1, 20), maxZoom: 20, keepBuffer: 1, updateWhenZooming: false, className: 'doctile' });
+    this.on('tileunload', e => { if (e.tile && e.tile._u) { URL.revokeObjectURL(e.tile._u); e.tile._u = null; } });
+  },
+  createTile(co, done) {
+    const im = document.createElement('img'); im.alt = ''; im.setAttribute('role', 'presentation');
+    tileDb.get(this._pre + co.z + '/' + co.x + '/' + co.y).then(t => {
+      if (t && t.buf) { im._u = URL.createObjectURL(new Blob([t.buf], { type: t.mime || 'image/png' })); im.onload = im.onerror = () => done(null, im); im.src = im._u; }
+      else done(null, im);
+    });
+    return im;
+  }
+}) : null;
+/* 貼り付けがまだの図面：細い枠と名前だけ（場所が分かるように） */
+function tileFrame(u, pane) {
+  const pts = [[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].map(p => imgToLL(u.A, p[0], p[1]));
+  const g = L.featureGroup([L.polygon(pts, { pane: pane || 'docPane', color: '#1d7a3a', weight: 2, dashArray: '6 6', fill: false, interactive: false })]);
+  const c = L.polygon(pts).getBounds().getCenter();
+  g.addLayer(L.marker(c, { pane: pane || 'docPane', interactive: false, keyboard: false, icon: L.divIcon({ className: 'tileframe', html: '<b>' + esc(u.name || '図面') + '</b><br>貼り付け中', iconSize: [140, 40], iconAnchor: [70, 20] }) }));
+  g._frame = true; g.setOpacity = () => {}; g.setShown = () => {};
+  return g;
+}
+/* 地図に重ねる層を作る：タイルができていればタイル、まだなら枠 */
+function docMapLayer(u, op, pane) { return tileReady(u) && TileDocLayer ? new TileDocLayer(u, op, pane) : tileFrame(u, pane); }
 /* PDF（1ページ目または選んだページ）を画像にする。pdf.js はこのときだけ読み込む */
 function loadPdfJs() {
   if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
@@ -4138,7 +4351,13 @@ function askPages(n, name) {
     box.append(ok, no);
   }));
 }
-$('docFile').onchange = () => { const f = $('docFile').files[0]; if (f) docImportFile(f); };
+$('docFile').onchange = async () => {           // v0.10.12：計画入りのPDF（計画のデータ）なら、ここからでもそのまま計画の取り込みへ
+  const files = [...$('docFile').files]; if (!files.length) return;
+  const f = files[0], isPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name), isImg = /^image\//i.test(f.type) || /\.(jpe?g|png)$/i.test(f.name);
+  if (!isPdf && !isImg) { $('doc').classList.add('hidden'); return planImport(files); }
+  if (isPdf && await planFromPdf(f).catch(() => null)) { $('doc').classList.add('hidden'); return planImport(files); }
+  docImportFile(f);
+};
 async function docImportFile(file) {
   $('docInfo').textContent = '図面を読み込んでいます…';
   try {
@@ -4250,7 +4469,7 @@ let areaDocs = [];
 function areaUnderlays(on) {
   areaDocs.forEach(o => areaMap.removeLayer(o)); areaDocs = [];
   if (!on) return;
-  docShown().forEach(async u => { const url = await docUrl(u.id); if (!url) return; const o = new DocLayer(url, u.w, u.h, u.A, Number($('areaDocOp').value) / 100).addTo(areaMap); areaDocs.push(o); });
+  docShown().forEach(u => { const o = docMapLayer(u, Number($('areaDocOp').value) / 100, 'overlayPane').addTo(areaMap); areaDocs.push(o); });     // v0.10.12：タイル（前は元の大きさの画像を全部広げていた）
 }
 
 $('areaDocOn').onchange = () => areaUnderlays($('areaDocOn').checked);
@@ -4709,7 +4928,7 @@ function prepSheet() {
     const alive = areasAll().filter(areaAlive);
     const tb = el('button', 'minibtn', alive.length ? '追加する' : '保存する'); tb.onclick = () => { sheet(null); openArea('tiles'); };
     row(alive.length > 0, alive.length ? '航空写真：' + alive.length + '範囲を保存済み（早いもので ' + md(Math.min(...alive.map(a => a.exp))) + ' まで）' : 'この現場の航空写真がまだ保存されていません', tb);
-    const dn = uls().filter(u => u.A).length, db = el('button', 'minibtn', dn ? '追加する' : '取り込む'); db.onclick = () => { sheet(null); $('planFile').value = ''; $('planFile').click(); };     // v0.10
+    const dn = uls().filter(u => u.A).length, db = el('button', 'minibtn', dn ? '追加する' : '取り込む'); db.onclick = () => { sheet(null); openDoc(); };     // v0.10.12：取り込みは位置合わせの画面から
     row(dn > 0, dn ? '図面：' + dn + '枚を位置合わせ済み（位置図に重なります）' : '重ねる図面はまだありません（なくても調査はできます）', db);
     const dw = docsWaiting().length, aw = areasWaiting().length;          // v0.10：ほかのスマホで重ねた図面・保存した範囲
     if (dw) { const b = el('button', 'minibtn', '受け取る'); b.onclick = async () => { sheet(null); await takeRemoteDocs(); prepSheet(); }; row(false, 'ほかのスマホで重ねた図面が ' + dw + '枚あります（位置合わせ済みで届きます）', b); }
@@ -5068,6 +5287,7 @@ function kdMode() { return LS.get('mode', 'koudo') !== 'srv'; }
 function dockMode() {
   const k = kdMode(); $('dockDraw').classList.remove('hidden'); $('dockNocho').classList.add('hidden');     // v0.10.1：タブバーは作業項目（工種）によらず共通（耕土厚でも図面を出す。野帳は区画の画面の「📒 野帳」から）
   const lab = $('dockNext'); if (!lab) return;
+  lab.classList.add('hidden'); return;         // v0.10.12：撮るボタンの下の「次：○○」は出さない（区画の画面の「📷 次：○○」で分かる）
   if (!k) { lab.classList.add('hidden'); return; }
   let t = '';
   try { const plot = LS.get('kd:lastPlot', ''); if (plot && posFields().length && selFields().length) { const st = plot === PLOT && STATE ? STATE : localState(TYPE, plot), pos = kdDig(st); if (pos === '') t = plot + '・位置を選ぶ'; else { const q = kdNextOf(plot, pos); t = q ? '次：' + (q.k === '作業前' ? '作業前' : q.k) : '4枚済'; } } } catch (e) {}
@@ -5659,28 +5879,17 @@ function syncDocs(map) {
   if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 250;     // v0.10.2：航空写真（200）の上に、図面ごとの濃さで透かして重ねる（前は下に置いて航空写真を薄くしていた）
   map._docs = map._docs || {};
   const visible = map.getContainer().offsetParent !== null;
-  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(','), keys = new Set(want.map(key)), cur = {};
-  uls().filter(u => u.A).forEach(u => cur[key(u)] = true);
-  Object.keys(map._docs).forEach(k => {
-    if (keys.has(k)) return;
-    const o = map._docs[k];
-    if (cur[k] && map === mainMap) { if (o && o !== 'loading' && o.setShown) o.setShown(false); return; }   // 位置図は出さないだけ：残して隠す（すぐ戻せる）
-    // 調査票の小さい地図・位置を選ぶ窓では、隠した図面はメモリから外す（v0.10）
-    if (o && o !== 'loading') map.removeLayer(o); delete map._docs[k];                               // 消した・合わせ直した図面は捨てる
-  });
-  want.forEach(async u => {
+  /* v0.10.12：図面はタイル（見えている所だけ読む）。貼り付けがまだの図面は枠と名前。外した図面は、どの地図でもすぐ手放す（前は位置図だけ残していた） */
+  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(',') + ':' + (tileReady(u) ? 't' : 'f'), keys = new Set(want.map(key));
+  Object.keys(map._docs).forEach(k => { if (keys.has(k)) return; const o = map._docs[k]; if (o) map.removeLayer(o); delete map._docs[k]; });
+  if (visible) want.forEach(u => {
     const k = key(u), o = map._docs[k];
-    if (o && o !== 'loading') { o.setShown(true); if (o.setOpacity) o.setOpacity(docOp(u) / 100); return; }
-    if (o === 'loading' || !visible) return;
-    map._docs[k] = 'loading'; docBusy(map, 1);
-    const url = await docLightUrl(u.id);
-    if (map._docs[k] !== 'loading' || !url) { if (map._docs[k] === 'loading') delete map._docs[k]; docBusy(map, -1); return; }
-    const ly = new DocLayer(url, u.w, u.h, u.A, docOp(u) / 100, 'docPane'); ly.once('ready', () => docBusy(map, -1));
-    map._docs[k] = ly.addTo(map);
+    if (o) { if (o.setOpacity) o.setOpacity(docOp(u) / 100); return; }
+    map._docs[k] = docMapLayer(u, docOp(u) / 100, 'docPane').addTo(map);
   });
   const base = docBaseOf(map); if (base) base.setOpacity(1);
 }
-function syncAllDocs() { [mainMap, recMap, pickMap].forEach(m => { if (m) syncDocs(m); }); }
+function syncAllDocs() { [mainMap, recMap, pickMap].forEach(m => { if (m) syncDocs(m); }); if (typeof areaMap !== 'undefined' && areaMap && areaDocs.length) areaUnderlays($('areaDocOn').checked); tileKick(); }
 function mapPhotoApply() { syncAllDocs(); }     // v0.10.2：航空写真の濃さのつまみはなくした（図面ごとの濃さに）
 /* v0.10.2：図面の欄。図面ごとに「重ねる」と濃さ（0〜100%）。航空写真はいつも100%で、図面をその上に透かして重ねる。
    位置合わせがまだの図面も出す（押すと位置合わせの画面）。ほかの端末の図面を今すぐ受け取るボタン */
@@ -5749,7 +5958,7 @@ function planTargets(gj) {
   });
   return out;
 }
-$('planBtn').onclick = () => { $('planFile').value = ''; $('planFile').click(); };
+$('planBtn').onclick = () => openDoc();     // v0.10.12：まず位置合わせの画面（取り込む・一覧から選ぶ・合わせ直すが1か所で）
 /* v0.10：図面の入口を1つに。計画入りのPDF（または計画のデータ）ならそのまま位置が合った状態で重なる。
    ふつうのPDF・画像なら、位置合わせの画面を開いて取り込む（2〜3点合わせて「この位置で保存」） */
 $('planFile').onchange = async () => {
@@ -5981,7 +6190,285 @@ async function sendVideos() {
 }
 $('videoSend').onclick = () => sendVideos();
 
-start();
+/* ====================== v0.10.12：練習モード ======================
+ *  ・登録（接続コード）なしで入れる。何も送らない（スプレッドシートにもドライブにも）。このスマホの中だけ
+ *  ・入ると、練習用の架空の平面図（区画整理・practice.pdf）と区画・水路が、今いる所を中心に重なった状態で始まる（位置合わせ不要）
+ *    → 会社の駐車場や近くの田んぼを歩くだけで、図面の上を青丸が歩く・撮った所に矢印が出る、を試せる。自分の図面を取り込んで位置合わせも試せる
+ *  ・最後に開いてから24時間たっていたら、次に開いたとき最初の状態に戻す（開いた瞬間だけ消す＝使っている最中には消えない）。練習の物は本物ではないので、
+ *    「消すのは手動」の例外。そのかわり、画面の上にずっと「🔰 練習中」の帯、写真を10枚撮ったら「本番の現場ですか？」と一度聞く
+ *  ・練習用の図面と区画は架空（実在の地区・会社の図面は入れない。アプリは公開の場所に置いているため） */
+const PRAC_DAY = 24 * 3600e3;
+const PRAC_GEO = {"page":[420,297],"center":[205.0,150.0],"plots":[{"name":"1-1","pts":[[100.7,166.9],[144.9,143.5],[154.3,161.1],[110.1,184.6]]},{"name":"1-2","pts":[[144.9,143.5],[189.0,120.0],[198.4,137.6],[154.3,161.1]]},{"name":"1-3","pts":[[189.0,120.0],[233.2,96.5],[242.6,114.2],[198.4,137.6]]},{"name":"1-4","pts":[[233.2,96.5],[277.3,73.0],[286.7,90.7],[242.6,114.2]]},{"name":"2-1","pts":[[112.0,188.1],[156.2,164.6],[165.5,182.3],[121.4,205.8]]},{"name":"2-2","pts":[[156.2,164.6],[200.3,141.2],[209.7,158.8],[165.5,182.3]]},{"name":"2-3","pts":[[200.3,141.2],[244.5,117.7],[253.8,135.4],[209.7,158.8]]},{"name":"2-4","pts":[[244.5,117.7],[288.6,94.2],[298.0,111.9],[253.8,135.4]]},{"name":"3-1","pts":[[123.3,209.3],[167.4,185.8],[176.8,203.5],[132.7,227.0]]},{"name":"3-2","pts":[[167.4,185.8],[211.6,162.4],[221.0,180.0],[176.8,203.5]]},{"name":"3-3","pts":[[211.6,162.4],[255.7,138.9],[265.1,156.5],[221.0,180.0]]},{"name":"3-4","pts":[[255.7,138.9],[299.9,115.4],[309.3,133.1],[265.1,156.5]]}],"lines":[{"name":"1号用水路","kind":"用水路","pts":[[111.1,186.4],[287.7,92.5]]},{"name":"2号用水路","kind":"用水路","pts":[[122.3,207.5],[298.9,113.6]]},{"name":"1号排水路","kind":"排水路","pts":[[99.3,164.3],[275.9,70.4]]},{"name":"2号排水路","kind":"排水路","pts":[[134.1,229.6],[310.7,135.7]]},{"name":"幹線用水路","kind":"用水路","pts":[[277.5,60.5],[319.7,140.0]]},{"name":"幹線農道","kind":"農道","pts":[[79.7,165.7],[121.9,245.1]]}]};
+const PRAC_FIELDS = [
+  { type: '耕土厚調査', id: '耕土厚', label: '耕土厚', kind: '位置数値', options: [], required: true, min: '0', max: '100', unit: 'cm' },
+  { type: '耕土厚調査', id: '掘削調査', label: '掘削調査', kind: '位置選択', options: [], required: false, min: '', max: '', unit: '' },
+  { type: '耕土厚調査', id: '耕作物', label: '耕作物（従前）', kind: '選択＋自由', options: ['水稲', '大豆', '麦', '未耕作', 'たまねぎ', 'トウモロコシ'], required: true, min: '', max: '', unit: '' },
+  { type: '耕土厚調査', id: '状況', label: '状況', kind: '選択', options: ['収穫後', '作付中', '耕起後', '休耕', 'その他'], required: false, min: '', max: '', unit: '' },
+  { type: '耕土厚調査', id: '備考', label: '備考', kind: '文字', options: [], required: false, min: '', max: '', unit: '' }];
+function pracCfg() {
+  const A = LS.get('pracA', null), d = uls().find(u => u.id === 'prac1'), targets = [];
+  if (A && d) {
+    const k = d.w / PRAC_GEO.page[0], P = q => imgToLL(A, q[0] * k, q[1] * k).map(v => Math.round(v * 1e7) / 1e7);
+    PRAC_GEO.plots.forEach((p, i) => targets.push({ id: 'prT' + i, name: p.name, kind: '区画', shape: 'poly', reuse: false, pts: p.pts.map(P), at: '' }));
+    PRAC_GEO.lines.forEach((p, i) => targets.push({ id: 'prL' + i, name: p.name, kind: p.kind, shape: 'line', reuse: false, pts: p.pts.map(P), at: '' }));
+  }
+  return { types: [{ name: '耕土厚調査', area: '練習地区（架空）', job: '練習', initialPositions: 4, maxPositions: 8, digits: 0, positionLabel: '位置' }], fields: PRAC_FIELDS,
+    plots: PRAC_GEO.plots.map(p => ({ type: '耕土厚調査', plot: p.name, plan: p.name.split('-')[0] })), progress: { '耕土厚調査': {} }, visited: {}, user: '',
+    biz: { name: '🔰 練習（架空の地区）', survey: '現況調査' }, targets, ver: '0.10.2', devNo: devNo(), nextDevNo: '01', devIds: [],
+    site: { boss: '', bossAt: '', areas: [], areasAt: '', areasBy: '', history: [] }, todos: [], marks: [], memos: {}, others: [] };
+}
+window.pracCall = async function (fn) { if (fn === 'api_getConfig') return pracCfg(); throw new Error('練習中は送りません'); };
+function pracEnter() {
+  const l = LS.get('bizList', []); if (!l.some(x => x.id === PRAC)) { l.push({ id: PRAC, name: '🔰 練習' }); LS.set('bizList', l); }
+  if (!isPrac()) LS.set('pracBack', BIZ);
+  try { KV.setItem(PFX(PRAC) + 'conn', JSON.stringify({ api: 'practice:', key: 'practice-local-0000', name: '練習' })); } catch (e) {}
+  bizSwitch(PRAC);
+}
+function pracLeave() {
+  const b = LS.get('pracBack', ''), others = bizList().filter(x => x.id !== PRAC);
+  bizSwitch(others.some(x => x.id === b) ? b : others.length ? others[0].id : '');
+}
+/* 練習で入れた物を全部消す（業務の入口＝conn は残す） */
+async function pracWipe() {
+  KV.keys().filter(k => bizOwns(k, PRAC) && k !== PFX(PRAC) + 'conn').forEach(k => KV.removeItem(k));
+  for (const store of ['photos', 'videos', 'xops', 'thumbs', 'docs', 'tiles', 'refs'])
+    await idbTx(store, 'readwrite', st => { const q = st.openCursor(); q.onsuccess = () => { const c = q.result; if (!c) return; if ((c.value && c.value.biz || '') === PRAC) c.delete(); c.continue(); }; }).catch(() => {});
+  await KV.flush();
+}
+/* 開いたとき：24時間たっていたら空に戻してから始める。true を返したら開き直す */
+async function pracBoot() {
+  if (!isPrac()) return false;
+  document.body.classList.add('prac'); $('pracBar').classList.remove('hidden');
+  const at = LS.get('pracAt', 0);
+  LS.set('pracAt', Date.now());
+  if (at && Date.now() - at > PRAC_DAY) { await pracWipe(); LS.set('pracAt', Date.now()); await KV.flush(); location.reload(); return true; }
+  return false;
+}
+/* 図面1画素＝紙の何mm か から、紙の「区画整理の真ん中」を今いる所 c に置く（北が上） */
+function pracPlace(w, c) {
+  const k = w / PRAC_GEO.page[0], cx = PRAC_GEO.center[0] * k, cy = PRAC_GEO.center[1] * k, m = MERC.project(L.latLng(c[0], c[1])), g = (1 / k) / Math.cos(c[0] * Math.PI / 180);
+  return [g, 0, m.x - g * cx, 0, -g, m.y + g * cy];
+}
+async function pracHere() {          // 今いる所（分からなければ少し待つ）
+  let f = freshFix(120); if (!f) { try { startGeo(); } catch (e) {} for (let i = 0; i < 24 && !(f = freshFix(120)); i++) await new Promise(r => setTimeout(r, 500)); }
+  return f ? [f.lat, f.lon] : null;
+}
+async function pracSeed() {
+  if (!isPrac() || uls().some(u => u.id === 'prac1')) return;
+  sheet(box => { box.append(el('h3', '', '🔰 練習の準備をしています…')); box.append(el('p', '', '練習用の図面を、今いる所に置いています（位置情報の使用を「許可」してください）。')); });
+  try {
+    const here = await pracHere(), c = here || [36.645, 136.95];
+    const blob = await (await fetch('practice.pdf')).blob(), im = await fileToImage(new File([blob], '練習用の平面図.pdf', { type: 'application/pdf' }), 1);
+    await docDb.put({ id: 'prac1', blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] });
+    const A = pracPlace(im.w, c), l = uls().filter(u => u.id !== 'prac1');
+    l.unshift({ id: 'prac1', name: '練習用の平面図（架空）', w: im.w, h: im.h, pairs: [], A, op: .55, mop: 60, on: true, share: 'none' }); ulsSet(l);
+    LS.set('pracA', A); LS.set('pracHello', here ? 'here' : 'nohere'); await KV.flush();
+    location.reload();
+  } catch (e) { sheet(null); toast('練習用の図面を読み込めませんでした（最初は電波のある所で開いてください）'); }
+}
+function pracHello() {
+  const h = LS.get('pracHello', ''); if (!h) return; LS.del('pracHello');
+  sheet(box => {
+    box.append(el('h3', '', '🔰 練習モードへようこそ'));
+    box.append(el('p', '', '何をしても大丈夫です。スプレッドシートにもドライブにも送りません。'));
+    box.append(el('p', '', h === 'here' ? '練習用の図面（架空の区画整理）と区画・水路を、今いる所を中心に重ねました。位置図を開いて、歩いてみてください。' : '今いる所が分からなかったので、仮の場所に図面を置きました。外に出てから「練習メニュー」→「図面を今いる所へ動かす」を押してください。'));
+    box.append(el('p', '', '練習で入れた物は、最後に開いてから24時間たつと、次に開いたときに消えて最初の状態に戻ります。'));
+    const go = el('button', 'btn acc', '📍 位置図を開く'); go.onclick = () => { sheet(null); $('dockMap').click(); };
+    const no = el('button', 'btn sub', 'とじる'); no.onclick = () => sheet(null); box.append(go, no);
+  });
+}
+function pracMenu() {
+  sheet(box => {
+    box.append(el('h3', '', '🔰 練習モード'));
+    box.append(el('p', '', '何も送りません。練習で入れた物は、最後に開いてから24時間たつと、次に開いたときに消えます。'));
+    const mv = el('button', 'btn sub', '📍 練習用の図面を今いる所へ動かす'); mv.id = 'pracMove';
+    mv.onclick = async () => { mv.textContent = '今いる所を調べています…'; const c = await pracHere(); if (!c) { mv.textContent = '今いる所が分かりません（外で、位置情報を許可して）'; return; }
+      const l = uls(), u = l.find(x => x.id === 'prac1'); if (!u) { sheet(null); return pracSeed(); }
+      u.A = pracPlace(u.w, c); ulsSet(l); LS.set('pracA', u.A); await KV.flush(); location.reload(); };
+    const rs = el('button', 'btn sub', '最初からやり直す（練習で入れた物を消す）'); rs.id = 'pracReset';
+    rs.onclick = async () => { rs.disabled = true; await pracWipe(); LS.set('pracAt', Date.now()); await KV.flush(); location.reload(); };
+    const others = bizList().filter(x => x.id !== PRAC);
+    const back = el('button', 'btn acc', others.length ? '本番に戻る' : '練習をやめる（登録の画面へ）'); back.id = 'pracLeave'; back.onclick = () => pracLeave();
+    const no = el('button', 'btn sub', 'とじる'); no.onclick = () => sheet(null);
+    box.append(mv, rs, back, no);
+  });
+}
+/* 写真を10枚撮ったら一度だけ聞く（練習中だと気づかずに本番の写真を撮ってしまわないように） */
+function pracCheck10(n) {
+  if (!isPrac() || n < 10 || LS.get('pracAsk10', false)) return;
+  LS.set('pracAsk10', true);
+  sheet(box => {
+    box.append(el('h3', '', '🔰 練習中です'));
+    box.append(el('p', '', '写真を10枚撮りました。本番の現場の写真ですか？練習モードの写真は送られず、24時間たつと消えます（本番の業務へは移せません）。'));
+    const go = el('button', 'btn acc', '練習を続ける'); go.id = 'prac10Ok'; go.onclick = () => sheet(null);
+    const back = el('button', 'btn sub', '本番に戻る'); back.onclick = () => pracLeave(); box.append(go, back);
+  });
+}
+$('pracMenuBtn').onclick = () => pracMenu();
+$('pracGo').onclick = () => pracEnter();
+
+// v0.10.12：練習モードなら、24時間たっていないか見てから始める
+/* ====================== v0.10.14：現場の取り違え・移動 ======================
+ *  ・朝の最初の画面で「今日行く現場」を選ぶ（いくつでも。今いる所から近い順）。今の現場が入っていなければ、近い方へ切り替えて始める
+ *  ・画面の上（機種番号の行）に今の現場名をいつも出す（現場ごとに色）。押すと近い順の一覧から切り替えられる
+ *  ・撮ろうとしたとき、今いる所が今の現場の外で、ほかの現場（今日行く現場を選んでいればその中）の範囲なら、カメラを開く前に聞く
+ *  ・アプリを開いている間に、ほかの現場の範囲に入ったら「○○に入りました［切り替える］」の帯（勝手には切り替えない）
+ *  ・現場の範囲は、その現場を開いたときに「写真 → 対象 → 保存した航空写真の範囲 → 図面」から決めて覚えておく（siteBoxes） */
+const SITE_IN = 300, SITE_NEAR = 150;
+function realBiz() { return bizList().filter(b => b.id !== PRAC && b.conn); }
+function bizLabel(id) { const b = bizList().find(x => x.id === id); return (b && b.name) || '（名前のない業務）'; }
+function bizHue(id) { let h = 7; for (const c of String(id) + '#') h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+function siteBoxSave() {
+  if (isPrac() || SENDBIZ !== null || typeof L === 'undefined' || typeof bizBounds !== 'function') return;
+  let b = null; try { b = bizBounds(); } catch (e) {}
+  if (!b) return;
+  const m = LS.get('siteBoxes', {}) || {}, v = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x => Math.round(x * 1e6) / 1e6);
+  if (JSON.stringify(m[BIZ] && m[BIZ].b) === JSON.stringify(v)) return;
+  m[BIZ] = { b: v, at: nowIso() }; LS.set('siteBoxes', m);
+}
+function boxDist(bx, lat, lon) {          // 四角（南・西・北・東）の外なら何m離れているか（中なら0）
+  const [s, w, n, e] = bx, dy = lat < s ? s - lat : lat > n ? lat - n : 0, dx = lon < w ? w - lon : lon > e ? lon - e : 0;
+  return Math.hypot(dy * 111320, dx * 111320 * Math.cos(lat * Math.PI / 180));
+}
+function siteDist(id, f) { const m = LS.get('siteBoxes', {}) || {}; return f && m[id] ? boxDist(m[id].b, f.lat, f.lon) : null; }
+function todaySites() { const t = LS.get('todaySites', null); return t && t.d === today() ? (t.ids || []) : []; }
+function siteSkipped(id) { const t = LS.get('siteSkip', null); return !!(t && t.d === today() && t.ids.includes(BIZ + '>' + id)); }
+function siteSkip(id) { const t = LS.get('siteSkip', null), ids = t && t.d === today() ? t.ids : []; ids.push(BIZ + '>' + id); LS.set('siteSkip', { d: today(), ids }); }
+/* 今いる所が今の現場の外（300m以上）で、ほかの現場の範囲（150m以内）なら、その現場の id。位置が粗い（±100m超）・分からない、今の現場の範囲が分からないときは null */
+function siteOther(f) {
+  if (!f || isPrac() || !CONN || (f.acc && f.acc > 100)) return null;
+  const m = LS.get('siteBoxes', {}) || {}, cur = m[BIZ];
+  if (!cur || boxDist(cur.b, f.lat, f.lon) <= SITE_IN) return null;      // 今の現場の範囲が分からないとき（まだ何も入っていない現場）は、外にいるとは言えないので聞かない
+  const pick = todaySites();
+  let best = null, bd = Infinity;
+  realBiz().forEach(b => { if (b.id === BIZ || !m[b.id] || (pick.length && !pick.includes(b.id))) return; const d = boxDist(m[b.id].b, f.lat, f.lon); if (d <= SITE_NEAR && d < bd) { bd = d; best = b.id; } });
+  return best;
+}
+/* 近い順（範囲が分からない現場は後ろ） */
+function sitesByNear(list) {
+  const f = freshFix(300);
+  return list.map(b => ({ b, d: siteDist(b.id, f) })).sort((x, y) => (x.d == null) - (y.d == null) || (x.d || 0) - (y.d || 0) || natCmp(x.b.name, y.b.name));
+}
+function distTxt(d) { return d == null ? '' : d < 50 ? '（今いる所）' : d < 1000 ? '（' + Math.round(d / 10) * 10 + 'm）' : '（' + (d / 1000).toFixed(1) + 'km）'; }
+/* 朝の画面の「今日行く現場」（いくつでも）。返り値 get() で選ばれた id の配列 */
+function todayPickBox(box) {
+  const all = realBiz(); if (all.length < 2) return null;
+  const h = el('div', '', '📍 今日行く現場（いくつでも）'); h.style.cssText = 'font-size:14px;font-weight:bold;margin-top:12px';
+  const c = el('div', 'chips'); c.id = 'dayPick'; c.style.marginTop = '6px';
+  const sel = new Set(todaySites().length ? todaySites() : [BIZ]);
+  sitesByNear(all).forEach(({ b, d }) => {
+    const x = el('button', 'chip' + (sel.has(b.id) ? ' on' : ''), b.name + distTxt(d)); x.type = 'button'; x.dataset.id = b.id;
+    x.style.borderLeft = '6px solid hsl(' + bizHue(b.id) + ',55%,42%)';
+    x.onclick = () => { if (sel.has(b.id)) sel.delete(b.id); else sel.add(b.id); x.classList.toggle('on', sel.has(b.id)); };
+    c.append(x);
+  });
+  const n = el('div', '', '選んだ現場のどれかに着いたら知らせます。今の現場が入っていなければ、いちばん近い現場に切り替えて始めます。'); n.style.cssText = 'font-size:12px;color:var(--mute);margin-top:4px';
+  box.append(h, c, n);
+  return { get: () => sitesByNear(all.filter(b => sel.has(b.id))).map(x => x.b.id) };
+}
+/* 現場名を押したとき：近い順の一覧から切り替える */
+function siteListSheet() {
+  sheet(box => {
+    box.append(el('h3', '', '📍 現場を切り替える'));
+    const pick = todaySites();
+    sitesByNear(realBiz()).forEach(({ b, d }) => {
+      const r = el('button', 'btn ' + (b.id === BIZ ? 'acc' : 'sub'), (pick.includes(b.id) ? '★ ' : '') + b.name + distTxt(d) + (b.id === BIZ ? '　← 今の現場' : ''));
+      r.style.cssText = 'text-align:left;border-left:8px solid hsl(' + bizHue(b.id) + ',55%,42%)'; r.dataset.id = b.id;
+      r.onclick = () => { if (b.id === BIZ) { sheet(null); return; } sheet(null); bizSwitch(b.id); };
+      box.append(r);
+    });
+    if (pick.length) box.append(el('p', '', '★＝今日行く現場'));
+    const no = el('button', 'btn sub', 'とじる'); no.onclick = () => sheet(null); box.append(no);
+  });
+}
+/* 撮る前の確認：カメラの入口（capture の付いた input）を押したとき */
+function siteShotGuard() {
+  document.querySelectorAll('input[type=file][capture]').forEach(i => {
+    if (i._sg) return; i._sg = true;
+    i.addEventListener('click', ev => {
+      if (i._sgPass) { i._sgPass = false; return; }
+      const id = siteOther(freshFix(60)); if (id === null || siteSkipped(id)) return;      // 最初の業務の id は ''（空）なので null で見分ける
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      sheet(box => {
+        box.append(el('h3', '', '📍 ここは「' + bizLabel(id) + '」の範囲です'));
+        box.append(el('p', '', '今開いている現場は「' + bizLabel(BIZ) + '」です。このまま撮ると「' + bizLabel(BIZ) + '」の写真になります。'));
+        const sw = el('button', 'btn acc', '「' + bizLabel(id) + '」に切り替える'); sw.id = 'siteShotSwitch'; sw.onclick = () => { sheet(null); bizSwitch(id); };
+        const keep = el('button', 'btn sub', '「' + bizLabel(BIZ) + '」のまま撮る'); keep.id = 'siteShotKeep';
+        keep.onclick = () => { siteSkip(id); sheet(null); i._sgPass = true; i.click(); };
+        box.append(sw, keep);
+      });
+    }, true);
+  });
+}
+/* 開いている間：ほかの現場の範囲に2回続けて（約40秒）いたら帯を出す */
+let siteSeen = { id: null, n: 0 };
+function siteWatch() {
+  const bar = $('siteBar'); if (!bar || SENDBIZ !== null) return;
+  const id = siteOther(freshFix(40));
+  if (id === null || siteSkipped(id)) { siteSeen = { id: null, n: 0 }; bar.classList.add('hidden'); return; }
+  siteSeen = siteSeen.id === id ? { id, n: siteSeen.n + 1 } : { id, n: 1 };
+  if (siteSeen.n < 2) return;
+  $('siteTxt').textContent = '📍「' + bizLabel(id) + '」に入りました'; bar.dataset.id = id; bar.classList.remove('hidden');
+}
+$('siteGo').onclick = () => { const id = $('siteBar').dataset.id; if (id != null) bizSwitch(id); };
+$('siteNo').onclick = () => { const id = $('siteBar').dataset.id; if (id != null) siteSkip(id); $('siteBar').classList.add('hidden'); };
+
+/* ---- 前の現場の送信待ちを裏で送る ----
+ *  前は、ほかの現場に切り替えると、前の現場の記録・写真は、その現場に切り替え直して開くまで送られなかった。
+ *  今は、電波があるとき、送信待ちのあるほかの現場を、見えない小さな画面（同じアプリを「送るだけ」で開いたもの）で1つずつ送る。
+ *  送り方は今の現場と同じ（同じ部品）。送り終わったら閉じる */
+let bgBusy = false; const bgLast = {};
+async function bizPhotoPending(id) {
+  try { return await idbTx('photos', 'readonly', st => new Promise(res => { let n = 0; const q = st.openCursor(); q.onsuccess = () => { const c = q.result; if (!c) return res(n); const v = c.value; if ((v.biz || '') === id && !v.sent && !v.broken) n++; c.continue(); }; q.onerror = () => res(0); })); } catch (e) { return 0; }
+}
+function bgSendOne(id) {
+  return new Promise(res => {
+    const f = document.createElement('iframe'); let done = false;
+    f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.style.cssText = 'position:fixed;left:-20px;top:-20px;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+    const fin = r => { if (done) return; done = true; window.removeEventListener('message', on); clearTimeout(t); setTimeout(() => f.remove(), 300); res(r || { left: -1 }); };
+    const on = ev => { if (ev.origin === location.origin && ev.data && ev.data.chosaSend && ev.data.biz === id) fin(ev.data); };
+    const t = setTimeout(() => fin({ left: -1, timeout: true }), 5 * 60000);
+    window.addEventListener('message', on);
+    f.src = location.pathname + '?sendbiz=' + encodeURIComponent(id);
+    document.body.append(f);
+  });
+}
+async function bgSendOthers() {
+  if (bgBusy || SENDBIZ !== null || isPrac() || !online || document.hidden) return;
+  bgBusy = true;
+  try {
+    for (const b of realBiz()) {
+      if (b.id === BIZ || (bgLast[b.id] && Date.now() - bgLast[b.id] < 4 * 60000)) continue;
+      const q = (bizRaw(b.id, 'queue', []) || []).length, ph = await bizPhotoPending(b.id);
+      if (!q && !ph) continue;
+      bgLast[b.id] = Date.now();
+      const r = await bgSendOne(b.id);
+      await KV.reload(PFX(b.id));
+      if (r.left === 0) toast('前の現場「' + b.name + '」の送信待ちも送りました');
+      if (typeof renderDevBar === 'function') renderDevBar();
+    }
+  } finally { bgBusy = false; }
+}
+window.addEventListener('online', () => setTimeout(bgSendOthers, 5000));
+/* 「送るだけ」で開いたとき（見えない小さな画面の中） */
+async function sendOnly() {
+  const say = o => { try { parent.postMessage(Object.assign({ chosaSend: true, biz: SENDBIZ }, o), location.origin); } catch (e) {} };
+  if (!CONN || CONN.api === 'practice:') return say({ left: 0 });
+  try { await cfgGet(15000); } catch (e) { return say({ left: -1, off: true }); }
+  for (let i = 0; i < 80 && sendable().length && online && !keyBad && !lastError; i++) { await flush(); if (sendable().length) await new Promise(r => setTimeout(r, 400)); }
+  try { await uploadPhotos(); } catch (e) {}
+  for (let i = 0; i < 360 && uploading; i++) await new Promise(r => setTimeout(r, 500));
+  await KV.flush();
+  let ph = 0; try { ph = (await idb.all()).filter(p => !p.sent && !p.broken).length; } catch (e) {}
+  say({ left: queue.length + ph });
+}
+
+if (SENDBIZ !== null) sendOnly();
+else pracBoot().then(r => {
+  if (r) return; start(); if (isPrac()) setTimeout(() => { pracSeed(); pracHello(); }, 700);
+  siteShotGuard(); setTimeout(siteBoxSave, 4000); setInterval(siteBoxSave, 10 * 60000); setInterval(siteWatch, 20000);     // v0.10.14
+  setTimeout(bgSendOthers, 20000); setInterval(bgSendOthers, 5 * 60000);
+});
 /* v0.8：しまってある、ほかの端末の調査票を読み込む（読み終わったら一覧・地図を描き直す） */
 loadXops().then(() => { if (XOPS.length) afterSync(); });
 /* v0.9：業務ごとに最後に開いた日を覚える（4月15日のお知らせで「どの現場をいつから開いていないか」を出すため） */
@@ -6059,14 +6546,17 @@ async function pastSheet(x, s) {
 /* ⚙の業務：戻す用ファイルを読み込む（一式から戻す）・読み込んだものを外す */
 function refSection(box) {
   box.append(el('h3', '', '過去の調査（戻す用ファイル）'));
-  const p0 = el('p', '', '何年か前の調査を、位置図の「過去」に重ねて見られます。現場フォルダの「アプリに戻す用.json」（管理用の「戻す用ファイルを作る」で作ったもの）を選んでください。'); p0.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(p0);
+  const p0 = el('p', '', '何年か前の調査を、位置図の「過去」に重ねて見られます。戻す用ファイルは、業務のスプレッドシートのメニュー「戻す用ファイルを作る」で、現場フォルダに「アプリに戻す用.json」として作られます。'); p0.style.cssText = 'font-size:12px;color:var(--mute)'; box.append(p0);
   const inp = el('input'); inp.type = 'file'; inp.accept = '.json,application/json'; inp.className = 'hidden'; inp.id = 'refFile';
   inp.onchange = async () => { const f = inp.files[0]; if (!f) return; const r = await refImport(await f.text()); toast(r.ok ? '「' + r.name + '」を読み込みました（位置図の「過去」から出せます）' : r.error); if (r.ok) { sheet(null); } };
   const b = el('button', 'btn sub', '📂 一式から戻す（戻す用ファイルを読み込む）'); b.id = 'refBtn'; b.onclick = () => { inp.value = ''; inp.click(); };
   box.append(inp, b);
   refDb.all().catch(() => []).then(l => l.forEach(r => {
     const row = el('div', 'setrow'); row.append(el('span', '', r.name + '（' + String(r.made || '').slice(0, 10) + '・写真 ' + Object.keys(r.thumbs || {}).length + '枚）'));
-    const rm = el('button', 'minibtn', '外す'); rm.onclick = async () => { await refDb.del(r.id); REFS = null; delete PAST['ref:' + r.id]; row.remove(); toast('外しました'); }; row.append(rm);
+    const rm = el('button', 'minibtn', '外す'); rm.onclick = () => sheet(bx => {        // v0.10.12：外す前に、何が消えるかを一言
+      bx.append(el('h3', '', '「' + r.name + '」を外しますか？'), el('p', '', '位置図の「過去」から消えます。あとで見るには、現場フォルダの「アプリに戻す用.json」を電波のある所で読み込み直してください。'));
+      const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
+      const yes = el('button', 'btn danger', '外す'); yes.id = 'refDelYes'; yes.onclick = async () => { await refDb.del(r.id); REFS = null; delete PAST['ref:' + r.id]; sheet(null); toast('外しました'); }; bx.append(no, yes); }); row.append(rm);
     box.insertBefore(row, b);
   }));
 }
@@ -6086,11 +6576,44 @@ function bizFinish(b) {
     bx.append(el('h3', '', '「' + b.name + '」を終えますか？'));
     if (n) { bx.append(el('p', '', 'まだ送れていない記録・写真が ' + n + ' 件あります。電波のある所で送り終わってから終えてください（HOMEの数字が0になったら）。')); const c = el('button', 'btn acc', '閉じる'); c.onclick = () => sheet(null); bx.append(c); return; }
     bx.append(el('p', '', 'この業務の記録・写真・動画・図面・受け取った分を、このスマホから消します。スプレッドシートと現場フォルダの記録は消えません。終わった現場は、現場フォルダを社内サーバーへ移してください。'));
+    // v0.10.12：終えても位置図の「過去」で見られるように、軽い形（記録・小さい写真・対象・図面の位置合わせ）で残せる（はじめは残す）
+    const kr = el('label', 'setrow'); kr.style.cssText = 'gap:10px;justify-content:flex-start'; const kc = el('input'); kc.type = 'checkbox'; kc.checked = !isPrac(); kc.id = 'bizKeepPast'; kc.style.cssText = 'width:22px;height:22px';
+    kr.append(kc, el('span', '', '過去の調査として残す（位置図の「過去」で見られる。戻す用ファイルを入れ直さなくてよい）')); if (!isPrac()) bx.append(kr);
+    const warn = el('p', '', '⚠ 残さないと、位置図の「過去」からも消えます。あとで見るには、現場フォルダの「アプリに戻す用.json」を電波のある所で読み込み直してください。'); warn.style.cssText = 'font-size:13px;color:var(--err)'; warn.classList.toggle('hidden', kc.checked); bx.append(warn);
+    kc.onchange = () => warn.classList.toggle('hidden', kc.checked);
     const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
     const yes = el('button', 'btn danger', '終える（このスマホから消す）'); yes.id = 'bizFinishYes';
-    yes.onclick = async () => { const other = bizList().find(x => x.id !== b.id); try { await clearPhotos(); } catch (e) {} bizRemove(b); sheet(null); bizSwitch(other ? other.id : (b.id === '' ? 'b' + Date.now().toString(36) : '')); };
+    yes.onclick = async () => {
+      yes.disabled = true;
+      if (kc.checked) { yes.textContent = '過去の調査として残しています…'; try { await bizToRef(b); } catch (e) { yes.disabled = false; yes.textContent = '終える（このスマホから消す）'; toast('残せませんでした（空き容量を確かめてください）。終えていません'); return; } }
+      const other = bizList().find(x => x.id !== b.id); try { await clearPhotos(); } catch (e) {} bizRemove(b); sheet(null); bizSwitch(other ? other.id : (b.id === '' ? 'b' + Date.now().toString(36) : '')); };
     bx.append(no, yes);
   });
+}
+/* v0.10.12：今開いている業務を、戻す用ファイルと同じ形にして「過去の調査」にしまう（終えるときに使う）。写真は小さい版（640px）、図面は長い辺1600px */
+async function b64Small(blob, px, type) {
+  const bm = await createImageBitmap(blob), k = Math.min(1, px / Math.max(bm.width, bm.height)), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bm.width * k)); c.height = Math.max(1, Math.round(bm.height * k)); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bm, 0, 0, c.width, c.height); if (bm.close) bm.close();
+  const out = await new Promise(r => c.toBlob(r, type || 'image/jpeg', 0.75)); c.width = c.height = 0; const u8 = new Uint8Array(await out.arrayBuffer());
+  let bin = ''; for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(bin);
+}
+async function bizToRef(b) {
+  const ops = (LS.get('srv:ops', []) || []).slice(), ids = new Set(ops.map(o => o.id));
+  try { ((await idbTx('xops', 'readonly', st => st.getAll())) || []).forEach(o => { if ((o.biz || '') === BIZ && o.op && !ids.has(o.op.id)) ops.push(o.op); }); } catch (e) {}
+  const survey = ops.map(o => ({ at: o.at, rec: o.rec, action: o.action, data: o.data || {}, id: o.id }));
+  const recs = Object.values(reduceSurvey(survey)).filter(r => !r.deleted), thumbs = {};
+  for (const pid of recs.flatMap(r => r.photos || [])) {
+    try { const p = await idb.get(pid).catch(() => null); if (p && p.blob) { thumbs[pid] = await b64Small(p.blob, 640); continue; }
+      const t = await thumbGet(pid); if (t) thumbs[pid] = await b64Small(new Blob([t.buf], { type: t.mime || 'image/jpeg' }), 640); } catch (e) {}
+  }
+  const docs = [], docImgs = {};
+  for (const u of uls().filter(u => u.A)) {
+    try { const d = await docDb.get(u.id); if (!d || !d.blob) continue; const k = Math.min(1, 1600 / Math.max(u.w, u.h));
+      docImgs[u.id] = await b64Small(d.blob, 1600); docs.push({ id: u.id, name: u.name, w: Math.round(u.w * k), h: Math.round(u.h * k), A: [u.A[0] / k, u.A[1] / k, u.A[2], u.A[3] / k, u.A[4] / k, u.A[5]] }); } catch (e) {}
+  }
+  const made = nowIso(), name = b.name, id = 'r' + planHash(name + '|' + made + '|' + survey.length);
+  await refDb.put({ id, name, made, survey, photos: {}, thumbs, targets: tgts(), docs, docImgs, site: {}, from: 'finish' });
+  REFS = null; return id;
 }
 /* 毎年4月15日のお知らせ：その日以降に初めて開いたとき、年に1回「過去の現場がこのスマホに残っています」 */
 function notice415(now) {
@@ -6113,7 +6636,8 @@ function notice415(now) {
   });
   return true;
 }
-setTimeout(() => { try { if (CONN && $('sheet').classList.contains('hidden')) notice415(); } catch (e) {} }, 2500);
+if (SENDBIZ === null) setTimeout(() => { try { if (CONN && $('sheet').classList.contains('hidden')) notice415(); } catch (e) {} }, 2500);
+if (SENDBIZ === null) setTimeout(() => { try { tileCamWatch(); tileKick(); } catch (e) {} }, 1500);     // v0.10.12：まだ貼り付けていない図面があれば作る
 </script>
 </body>
 </html>
