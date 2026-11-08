@@ -21,8 +21,15 @@
   #pracBar.hidden { display:none; }
   #siteBar { flex-basis:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; background:#2f6fb0; color:#fff; font-size:14px; font-weight:bold; margin:2px -14px -10px; padding:7px 14px; }
   #siteBar.hidden { display:none; } #siteBar button { background:#fff; color:#16303f; padding:5px 10px; font-size:13px; }
-  #devBar .sitechip { display:inline-block; font-weight:bold; color:#fff; border-radius:12px; padding:2px 10px; margin-right:6px; text-decoration:none; } #pracBar button { background:#16303f; padding:5px 10px; font-size:13px; }
-  #tileBar { position:absolute; left:0; right:0; top:100%; background:#e8f3ec; color:#16303f; font-size:13px; font-weight:bold; padding:5px 14px 7px; border-bottom:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.08); }
+  #devBar .sitechip { flex-basis:100%; display:flex; align-items:flex-start; gap:6px; font-weight:bold; font-size:14px; line-height:1.35; color:#fff; border-radius:10px; padding:6px 10px; text-decoration:none; }
+  #qrBox { position:fixed; inset:0; z-index:95; background:rgba(0,0,0,.85); display:flex; align-items:center; justify-content:center; } #qrBox.hidden { display:none; }
+  #qrBox .qrin { width:min(92vw,420px); text-align:center; color:#fff; } #qrBox video { width:100%; border-radius:12px; background:#000; border:3px solid #8fd3a5; }
+  #moveBar { position:fixed; left:12px; right:12px; bottom:calc(96px + env(safe-area-inset-bottom,0px)); max-width:616px; margin:0 auto; z-index:45; background:#16303f; color:#fff; border-radius:12px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; font-weight:bold; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+  #moveBar.hidden { display:none; } #moveBar button { padding:7px 12px; font-size:14px; } #moveBar button:disabled { opacity:.5; } #moveBar .sub { background:#fff; color:#16303f; }
+  .reccard { position:relative; } .movemode .reccard.mno { opacity:.45; } .movemode .reccard.msel { box-shadow:inset 0 0 0 3px #2f6fb0; background:#eaf2fb; }
+  .reccard .mchk { position:absolute; right:8px; top:6px; font-size:22px; line-height:1; color:#2f6fb0; } #moveStart.on { background:#2f6fb0; color:#fff; }
+  #devBar .sitechip .pin { flex:none; } #devBar .sitechip .nm { flex:1; min-width:0; } #devBar .sitechip small { font-weight:normal; opacity:.85; margin-left:4px; } #pracBar button { background:#16303f; padding:5px 10px; font-size:13px; }
+  #tileBar { pointer-events:none; position:absolute; left:0; right:0; top:100%; background:#e8f3ec; color:#16303f; font-size:13px; font-weight:bold; padding:5px 14px 7px; border-bottom:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.08); }
   #tileBar.hidden { display:none; } #tileBar i { display:block; height:5px; background:#cfe3d6; border-radius:3px; margin-top:4px; overflow:hidden; } #tileBar b { display:block; height:100%; width:0; background:#1d7a3a; transition:width .3s; }
   .tileframe { font-size:12px; color:#1d7a3a; text-align:center; line-height:1.3; text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; white-space:nowrap; }
   header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -34,7 +41,7 @@
   #saveErr { font-size:14px; padding:10px 14px; background:#b3261e; color:#fff; font-weight:bold; }
   #saveErr.hidden { display:none; }
   #oldSrv { font-size:13px; padding:8px 14px; background:var(--errbg); color:var(--err); font-weight:bold; border-bottom:1px solid var(--line); }
-  #devBar { font-size:12px; padding:4px 14px; background:#eef3f6; color:#16303f; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  #devBar { font-size:12px; padding:4px 14px; background:#eef3f6; color:#16303f; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px 8px; }
   #devBar.hidden, #oldSrv.hidden { display:none; }
   .gpsline { font-size:13px; margin:2px 2px 0; }
   .btn small { display:block; font-size:12px; font-weight:normal; opacity:.75; margin-top:2px; line-height:1.3; }
@@ -379,6 +386,8 @@
 <div id="saveErr" class="hidden">⚠ スマホに保存できませんでした。電波のある所で送れるまで、アプリを閉じないでください（スマホの空き容量も確かめてください）</div>
 <div id="oldSrv" class="hidden"></div>
 <div id="devBar" class="hidden"></div>
+<div id="qrBox" class="hidden"><div class="qrin"><video id="qrVideo" playsinline muted></video><p id="qrMsg"></p><button class="btn sub" id="qrClose">やめる</button></div></div>     <!-- v0.11：QRを読む -->
+<div id="moveBar" class="hidden"><span id="moveCount">0件を選択中</span><span><button id="moveGo">別の現場へ移す</button> <button id="moveCancel" class="sub">やめる</button></span></div>     <!-- v0.11：調査票を移す -->
 <main>
   <div id="msg" class="msg err hidden"></div>
 
@@ -386,7 +395,9 @@
   <section id="setup" class="hidden">
     <div class="card">
       <h2>はじめに（このスマホで1回だけ）</h2>
-      <p style="font-size:15px;margin:0 0 8px">管理する人から届いた<b>接続コード</b>を貼り付けて「登録」を押してください。</p>
+      <button class="btn acc wide" id="qrGo" style="margin-bottom:6px">📷 QRを読んで登録</button>
+      <p style="font-size:13px;margin:0 0 12px;color:var(--mute)">会社のスマホは、マスターの「会社のスマホを登録する」で出るQRを読むだけです。<a href="#" id="qrPhoto">写真から読む</a><input type="file" id="qrImg" accept="image/*" class="hidden"></p>
+      <p style="font-size:15px;margin:0 0 8px">または、管理する人から届いた<b>接続コード</b>を貼り付けて「登録」を押してください。</p>
       <textarea id="connCode" rows="4" style="width:100%;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px" placeholder="ここに接続コードを貼り付け"></textarea>
       <button class="btn acc wide" id="connGo">登録</button>
       <button class="btn sub wide" id="pracGo" style="margin-top:14px">🔰 練習モードで試す（登録なし・何も送りません）</button>
@@ -415,6 +426,7 @@
     <div class="nearbar hidden" id="nearList"></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">調査票（<span id="srvCount">0</span>件）</h2><button class="minibtn" id="srvBlank">＋ 写真なしで作る</button></div>
+      <div style="text-align:right;margin-top:6px"><button class="minibtn hidden" id="moveStart">☑ 選んで別の現場へ移す</button></div>
       <div class="chips" id="srvWhoF" style="margin-bottom:6px"></div>
       <div id="srvSyncNote" class="hidden" style="font-size:12px;color:var(--mute);margin:-2px 0 6px"></div>
       <div class="chips" id="srvDayF" style="margin-bottom:6px"></div>
@@ -711,7 +723,7 @@
 const $ = id => document.getElementById(id);
 /* 業務（スプレッドシート）ごとに記録を分けて持つ。最初の業務は今までどおりの置き場所（BIZ = ''）
    業務にかかわらず共通のもの：設定・候補の回数・自分の候補・工種の追加・入力者・業務の一覧 */
-const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today', 'bizSeen', 'notice415', 'pracAt', 'pracBack', 'todaySites', 'siteBoxes', 'siteSkip']);
+const GLOBAL_KEYS = new Set(['set', 'tplUse', 'tplMine', 'kinds', 'who', 'bizList', 'biz', 'tgtKind', 'srv:offset', 'dev', 'devNo', 'names', 'today', 'bizSeen', 'notice415', 'pracAt', 'pracBack', 'todaySites', 'siteBoxes', 'siteSkip', 'fleet', 'doneSeen']);
 const SENDBIZ = (() => { try { return new URLSearchParams(location.search).get('sendbiz'); } catch (e) { return null; } })();     // v0.10.14：ほかの現場の送信待ちを送るだけの見えない画面
 let BIZ = SENDBIZ !== null ? SENDBIZ : (() => { try { return JSON.parse(KV.getItem('chosa:biz')) || ''; } catch (e) { return ''; } })();
 const PFX = (b = BIZ) => 'chosa:' + (b ? b + '|' : '');
@@ -735,7 +747,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.10.14β';
+const VERSION = 'v0.11.0β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -762,7 +774,7 @@ function parseConn(text) {               // 接続コード（またはそれを
   try {
     const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((t.length + 3) % 4));
     const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
-    if (o && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(o.a) && o.k && o.k.length >= 16) return Object.assign({ api: o.a, key: o.k, name: o.n || '' }, o.b ? { b: String(o.b) } : {});     // v0.9：マスターから作った業務は業務ID（b）も
+    if (o && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(o.a) && o.k && o.k.length >= 16) return Object.assign({ api: o.a, key: o.k, name: o.n || '' }, o.b ? { b: String(o.b) } : {}, o.f ? { fleet: true, devNo: String(o.d || '') } : {});     // v0.11：f＝会社のスマホ（マスターで登録）     // v0.9：マスターから作った業務は業務ID（b）も
   } catch (e) {}
   return null;
 }
@@ -986,12 +998,16 @@ function renderDevBar() {
   const b = $('devBar'); if (!CONN || !devNo()) { b.classList.add('hidden'); return; }
   b.classList.remove('hidden'); b.innerHTML = '';
   const boss = siteState().boss, w = worker();
-  if (typeof realBiz === 'function' && !isPrac() && realBiz().length >= 2) {      // v0.10.14：今の現場名（現場ごとの色）。押すと切り替え
-    const sc = el('a', 'sitechip', '📍 ' + bizLabel(BIZ)); sc.href = '#'; sc.id = 'siteChip'; sc.style.background = 'hsl(' + bizHue(BIZ) + ',55%,38%)';
+  const showChip = typeof realBiz === 'function' && !isPrac();
+  if (showChip) {      // v0.10.14：今の現場名（現場ごとの色）。押すと切り替え。v0.11：1行まるごと使い、折り返しは名前の頭にそろえる。現場が1つでも出す
+    const sc = el('a', 'sitechip'); sc.href = '#'; sc.id = 'siteChip'; sc.style.background = 'hsl(' + bizHue(BIZ) + ',55%,38%)';
+    const nm = el('span', 'nm', bizLabel(BIZ)); nm.append(el('small', '', '（' + ((CFG && CFG.biz && CFG.biz.survey) || '現況調査') + '）'));
+    sc.append(el('span', 'pin', '📍'), nm);
     sc.onclick = ev => { ev.preventDefault(); siteListSheet(); }; b.append(sc);
   }
+  if ($('bizLine')) $('bizLine').classList.toggle('hidden', showChip);     // 上の現場名の行と重なるので出さない
   b.append(el('span', '', devNo() + '機｜作業者：' + (w || '（未入力）') + (boss && w && boss === w ? '（現場責任者）' : '')));
-  const ch = el('a', '', '作業者を替える'); ch.href = '#'; ch.onclick = ev => { ev.preventDefault(); dailySheet(true); }; b.append(ch);
+  const ch = el('a', '', '作業者を替える'); ch.id = 'devChange'; ch.href = '#'; ch.onclick = ev => { ev.preventDefault(); dailySheet(true); }; b.append(ch);
 }
 function memoKey() { return 'memo:' + (LS.get('mode', 'koudo') === 'srv' ? 'srv' : 'koudo'); }
 function memoMode() { return LS.get('mode', 'koudo') === 'srv' ? '調査票（写真）' : '耕土厚'; }
@@ -1547,7 +1563,17 @@ function showSetup(msg) {
 $('connGo').onclick = async () => {
   const c = parseConn($('connCode').value);
   if (!c) { $('connMsg').textContent = '接続コードが読めません。届いた文字を全部そのまま貼り付けてください。'; return; }
-  const dup = bizList().find(b => b.id !== BIZ && (bizRaw(b.id, 'conn', {}) || {}).api === c.api);
+  if (c.fleet) {           // v0.11：会社のスマホ：届いている現場を全部入れる
+    $('connMsg').style.color = 'var(--mute)'; $('connMsg').textContent = '確認しています…';
+    let n = 0;
+    try { n = await fleetRegister(c); }
+    catch (e) { $('connMsg').style.color = 'var(--err)'; $('connMsg').textContent = e.server ? (e.message === 'KEY' ? 'このQRは使えません（止められているか、古いQRです）。' : 'エラー：' + e.message + '（受け付け側が古いときは、管理する人に更新を頼んでください）') : '接続できません。電波のある場所でもう一度読んでください。'; return; }
+    if (!n) { $('connMsg').style.color = 'var(--mute)'; $('connMsg').textContent = '会社のスマホ（' + (c.name || '') + '）として登録しました。このスマホに届いている現場はまだありません。マスターで業務を作ると届きます（届いたら、もう一度「登録」を押してください）。'; return; }
+    CONN = LS.get('conn', null) || CONN;
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    $('setup').classList.add('hidden'); toast('会社のスマホとして登録しました（現場 ' + n + 'か所）'); start(); return;
+  }
+  const dup = bizList().find(b => b.id !== BIZ && (bizRaw(b.id, 'conn', {}) || {}).api === c.api && ((bizRaw(b.id, 'conn', {}) || {}).b || '') === (c.b || ''));     // v0.11：マスターの業務は同じURLで業務IDが違う
   if (dup) { $('connMsg').textContent = 'この業務（' + dup.name + '）はもう登録されています。⚙ の業務から切り替えてください。'; return; }
   const before = CONN; CONN = c;
   $('connMsg').style.color = 'var(--mute)'; $('connMsg').textContent = '確認しています…';
@@ -2064,11 +2090,12 @@ async function renderList() {
       if (s.name && s.name !== me) add('撮影：' + s.name, 'gps');
       if (!s.mine) add((s.devNo ? s.devNo + 'の端末' : '別の端末') + '・見るだけ', 'gps');
       if (s.xed && s.xed.length) add('✎ ' + (s.xed[s.xed.length - 1].devNo || '別の端末') + 'で修正', 'mark');
-      b.onclick = () => openRec(s.id);
+      b.onclick = () => { if (MOVE.on) { moveToggle(s.id); return; } openRec(s.id); };     // v0.11：選んで移すときはチェック
       box.append(b);
     }
     listThumbs(box);
   }
+  if (typeof moveDecorate === 'function') { $('moveStart').classList.toggle('hidden', !moveAvail()); moveDecorate(); }
   // 送信待ちの印だけは毎回直す（写真の中身は読まない）
   const sent = {}; (await idb.all().catch(() => [])).forEach(p => sent[p.pid] = p.sent);
   box.querySelectorAll('.reccard').forEach(b => {
@@ -3748,7 +3775,7 @@ function bizList() {
   return l.map(x => {
     const cfg = bizRaw(x.id, 'cfg', null), conn = bizRaw(x.id, 'conn', null);
     return { id: x.id, name: (cfg && cfg.biz && cfg.biz.name) || x.name || (conn ? '業務（' + (conn.name || '登録済み') + '）' : '（未登録）'),
-             survey: (cfg && cfg.biz && cfg.biz.survey) || '現況調査', pending: bizRaw(x.id, 'queue', []).length, conn: !!conn };
+             survey: (cfg && cfg.biz && cfg.biz.survey) || '現況調査', pending: bizRaw(x.id, 'queue', []).length, conn: !!conn, done: !!(conn && conn.b && (LS.get('doneSeen', []) || []).includes(conn.b)) };
   }).filter(x => x.conn || x.id === BIZ);
 }
 function bizSwitch(id) { try { KV.setItem('chosa:biz', JSON.stringify(id)); } catch (e) {} KV.flush().then(() => location.reload()); }
@@ -3772,7 +3799,7 @@ function bizSection(box) {
   bizList().forEach(b => {
     const r = el('div', 'setrow'), cur = b.id === BIZ;
     const name = el('span', '', (cur ? '● ' : '') + b.name); name.style.fontWeight = cur ? 'bold' : '';
-    const sub = el('div', '', b.survey + (b.pending ? '・送信待ち ' + b.pending + '件（切り替えて電波のある所で開くと送ります）' : '')); sub.style.cssText = 'font-size:12px;color:var(--mute)';
+    const sub = el('div', '', b.survey + (b.done ? '・📦 終わった現場（片付け済み。「終える」で消せます）' : '') + (b.pending ? '・送信待ち ' + b.pending + '件（切り替えて電波のある所で開くと送ります）' : '')); sub.style.cssText = 'font-size:12px;color:var(--mute)';
     const left = el('div'); left.append(name, sub); r.append(left);
     const btns = el('div'); btns.style.cssText = 'display:flex;gap:6px';
     if (cur) { const fin = el('button', 'minibtn', '終える…'); fin.onclick = () => bizFinish(b); btns.append(fin); }
@@ -6439,12 +6466,13 @@ async function bgSendOthers() {
   try {
     for (const b of realBiz()) {
       if (b.id === BIZ || (bgLast[b.id] && Date.now() - bgLast[b.id] < 4 * 60000)) continue;
-      const q = (bizRaw(b.id, 'queue', []) || []).length, ph = await bizPhotoPending(b.id);
+      const q = (bizRaw(b.id, 'queue', []) || []).length + (bizRaw(b.id, 'moveIn', []) || []).length, ph = await bizPhotoPending(b.id);
       if (!q && !ph) continue;
       bgLast[b.id] = Date.now();
       const r = await bgSendOne(b.id);
       await KV.reload(PFX(b.id));
-      if (r.left === 0) toast('前の現場「' + b.name + '」の送信待ちも送りました');
+      if (r.moved && r.moved.length) toast('「' + b.name + '」へ移した票は ' + moveInLabel(r.moved) + ' になりました');
+      else if (r.left === 0) toast('前の現場「' + b.name + '」の送信待ちも送りました');
       if (typeof renderDevBar === 'function') renderDevBar();
     }
   } finally { bgBusy = false; }
@@ -6454,20 +6482,234 @@ window.addEventListener('online', () => setTimeout(bgSendOthers, 5000));
 async function sendOnly() {
   const say = o => { try { parent.postMessage(Object.assign({ chosaSend: true, biz: SENDBIZ }, o), location.origin); } catch (e) {} };
   if (!CONN || CONN.api === 'practice:') return say({ left: 0 });
-  try { await cfgGet(15000); } catch (e) { return say({ left: -1, off: true }); }
+  const moved = await applyMoveIn().catch(() => []);       // v0.11：移されてきた票を作り直す（番号はこの現場の続き）
+  try { await cfgGet(15000); } catch (e) { return say({ left: -1, off: true, moved }); }
   for (let i = 0; i < 80 && sendable().length && online && !keyBad && !lastError; i++) { await flush(); if (sendable().length) await new Promise(r => setTimeout(r, 400)); }
   try { await uploadPhotos(); } catch (e) {}
   for (let i = 0; i < 360 && uploading; i++) await new Promise(r => setTimeout(r, 500));
   await KV.flush();
   let ph = 0; try { ph = (await idb.all()).filter(p => !p.sent && !p.broken).length; } catch (e) {}
-  say({ left: queue.length + ph });
+  say({ left: queue.length + ph, moved });
 }
+
+/* ====================== v0.11：調査票を別の現場へ移す（チェックで選んで） ======================
+ *  ・調査票の一覧の「☑ 選んで別の現場へ移す」→ このスマホで作った票にチェック → 下の帯の「別の現場へ移す」→ 移す先 → 確認
+ *  ・移す先で作り直す（写真・撮った時刻・位置と向き・内容はそのまま。写真番号は移す先の続きの番号）。作り直しは移す先を開いたとき、
+ *    または裏で送る見えない画面で（前の現場の送信待ちと同じ仕組み）。移す先の票には「○○から移した（元の番号）」を残す
+ *  ・元の現場：まだ送っていない票は、送信待ちから外す（元の現場には何も届かない）。送った票は「削除」にする（スプレッドシートに跡が残る）
+ *  ・写真の元の大きさがこのスマホにないときは、元の現場から受け取る（電波が要る） */
+const MOVE = { on: false, sel: new Set() };
+function moveAvail() { return typeof realBiz === 'function' && !isPrac() && realBiz().length >= 2; }
+function moveMode(on) {
+  MOVE.on = !!on; MOVE.sel.clear();
+  $('srvItems').classList.toggle('movemode', MOVE.on); $('moveStart').classList.toggle('on', MOVE.on);
+  moveDecorate(); moveBarUi();
+}
+function moveDecorate() {
+  const all = recsAll();
+  $('srvItems').querySelectorAll('.reccard').forEach(b => {
+    const s = all[b.dataset.rec], ok = MOVE.on && s && s.mine; let c = b.querySelector('.mchk');
+    if (!MOVE.on) { if (c) c.remove(); b.classList.remove('mno', 'msel'); return; }
+    b.classList.toggle('mno', !ok); b.classList.toggle('msel', MOVE.sel.has(b.dataset.rec));
+    if (ok && !c) { c = el('span', 'mchk'); b.append(c); }
+    if (c) c.textContent = MOVE.sel.has(b.dataset.rec) ? '☑' : '☐';
+  });
+}
+function moveToggle(id) {
+  const s = recsAll()[id]; if (!s || !s.mine) { toast('ほかの班の票は移せません（このスマホで作った票だけ）'); return; }
+  if (MOVE.sel.has(id)) MOVE.sel.delete(id); else MOVE.sel.add(id);
+  moveDecorate(); moveBarUi();
+}
+function moveBarUi() {
+  $('moveBar').classList.toggle('hidden', !MOVE.on);
+  $('moveCount').textContent = MOVE.sel.size + '件を選択中';
+  $('moveGo').disabled = !MOVE.sel.size;
+}
+$('moveStart').onclick = () => moveMode(!MOVE.on);
+$('moveCancel').onclick = () => moveMode(false);
+$('moveGo').onclick = () => {
+  const list = sitesByNear(realBiz().filter(b => b.id !== BIZ)), pick = todaySites();
+  sheet(box => {
+    box.append(el('h3', '', MOVE.sel.size + '件を移す先の現場'));
+    list.sort((a, b) => (pick.includes(b.b.id) - pick.includes(a.b.id))).forEach(({ b, d }) => {
+      const r = el('button', 'btn sub', (pick.includes(b.id) ? '★ ' : '') + b.name + distTxt(d)); r.dataset.id = b.id; r.style.cssText = 'text-align:left;border-left:8px solid hsl(' + bizHue(b.id) + ',55%,42%)';
+      r.onclick = () => moveConfirm(b.id); box.append(r);
+    });
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(no);
+  });
+};
+function moveConfirm(to) {
+  const all = recsAll(), ids = [...MOVE.sel], labels = ids.map(id => all[id] ? recNo(all[id]) : '').filter(String);
+  sheet(box => {
+    box.append(el('h3', '', ids.length + '件を「' + bizLabel(to) + '」へ移します'));
+    box.append(el('p', '', '移す票：' + labels.join('、')));
+    box.append(el('p', '', '写真番号は「' + bizLabel(to) + '」の続きの番号に変わります。写真・撮った時刻・位置と向き・内容はそのまま移ります。'));
+    box.append(el('p', '', '「' + bizLabel(BIZ) + '」では、まだ送っていない票は送らずに外し、送った票は「削除（' + bizLabel(to) + 'へ移した）」になります。'));
+    const msg = el('p'); msg.style.color = 'var(--err)'; box.append(msg);
+    const go = el('button', 'btn acc', '移す'); go.id = 'moveYes';
+    go.onclick = async () => {
+      go.disabled = true; go.textContent = '移しています…';
+      try { const n = await moveRun(to, ids); sheet(null); moveMode(false); if (typeof refreshView === 'function') refreshView(); renderList();
+        sheetMoved(to, n); }
+      catch (e) { go.disabled = false; go.textContent = '移す'; msg.textContent = e.message || String(e); }
+    };
+    const no = el('button', 'btn sub', 'やめる'); no.onclick = () => sheet(null); box.append(go, no);
+  });
+}
+function sheetMoved(to, n) {
+  sheet(box => {
+    box.append(el('h3', '', n + '件を「' + bizLabel(to) + '」へ移しました'));
+    box.append(el('p', '', '新しい写真番号は、「' + bizLabel(to) + '」を開いたとき（電波があれば裏で送るとき）に付きます。'));
+    const op = el('button', 'btn acc', '「' + bizLabel(to) + '」を開く'); op.onclick = () => { sheet(null); bizSwitch(to); };
+    const st = el('button', 'btn sub', 'このまま'); st.onclick = () => sheet(null); box.append(op, st);
+  });
+  if (bgLast) bgLast[to] = 0;
+  setTimeout(bgSendOthers, 800);
+}
+function b64Blob(b64, mime) { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new Blob([u8], { type: mime || 'image/jpeg' }); }
+async function moveRun(to, ids) {
+  const all = recsAll(), own = srvOps(), ownIds = new Set(own.map(o => o.id)), xs = (typeof XOPS !== 'undefined' ? XOPS : []).filter(o => !ownIds.has(o.id));
+  const qids = new Set(queue.map(o => o.id)), pkg = [];
+  for (const id of ids) {
+    const s = all[id]; if (!s || !s.mine) continue;
+    const ops = own.concat(xs).filter(o => o.rec === id).sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : 0);
+    const pids = [...new Set((s.photos || []).concat(ops.flatMap(o => (o.data && Array.isArray(o.data.photos) ? o.data.photos : []).concat(o.data && o.data.pid ? [o.data.pid] : []))))];
+    for (const pid of pids) {              // 写真の元の大きさがスマホにないときは、元の現場から受け取る
+      const p = await idb.get(pid).catch(() => null); if (p && p.blob) continue;
+      let r = null; try { r = await call('api_photoGet', pid, 'full'); } catch (e) {}
+      if (!r || !r.b64) throw new Error('No.' + recNo(s) + ' の写真をこのスマホに持っていません。電波のある所で、もう一度「移す」を押してください。');
+      await idb.put({ pid, rec: id, blob: b64Blob(r.b64, r.mime), sent: true, at: nowIso(), name: photoName(s.no, pid) });
+    }
+    pkg.push({ id, from: bizLabel(BIZ), oldLabel: recNo(s), ops: ops.map(o => ({ at: o.at, action: o.action, data: o.data || {}, who: o.who || '' })), pids, unsent: ops.every(o => qids.has(o.id)) });
+  }
+  if (!pkg.length) throw new Error('移せる票がありません');
+  const k = PFX(to) + 'moveIn'; let cur = []; try { cur = JSON.parse(KV.getItem(k) || '[]') || []; } catch (e) {}
+  KV.setItem(k, JSON.stringify(cur.concat(pkg.map(p => ({ from: p.from, oldLabel: p.oldLabel, ops: p.ops, pids: p.pids })))));
+  for (const p of pkg) for (const pid of p.pids) { const x = await idb.get(pid).catch(() => null); if (x) { x.biz = to; x.sent = false; x.rec = 'moving'; delete x.buf; await idb.put(x); } }
+  const toName = bizLabel(to);
+  for (const p of pkg) {
+    if (p.unsent) {              // まだ送っていない：元の現場には何も届けない
+      queue = queue.filter(o => o.rec !== p.id); LS.set('queue', queue);
+      LS.set('srv:ops', srvOps().filter(o => o.rec !== p.id));
+    } else recordSrv('削除', p.id, { reason: '「' + toName + '」へ移した', movedTo: toName });
+  }
+  await KV.flush(); await refreshPending();
+  return pkg.length;
+}
+/* 移す先で：届いた票を作り直す（この現場の続きの写真番号で）。作り直した番号の一覧を返す */
+async function applyMoveIn() {
+  const pk = LS.get('moveIn', []); if (!pk || !pk.length || isPrac()) return [];
+  LS.del('moveIn'); await KV.flush();
+  const labels = [];
+  for (const m of pk) {
+    const no = nextPhotoNo(); LS.set('srv:no', no);
+    const rec = 'r' + uuid().slice(3), opsAll = srvOps();
+    m.ops.forEach(o => {
+      const data = Object.assign({}, o.data);
+      if (o.action === '作成') Object.assign(data, { no, devNo: devNo(), dev: devId(), moved: { from: m.from, no: m.oldLabel } });
+      const op = { id: uuid(), at: o.at, kind: 'srv', action: o.action, rec, data, who: o.who };
+      opsAll.push(op); queue.push(op);
+    });
+    LS.set('srv:ops', opsAll); LS.set('queue', queue);
+    for (const pid of m.pids) {
+      const x = await idbTx('photos', 'readonly', st => st.get(pid)).catch(() => null); if (!x) continue;
+      const nm = String(x.name || '').replace(/^(\d+-|No)\d+/, (mm, pre) => pre + no);
+      x.rec = rec; x.biz = BIZ; x.sent = false; x.name = /^(\d+-|No)\d+/.test(nm) ? nm : photoName(no, pid);
+      await idbTx('photos', 'readwrite', st => st.put(x));
+    }
+    labels.push((devNo() ? devNo() + '-' : '') + no);
+  }
+  await KV.flush(); flush(); if (typeof uploadPhotos === 'function') uploadPhotos();
+  return labels;
+}
+function moveInLabel(l) { return l.length > 1 ? l[0] + '〜' + l[l.length - 1] : l[0]; }
+
+/* ====================== v0.11：会社のスマホ（QRで1回だけ登録・現場が自動で届く） ======================
+ *  ・マスターの「会社のスマホを登録する」で出るQRを、アプリの最初の画面の「📷 QRを読んで登録」で読む → このスマホに届いている現場が全部入る
+ *  ・開くたび（電波があるとき）に届いている現場を確かめ、新しい現場は「新しい現場が届きました」で足す。片付けた現場は「終わりました」と知らせる（消すのは各自が「終える」）
+ *  ・個人のスマホの接続コードもQRで読める（中身は今までのリンクと同じ） */
+async function callConn(conn, ms, fn, ...args) { const keep = CONN; CONN = conn; try { return await callIn(ms, fn, ...args); } finally { CONN = keep; } }
+async function fleetRegister(c) {
+  const conn = { api: c.api, key: c.key, name: c.name };
+  const r = await callConn(conn, 20000, 'api_myBiz', devId());
+  LS.set('fleet', { api: c.api, key: c.key, name: c.name, devNo: r.devNo || c.devNo || '' });
+  if (r.devNo) LS.set('devNo', r.devNo);
+  const use = (r.biz || []).filter(x => x.state !== 'done');
+  if (!use.length) return 0;
+  const l = LS.get('bizList', []);
+  use.forEach((x, i) => {
+    const cn = { api: c.api, key: c.key, name: c.name, b: x.b };
+    if (i === 0 && !CONN) { LS.set('conn', cn); return; }
+    if (bizList().some(b => (bizRaw(b.id, 'conn', {}) || {}).b === x.b)) return;
+    const id = 'b' + Date.now().toString(36) + i; l.push({ id, name: x.name }); KV.setItem(PFX(id) + 'conn', JSON.stringify(cn));
+  });
+  LS.set('bizList', l);
+  return use.length;
+}
+async function fleetSync() {
+  const f = LS.get('fleet', null); if (!f || isPrac() || SENDBIZ !== null) return;
+  let r = null; try { r = await callConn({ api: f.api, key: f.key, name: f.name }, 10000, 'api_myBiz', devId()); } catch (e) { return; }
+  if (!r || !Array.isArray(r.biz)) return;
+  const l = LS.get('bizList', []), got = [], seen = LS.get('doneSeen', []), doneNow = [];
+  r.biz.forEach((x, i) => {
+    const have = bizList().find(b => (bizRaw(b.id, 'conn', {}) || {}).b === x.b);
+    if (!have && x.state !== 'done') { const id = 'b' + Date.now().toString(36) + i; l.push({ id, name: x.name }); KV.setItem(PFX(id) + 'conn', JSON.stringify({ api: f.api, key: f.key, name: f.name, b: x.b })); got.push(x.name); }
+    if (have && x.state === 'done' && !seen.includes(x.b)) { seen.push(x.b); doneNow.push(x.name || have.name); }
+    if (x.state !== 'done' && seen.includes(x.b)) seen.splice(seen.indexOf(x.b), 1);          // 片付けたのを戻した
+  });
+  LS.set('bizList', l); LS.set('doneSeen', seen);
+  if (got.length) { toast('新しい現場が届きました：' + got.join('、')); renderDevBar(); }
+  if (doneNow.length) sheet(box => {
+    box.append(el('h3', '', '📦 終わった現場があります'));
+    box.append(el('p', '', '「' + doneNow.join('」「') + '」は片付けられました（記録は受け付けなくなりました）。'));
+    box.append(el('p', '', 'このスマホから消すときは、⚙ の業務の欄で「終える」を押してください（勝手には消しません）。'));
+    const ok = el('button', 'btn acc', 'わかった'); ok.onclick = () => sheet(null); box.append(ok);
+  });
+}
+/* QRを読む：カメラ（BarcodeDetector があればそれ、なければ jsQR）。写真から読むこともできる */
+function loadJsQR() { return window.jsQR ? Promise.resolve(window.jsQR) : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'jsqr.js'; s.onload = () => res(window.jsQR); s.onerror = rej; document.head.append(s); }); }
+async function qrFromImageData(img) {
+  const c = document.createElement('canvas'), w = img.videoWidth || img.naturalWidth || img.width, h = img.videoHeight || img.naturalHeight || img.height; if (!w || !h) return null;
+  const k = Math.min(1, 1000 / Math.max(w, h)); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, c.width, c.height);
+  if ('BarcodeDetector' in window) { try { const d = new BarcodeDetector({ formats: ['qr_code'] }), r = await d.detect(c); if (r && r[0]) return r[0].rawValue; } catch (e) {} }
+  const jq = await loadJsQR(), px = g.getImageData(0, 0, c.width, c.height), r = jq(px.data, c.width, c.height, { inversionAttempts: 'attemptBoth' });
+  return r ? r.data : null;
+}
+function qrGot(text) {
+  qrStop();
+  $('connCode').value = text;
+  const c = parseConn(text);
+  if (!c) { $('connMsg').style.color = 'var(--err)'; $('connMsg').textContent = '読めたQRは接続コードではありませんでした。'; return; }
+  $('connGo').click();
+}
+let qrStream = null, qrTimer = null;
+async function qrStart() {
+  $('qrBox').classList.remove('hidden'); $('qrMsg').textContent = 'カメラを向けて、QRを枠の中に入れてください';
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const v = $('qrVideo'); v.srcObject = qrStream; await v.play();
+    const tick = async () => { if (!qrStream) return; let t = null; try { t = await qrFromImageData(v); } catch (e) {} if (t) qrGot(t); else qrTimer = setTimeout(tick, 300); };
+    tick();
+  } catch (e) { $('qrMsg').textContent = 'カメラが使えません。下の「写真から読む」で、QRを撮った写真を選んでください。'; }
+}
+function qrStop() { clearTimeout(qrTimer); if (qrStream) qrStream.getTracks().forEach(t => t.stop()); qrStream = null; $('qrBox').classList.add('hidden'); }
+$('qrGo').onclick = () => qrStart();
+$('qrClose').onclick = () => qrStop();
+$('qrPhoto').onclick = () => { $('qrImg').value = ''; $('qrImg').click(); };
+$('qrImg').onchange = async () => {
+  const f = $('qrImg').files[0]; if (!f) return;
+  const im = new Image(), u = URL.createObjectURL(f);
+  im.onload = async () => { const t = await qrFromImageData(im).catch(() => null); URL.revokeObjectURL(u); if (t) qrGot(t); else { $('qrBox').classList.remove('hidden'); $('qrMsg').textContent = 'この写真からはQRが読めませんでした。QRが大きく写るように撮り直してください。'; } };
+  im.src = u;
+};
 
 if (SENDBIZ !== null) sendOnly();
 else pracBoot().then(r => {
   if (r) return; start(); if (isPrac()) setTimeout(() => { pracSeed(); pracHello(); }, 700);
   siteShotGuard(); setTimeout(siteBoxSave, 4000); setInterval(siteBoxSave, 10 * 60000); setInterval(siteWatch, 20000);     // v0.10.14
   setTimeout(bgSendOthers, 20000); setInterval(bgSendOthers, 5 * 60000);
+  setTimeout(async () => { const l = await applyMoveIn().catch(() => []); if (l.length) { toast('移されてきた票 ' + l.length + '件を ' + moveInLabel(l) + ' にしました'); if (!$('srvList').classList.contains('hidden')) renderList(); } fleetSync(); }, 1200);     // v0.11
 });
 /* v0.8：しまってある、ほかの端末の調査票を読み込む（読み終わったら一覧・地図を描き直す） */
 loadXops().then(() => { if (XOPS.length) afterSync(); });
