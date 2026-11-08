@@ -31,7 +31,6 @@
   #devBar .sitechip .pin { flex:none; } #devBar .sitechip .nm { flex:1; min-width:0; } #devBar .sitechip small { font-weight:normal; opacity:.85; margin-left:4px; } #pracBar button { background:#16303f; padding:5px 10px; font-size:13px; }
   #tileBar { pointer-events:none; position:absolute; left:0; right:0; top:100%; background:#e8f3ec; color:#16303f; font-size:13px; font-weight:bold; padding:5px 14px 7px; border-bottom:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.08); }
   #tileBar.hidden { display:none; } #tileBar i { display:block; height:5px; background:#cfe3d6; border-radius:3px; margin-top:4px; overflow:hidden; } #tileBar b { display:block; height:100%; width:0; background:#1d7a3a; transition:width .3s; }
-  .docbl { flex:none; min-width:34px; padding:4px 6px; font-size:13px; font-weight:bold; background:#fff; color:#1d7a3a; border:1.5px solid #1d7a3a; border-radius:8px; }
   .tileframe { font-size:12px; color:#1d7a3a; text-align:center; line-height:1.3; text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; white-space:nowrap; }
   header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header button { background:#2c4f63; color:#fff; border:0; border-radius:8px; padding:8px 12px; font-size:15px; }
@@ -748,7 +747,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.11.1β';
+const VERSION = 'v0.11.2β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -5947,13 +5946,9 @@ function docBusy(map, d) {
   let b = map._busyEl; if (!b) { b = map._busyEl = L.DomUtil.create('div', 'docbusy', map.getContainer()); b.textContent = '図面を読み込み中…'; }
   b.style.display = map._busy ? '' : 'none';
 }
-/* v0.11.1：重ね方。「線だけ」（はじめ）＝図面の白い所を消して線と色だけ地図に乗せる（下の地図にもやがかからず、線は薄まらない）。
-   「透かす」＝今までどおり半透明の紙として重ねる（塗りの多い図面向け）。図面ごとに選べる */
-function docPanes(map) {
-  if (!map.getPane('docPane')) { const p = map.createPane('docPane'); p.style.zIndex = 250; p.style.mixBlendMode = 'multiply'; }
-  if (!map.getPane('docPaneN')) map.createPane('docPaneN').style.zIndex = 251;
-}
-function docPaneOf(u) { return u && u.blend === 'sheet' ? 'docPaneN' : 'docPane'; }
+/* v0.11.2：重ね方は「紙」（半透明の紙として重ねる）だけ。v0.11.1 の「線だけ」は使わないので外した */
+function docPanes(map) { if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 250; }
+function docPaneOf(u) { return 'docPane'; }
 function syncDocs(map) {
   if (!map || typeof L === 'undefined') return;
   const has = uls().some(u => u.A), on = has && LS.get('mapDocOn', true), want = on ? docShown() : [];
@@ -6004,9 +5999,7 @@ function mapDocs() {
     const pct = el('b', '', docOp(u) + '%');
     sl.oninput = () => { const v = Number(sl.value); pct.textContent = v + '%'; ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { mop: v }) : x)); docOpApply(u.id); };
     const inf = el('button', 'docinf', u.alBy ? whoAt(u.alBy, u.alAt) : 'ⓘ'); inf.type = 'button'; inf.onclick = e => { e.preventDefault(); e.stopPropagation(); docInfoSheet(u); };   // 誰がいつ合わせたか・配る・前に戻す
-    const bl = el('button', 'docbl', u.blend === 'sheet' ? '紙' : '線'); bl.type = 'button'; bl.title = '重ね方：線＝線だけ重ねる（下の地図がそのまま見える）／紙＝半透明の紙として重ねる';
-    bl.onclick = e => { e.preventDefault(); const nb = u.blend === 'sheet' ? 'line' : 'sheet'; ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { blend: nb }) : x)); u.blend = nb; bl.textContent = nb === 'sheet' ? '紙' : '線'; syncAllDocs(); toast(nb === 'sheet' ? '重ね方：半透明の紙として重ねる' : '重ね方：線だけ重ねる'); };
-    r.append(c, nm, sl, pct, bl, inf); box.append(r);
+    r.append(c, nm, sl, pct, inf); box.append(r);
   });
   const ft = el('div', 'docfoot');
   if (shareOK()) { const b = el('button', 'btn sub', dw ? '📥 ほかの端末の図面を受け取る（' + dw + '枚）' : '📥 ほかの端末の図面を今すぐ受け取る'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); ft.append(b); }
