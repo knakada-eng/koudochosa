@@ -31,6 +31,7 @@
   #devBar .sitechip .pin { flex:none; } #devBar .sitechip .nm { flex:1; min-width:0; } #devBar .sitechip small { font-weight:normal; opacity:.85; margin-left:4px; } #pracBar button { background:#16303f; padding:5px 10px; font-size:13px; }
   #tileBar { pointer-events:none; position:absolute; left:0; right:0; top:100%; background:#e8f3ec; color:#16303f; font-size:13px; font-weight:bold; padding:5px 14px 7px; border-bottom:1px solid var(--line); box-shadow:0 2px 4px rgba(0,0,0,.08); }
   #tileBar.hidden { display:none; } #tileBar i { display:block; height:5px; background:#cfe3d6; border-radius:3px; margin-top:4px; overflow:hidden; } #tileBar b { display:block; height:100%; width:0; background:#1d7a3a; transition:width .3s; }
+  .docbl { flex:none; min-width:34px; padding:4px 6px; font-size:13px; font-weight:bold; background:#fff; color:#1d7a3a; border:1.5px solid #1d7a3a; border-radius:8px; }
   .tileframe { font-size:12px; color:#1d7a3a; text-align:center; line-height:1.3; text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; white-space:nowrap; }
   header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header button { background:#2c4f63; color:#fff; border:0; border-radius:8px; padding:8px 12px; font-size:15px; }
@@ -747,7 +748,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.11.0β';
+const VERSION = 'v0.11.1β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -4055,13 +4056,51 @@ function tileBarUi() {
   const b = $('tileBar'); if (!b) return;
   if (!TILE.busy || !TILE.total) { b.classList.add('hidden'); return; }
   b.classList.remove('hidden');
-  $('tileTxt').textContent = TILE.pausedCam ? '図面の貼り付けは撮影のあとで続けます' : '図面を貼り付け中…　' + Math.min(TILE.total, TILE.done + 1) + '／' + TILE.total;
+  $('tileTxt').textContent = TILE.pausedCam ? '図面の貼り付けは撮影のあとで続けます' : '図面を貼り付け中…　' + Math.min(TILE.total, TILE.done + 1) + '／' + TILE.total + '（1枚2分ほどかかる場合があります）';
   $('tileFill').style.width = Math.round(Math.min(1, (TILE.done + TILE.frac) / TILE.total) * 100) + '%';
+}
+/* v0.11.1：PDFで取り込んだ図面は、元のPDFもしまっておく（いちばん寄った段のタイルを、PDFの線と文字から直接描いて、標高などの小さい数字をくっきりさせる） */
+async function docPdfKeep(id, im) { if (im && im.pdf && im.pdf.buf) await docDb.put({ id: id + '#pdf', buf: im.pdf.buf, page: im.pdf.page, sc: im.pdf.sc, kind: 'pdf' }).catch(() => {}); }
+const TILE_TOP = 21;          // 地図は20段まで。画面の細かいスマホでは1段上のタイルを使うので、PDFからは21段まで作る
+/* PDFから寄った段（画像の段より上〜21段）のタイルを作る。1024px の区画ごとに描いて、16枚ずつ切り出す */
+async function tilePdfLevels(u, biz0, v, from, onTile) {
+  const rec = await docDb.get(u.id + '#pdf').catch(() => null); if (!rec || !rec.buf) return [];
+  const lib = await loadPdfJs(), pdf = await lib.getDocument({ data: rec.buf.slice(0) }).promise, pg = await pdf.getPage(rec.page || 1), vp = pg.getViewport({ scale: rec.sc });
+  const kx = vp.width / u.w, levels = [], made = [];
+  for (let z = from; z <= TILE_TOP; z++) { const g = tileGeom(u, z), t = tileList(u, g); if (t.list.length > 2500) break; levels.push({ z, g, list: t.list }); }
+  const total = levels.reduce((a, l) => a + l.list.length, 0); let n = 0;
+  const B = 1024, bc = document.createElement('canvas'); bc.width = bc.height = B; const bx = bc.getContext('2d');
+  const c = document.createElement('canvas'); c.width = c.height = 256; const ctx = c.getContext('2d');
+  try {
+    for (const lv of levels) {
+      const g = lv.g, blocks = new Map();
+      lv.list.forEach(([tx, ty]) => { const k = Math.floor(tx / 4) + ',' + Math.floor(ty / 4); if (!blocks.has(k)) blocks.set(k, []); blocks.get(k).push([tx, ty]); });
+      for (const [k, tl] of blocks) {
+        await tileWait(); if (BIZ !== biz0) return made;
+        const [bx0, by0] = k.split(',').map(Number), X0 = bx0 * B, Y0 = by0 * B;
+        bx.setTransform(1, 0, 0, 1, 0, 0); bx.clearRect(0, 0, B, B); bx.save();
+        const Q = tileQuad(u, g); bx.beginPath(); Q.forEach(([x, y], i) => i ? bx.lineTo(x - X0, y - Y0) : bx.moveTo(x - X0, y - Y0)); bx.closePath(); bx.clip();     // 図面の外は透明のまま
+        bx.fillStyle = '#fff'; bx.fillRect(0, 0, B, B);
+        await pg.render({ canvasContext: bx, viewport: vp, transform: [g.a / kx, g.b / kx, g.c / kx, g.d / kx, g.e - X0, g.f - Y0], background: 'rgba(0,0,0,0)' }).promise;
+        bx.restore();
+        const buf = [];
+        for (const [tx, ty] of tl) {
+          ctx.clearRect(0, 0, 256, 256); ctx.drawImage(bc, tx * 256 - X0, ty * 256 - Y0, 256, 256, 0, 0, 256, 256);
+          const b = await new Promise(r => c.toBlob(r, 'image/png'));
+          if (b) buf.push({ k: u.id + '|' + v + '|' + lv.z + '/' + tx + '/' + ty, biz: biz0, buf: await b.arrayBuffer(), mime: 'image/png' });
+          n++; onTile(n / Math.max(1, total));
+        }
+        await tileDb.putMany(buf);
+      }
+      made.push(lv.z);
+    }
+  } finally { bc.width = bc.height = 0; c.width = c.height = 0; try { pdf.destroy(); } catch (e) {} }
+  return made;
 }
 /* 1枚分のタイルを作る。引いた段階では、元の図面を半分ずつ縮めてから切る（細い線が消えないように） */
 async function tileBuild(u, biz0) {
   const d = await docDb.get(u.id).catch(() => null); if (!d || !d.blob) return false;
-  const v = tileVer(u), levels = tileLevels(u), total = levels.reduce((s, l) => s + l.list.length, 0) || 1;
+  const v = tileVer(u), levels = tileLevels(u), total = levels.reduce((s, l) => s + l.list.length, 0) || 1, hasPdf = !!(await docDb.get(u.id + '#pdf').catch(() => null));
   await tileDb.drop(u.id);
   let src = await createImageBitmap(d.blob), k = src.width / u.w, n = 0, buf = [];
   const c = document.createElement('canvas'); c.width = c.height = 256; const ctx = c.getContext('2d');
@@ -4081,13 +4120,19 @@ async function tileBuild(u, biz0) {
         const b = await new Promise(r => c.toBlob(r, 'image/png'));
         if (b) buf.push({ k: u.id + '|' + v + '|' + lv.z + '/' + tx + '/' + ty, biz: biz0, buf: await b.arrayBuffer(), mime: 'image/png' });     // iPhone対策でバイト列でしまう
         if (buf.length >= 16) { await tileDb.putMany(buf); buf = []; }
-        n++; TILE.frac = n / total; if (n % 4 === 0) tileBarUi();
+        n++; TILE.frac = (hasPdf ? 0.4 : 1) * n / total; if (n % 4 === 0) tileBarUi();
       }
     }
     await tileDb.putMany(buf);
   } finally { if (src && src.close) src.close(); c.width = c.height = 0; }
   if (BIZ !== biz0) return false;
-  const m = tileMeta(); m[u.id] = { v, z0: levels[levels.length - 1].z, z1: levels[0].z, n: total, at: nowIso() }; LS.set('docTiles', m);
+  let top = levels[0].z;
+  if (hasPdf && top < TILE_TOP) {          // v0.11.1：寄った段はPDFから（標高の数字などがにじまない）
+    const zs = await tilePdfLevels(u, biz0, v, top + 1, f => { TILE.frac = 0.4 + 0.6 * f; tileBarUi(); }).catch(e => { console.warn('tilepdf', e); return []; });
+    if (BIZ !== biz0) return false;
+    if (zs.length) top = Math.max(...zs);
+  }
+  const m = tileMeta(); m[u.id] = { v, z0: levels[levels.length - 1].z, z1: top, n: total, pdf: hasPdf, at: nowIso() }; LS.set('docTiles', m);
   return true;
 }
 /* 位置合わせ済みでタイルがまだ（または古い）図面を、重ねている図面から順に作る。1つずつ。消した図面のタイルは捨てる */
@@ -4119,12 +4164,14 @@ const TileDocLayer = L.GridLayer ? L.GridLayer.extend({
   initialize(u, op, pane) {
     const m = tileMeta()[u.id], b = L.latLngBounds([[0, 0], [u.w, 0], [u.w, u.h], [0, u.h]].map(p => imgToLL(u.A, p[0], p[1])));
     this._pre = u.id + '|' + m.v + '|';
-    L.GridLayer.prototype.initialize.call(this, { pane: pane || 'docPane', opacity: op, bounds: b, minNativeZoom: Math.min(m.z0, 20), maxNativeZoom: Math.min(m.z1, 20), maxZoom: 20, keepBuffer: 1, updateWhenZooming: false, className: 'doctile' });
+    const r = this._r = (window.devicePixelRatio || 1) >= 1.5 && m.z1 > m.z0 ? 1 : 0;     // v0.11.1：画面の細かいスマホは1段上のタイルを半分の大きさで並べる（Leaflet の detectRetina と同じ考え）
+    L.GridLayer.prototype.initialize.call(this, { pane: pane || 'docPane', opacity: op, bounds: b, tileSize: 256 >> r, minNativeZoom: Math.min(m.z0 - r, 20), maxNativeZoom: Math.min(m.z1 - r, 20), maxZoom: 20, keepBuffer: 1, updateWhenZooming: false, className: 'doctile' });
     this.on('tileunload', e => { if (e.tile && e.tile._u) { URL.revokeObjectURL(e.tile._u); e.tile._u = null; } });
   },
   createTile(co, done) {
     const im = document.createElement('img'); im.alt = ''; im.setAttribute('role', 'presentation');
-    tileDb.get(this._pre + co.z + '/' + co.x + '/' + co.y).then(t => {
+    im.style.width = im.style.height = (256 >> this._r) + 'px';
+    tileDb.get(this._pre + (co.z + this._r) + '/' + co.x + '/' + co.y).then(t => {
       if (t && t.buf) { im._u = URL.createObjectURL(new Blob([t.buf], { type: t.mime || 'image/png' })); im.onload = im.onerror = () => done(null, im); im.src = im._u; }
       else done(null, im);
     });
@@ -4166,7 +4213,7 @@ function pdfTexts(tc, vp) {
 async function fileToImage(file, page) {
   const LONG = 4000;
   if (/pdf/i.test(file.type) || /\.pdf$/i.test(file.name)) {
-    const lib = await loadPdfJs(), pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const raw = await file.arrayBuffer(), lib = await loadPdfJs(), pdf = await lib.getDocument({ data: raw.slice(0) }).promise;
     const pg = await pdf.getPage(Math.min(page || 1, pdf.numPages)), v1 = pg.getViewport({ scale: 1 });
     const sc = LONG / Math.max(v1.width, v1.height), vp = pg.getViewport({ scale: sc });
     const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
@@ -4174,7 +4221,7 @@ async function fileToImage(file, page) {
     await pg.render({ canvasContext: ctx, viewport: vp }).promise;
     const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
     let texts = []; try { texts = pdfTexts(await pg.getTextContent(), vp); } catch (e) {}
-    return { blob, w: c.width, h: c.height, pages: pdf.numPages, texts };
+    return { blob, w: c.width, h: c.height, pages: pdf.numPages, texts, pdf: { buf: raw, page: Math.min(page || 1, pdf.numPages), sc } };     // v0.11.1：寄った所をPDFから描くために元のPDFも返す
   }
   const bmp = await createImageBitmap(file), k = Math.min(1, LONG / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
@@ -4395,7 +4442,7 @@ async function docImportFile(file) {
     for (const pg of pages) {
       $('docInfo').textContent = '図面を読み込んでいます…（' + pg + 'ページ目）';
       const im = await fileToImage(file, pg), id = 'd' + Date.now().toString(36) + pg;
-      await docDb.put({ id, blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] });
+      await docDb.put({ id, blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] }); await docPdfKeep(id, im);
       const l = uls(); l.push({ id, name: base + (n > 1 ? '（' + pg + '/' + n + '）' : ''), w: im.w, h: im.h, pairs: [], A: null, op: .55, on: true }); ulsSet(l); last = id;
     }
     DOC.cur = null; await docSelect(last);
@@ -4444,7 +4491,7 @@ $('docDel').onclick = () => sheet(bx => {
   bx.append(el('p', '', 'この端末から図面の画像と位置合わせが消えます。描いた対象は消えません。'));
   const no = el('button', 'btn acc', 'やめる'); no.onclick = () => sheet(null);
   const yes = el('button', 'btn danger', '消す');
-  yes.onclick = async () => { sheet(null); const id = DOC.cur.id; ulsSet(uls().filter(x => x.id !== id)); await docDb.del(id).catch(() => {}); await docDb.del(id + 'm').catch(() => {}); LS.set('docsDropped', (LS.get('docsDropped', []) || []).concat([id])); if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer); if (DOC.ov) DOC.geoMap.removeLayer(DOC.ov); DOC.ov = null; DOC.cur = null; DOC.pairs = []; const l = uls(); if (l.length) docSelect(l[l.length - 1].id); else docUi(); };
+  yes.onclick = async () => { sheet(null); const id = DOC.cur.id; ulsSet(uls().filter(x => x.id !== id)); await docDb.del(id).catch(() => {}); await docDb.del(id + 'm').catch(() => {}); await docDb.del(id + '#pdf').catch(() => {}); LS.set('docsDropped', (LS.get('docsDropped', []) || []).concat([id])); if (DOC.imgLayer) DOC.imgMap.removeLayer(DOC.imgLayer); if (DOC.ov) DOC.geoMap.removeLayer(DOC.ov); DOC.ov = null; DOC.cur = null; DOC.pairs = []; const l = uls(); if (l.length) docSelect(l[l.length - 1].id); else docUi(); };
   bx.append(no, yes);
 });
 $('docClose').onclick = () => { $('doc').classList.add('hidden'); };
@@ -4496,7 +4543,7 @@ let areaDocs = [];
 function areaUnderlays(on) {
   areaDocs.forEach(o => areaMap.removeLayer(o)); areaDocs = [];
   if (!on) return;
-  docShown().forEach(u => { const o = docMapLayer(u, Number($('areaDocOp').value) / 100, 'overlayPane').addTo(areaMap); areaDocs.push(o); });     // v0.10.12：タイル（前は元の大きさの画像を全部広げていた）
+  docPanes(areaMap); docShown().forEach(u => { const o = docMapLayer(u, Number($('areaDocOp').value) / 100, docPaneOf(u)).addTo(areaMap); areaDocs.push(o); });     // v0.10.12：タイル（前は元の大きさの画像を全部広げていた）
 }
 
 $('areaDocOn').onchange = () => areaUnderlays($('areaDocOn').checked);
@@ -5900,19 +5947,26 @@ function docBusy(map, d) {
   let b = map._busyEl; if (!b) { b = map._busyEl = L.DomUtil.create('div', 'docbusy', map.getContainer()); b.textContent = '図面を読み込み中…'; }
   b.style.display = map._busy ? '' : 'none';
 }
+/* v0.11.1：重ね方。「線だけ」（はじめ）＝図面の白い所を消して線と色だけ地図に乗せる（下の地図にもやがかからず、線は薄まらない）。
+   「透かす」＝今までどおり半透明の紙として重ねる（塗りの多い図面向け）。図面ごとに選べる */
+function docPanes(map) {
+  if (!map.getPane('docPane')) { const p = map.createPane('docPane'); p.style.zIndex = 250; p.style.mixBlendMode = 'multiply'; }
+  if (!map.getPane('docPaneN')) map.createPane('docPaneN').style.zIndex = 251;
+}
+function docPaneOf(u) { return u && u.blend === 'sheet' ? 'docPaneN' : 'docPane'; }
 function syncDocs(map) {
   if (!map || typeof L === 'undefined') return;
   const has = uls().some(u => u.A), on = has && LS.get('mapDocOn', true), want = on ? docShown() : [];
-  if (!map.getPane('docPane')) map.createPane('docPane').style.zIndex = 250;     // v0.10.2：航空写真（200）の上に、図面ごとの濃さで透かして重ねる（前は下に置いて航空写真を薄くしていた）
+  docPanes(map);
   map._docs = map._docs || {};
   const visible = map.getContainer().offsetParent !== null;
   /* v0.10.12：図面はタイル（見えている所だけ読む）。貼り付けがまだの図面は枠と名前。外した図面は、どの地図でもすぐ手放す（前は位置図だけ残していた） */
-  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(',') + ':' + (tileReady(u) ? 't' : 'f'), keys = new Set(want.map(key));
+  const key = u => u.id + ':' + u.A.map(v => Math.round(v * 1e3)).join(',') + ':' + (tileReady(u) ? 't' : 'f') + ':' + docPaneOf(u), keys = new Set(want.map(key));
   Object.keys(map._docs).forEach(k => { if (keys.has(k)) return; const o = map._docs[k]; if (o) map.removeLayer(o); delete map._docs[k]; });
   if (visible) want.forEach(u => {
     const k = key(u), o = map._docs[k];
     if (o) { if (o.setOpacity) o.setOpacity(docOp(u) / 100); return; }
-    map._docs[k] = docMapLayer(u, docOp(u) / 100, 'docPane').addTo(map);
+    map._docs[k] = docMapLayer(u, docOp(u) / 100, docPaneOf(u)).addTo(map);
   });
   const base = docBaseOf(map); if (base) base.setOpacity(1);
 }
@@ -5950,7 +6004,9 @@ function mapDocs() {
     const pct = el('b', '', docOp(u) + '%');
     sl.oninput = () => { const v = Number(sl.value); pct.textContent = v + '%'; ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { mop: v }) : x)); docOpApply(u.id); };
     const inf = el('button', 'docinf', u.alBy ? whoAt(u.alBy, u.alAt) : 'ⓘ'); inf.type = 'button'; inf.onclick = e => { e.preventDefault(); e.stopPropagation(); docInfoSheet(u); };   // 誰がいつ合わせたか・配る・前に戻す
-    r.append(c, nm, sl, pct, inf); box.append(r);
+    const bl = el('button', 'docbl', u.blend === 'sheet' ? '紙' : '線'); bl.type = 'button'; bl.title = '重ね方：線＝線だけ重ねる（下の地図がそのまま見える）／紙＝半透明の紙として重ねる';
+    bl.onclick = e => { e.preventDefault(); const nb = u.blend === 'sheet' ? 'line' : 'sheet'; ulsSet(uls().map(x => x.id === u.id ? Object.assign(x, { blend: nb }) : x)); u.blend = nb; bl.textContent = nb === 'sheet' ? '紙' : '線'; syncAllDocs(); toast(nb === 'sheet' ? '重ね方：半透明の紙として重ねる' : '重ね方：線だけ重ねる'); };
+    r.append(c, nm, sl, pct, bl, inf); box.append(r);
   });
   const ft = el('div', 'docfoot');
   if (shareOK()) { const b = el('button', 'btn sub', dw ? '📥 ほかの端末の図面を受け取る（' + dw + '枚）' : '📥 ほかの端末の図面を今すぐ受け取る'); b.id = 'docTake'; b.onclick = () => takeRemoteDocs(); ft.append(b); }
@@ -6041,7 +6097,7 @@ async function planImport(files) {
             const im = await fileToImage(doc, u0.page || 1), pairs = u0.ctrl.map(c => ({ img: [c[0] * im.w, c[1] * im.h], geo: [c[2], c[3]] })), fit = fitAffine(pairs);
             if (!fit) throw new Error('位置を合わせられませんでした');
             const id = 'u' + planHash((u0.name || doc.name) + ((u0.page || 1) > 1 ? '#' + u0.page : ''));      // 1ページ目は前の版と同じID（取り込み直しても重ならない）
-            await docDb.put({ id, blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] });
+            await docDb.put({ id, blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] }); await docPdfKeep(id, im);
             if (docUrls[id]) { URL.revokeObjectURL(docUrls[id]); delete docUrls[id]; }
             if (docUrls[id + '@m']) { URL.revokeObjectURL(docUrls[id + '@m']); delete docUrls[id + '@m']; } await docDb.del(id + 'm').catch(() => {});      // 軽い画像も作り直す
             ulsSet(uls().filter(u => u.id !== id).concat([{ id, name: String(u0.name || doc.name), w: im.w, h: im.h, pairs, A: fit.A, op: .55, on: true, rms: fit.rms }]));
@@ -6286,7 +6342,7 @@ async function pracSeed() {
   try {
     const here = await pracHere(), c = here || [36.645, 136.95];
     const blob = await (await fetch('practice.pdf')).blob(), im = await fileToImage(new File([blob], '練習用の平面図.pdf', { type: 'application/pdf' }), 1);
-    await docDb.put({ id: 'prac1', blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] });
+    await docDb.put({ id: 'prac1', blob: im.blob, w: im.w, h: im.h, texts: im.texts || [] }); await docPdfKeep('prac1', im);
     const A = pracPlace(im.w, c), l = uls().filter(u => u.id !== 'prac1');
     l.unshift({ id: 'prac1', name: '練習用の平面図（架空）', w: im.w, h: im.h, pairs: [], A, op: .55, mop: 60, on: true, share: 'none' }); ulsSet(l);
     LS.set('pracA', A); LS.set('pracHello', here ? 'here' : 'nohere'); await KV.flush();
