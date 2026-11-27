@@ -360,6 +360,16 @@
   .kpgrid i.fl { left:5px; top:50%; transform:translateY(-50%); } .kpgrid i.fr { right:5px; top:50%; transform:translateY(-50%); }
   .kpgrid small.seq { display:block; font-size:11px; color:#5d6d78; font-weight:normal; letter-spacing:1px; pointer-events:none; }
   .kpgrid .mic { background:#fff3df; transform:scale(.8); }
+  .pickbar { display:flex; align-items:center; gap:8px; margin:6px 0 8px; min-width:0; } #srvPickNow { font-size:13px; color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .sheetbox.pickbox { max-height:100vh; max-height:100dvh; height:100dvh; border-radius:0; padding-bottom:0; display:flex; flex-direction:column; }
+  .pickhd { display:flex; justify-content:space-between; align-items:center; } .pickx { border:0; background:none; font-size:28px; line-height:1; padding:0 6px; color:var(--fg); }
+  .picksec { font-weight:bold; font-size:15px; margin:14px 2px 4px; color:var(--acc); }
+  .pickrow { display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; background:#fff; border:0; border-bottom:1px solid #e3e8eb; padding:12px 6px; font-size:16px; color:var(--fg); -webkit-user-select:none; user-select:none; }
+  .pickrow.on { font-weight:bold; color:var(--acc); background:#eef5f9; } .pickrow .pn { color:var(--mute); font-size:14px; flex:none; } .pickrow .pk { min-width:0; }
+  .pickmore { border:0; background:none; color:var(--acc); text-decoration:underline; font-size:14px; padding:8px 6px; text-align:left; }
+  .pickft { position:sticky; bottom:0; margin-top:auto; background:#fff; display:grid; grid-template-columns:1fr 2fr; gap:8px; padding:10px 0 16px; border-top:1px solid #e3e8eb; } .pickft .btn { margin-top:0; }
+  .kpgrid button.vf { font-size:17px; min-height:56px; padding:15px 0; }     /* v0.11.7：上下の小さい文字と重ならない */
+  .kpgrid i.fk { font-size:12px; }
   .kpgrid .star { background:#f4efff; color:#5a3fa0; }
   #kpPop { position:fixed; z-index:40; pointer-events:none; background:#fff; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.3); font-size:28px; font-weight:bold; min-width:52px; text-align:center; padding:6px 10px; color:var(--fg); }
   #kpPop.cross { display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,40px); padding:4px; font-size:20px; background:transparent; box-shadow:none; }
@@ -455,11 +465,8 @@
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">調査票（<span id="srvCount">0</span>件）</h2><button class="minibtn" id="srvBlank">＋ 写真なしで作る</button></div>
       <div style="text-align:right;margin-top:6px"><button class="minibtn hidden" id="moveStart">☑ 選んで別の現場へ移す</button></div>
-      <div class="chips" id="srvWhoF" style="margin-bottom:6px"></div>
+      <div class="pickbar"><button type="button" class="minibtn" id="srvPick">☰ 表示写真選択</button><span id="srvPickNow"></span></div>      <!-- v0.11.7：絞り込みは1行にたたむ（押すと下から選ぶ画面） -->
       <div id="srvSyncNote" class="hidden" style="font-size:12px;color:var(--mute);margin:-2px 0 6px"></div>
-      <div class="chips" id="srvDayF" style="margin-bottom:6px"></div>
-      <div class="chips kinds" id="srvFilter" style="margin-bottom:8px"></div>
-      <div class="chips" id="srvCatF" style="margin-bottom:8px"></div>
       <button type="button" id="crossSum" class="hidden"></button>
       <div class="reclist" id="srvItems"></div>
     </div>
@@ -529,7 +536,7 @@
       <div class="btnrow">
         <button class="btn sub" id="markBtn">目印でずれを測る<small>GPSのずれを直す</small></button>
         <button class="btn sub" id="tileBtn">航空写真を保存<small>前日に・電波なしで見る</small></button>
-        <button class="btn sub" id="tgtBtn">対象を描く<small>水路・道路・池</small></button>
+        <button class="btn sub" id="tgtBtn">担当範囲<small>班の分担を描く</small></button>
       </div>
       <button class="btn go wide" id="planBtn">📄 図面を取り込む<small>PDF・画像</small></button>       <!-- v0.10.3：取り込むのは前の日に1回だけなので、一番下へ -->
       <input type="file" id="planFile" accept="application/pdf,image/*,.json,.geojson,.txt" multiple class="hidden">
@@ -616,8 +623,8 @@
   <!-- 例の「砺波市五郎丸」は、このアプリを最初に作って使った現場。作った人のしるしとして残しているので消さないこと -->
   <div id="areaSearch"><input type="search" id="areaQ" placeholder="地名・座標　例：○○市○○町" autocomplete="off" enterkeyhint="search"><button id="areaFind" aria-label="探す">🔍</button></div><div id="areaWrap"><div id="areaMap"></div><div class="cross" id="areaCross"></div></div>
   <div id="areaBar">
-    <div class="seg" id="areaTask"><button data-t="tiles" class="on">航空写真を保存</button><button data-t="tgt">対象を描く</button></div>
-    <div class="seg" id="areaSeg"><button data-m="view" class="on">見ている範囲</button><button data-m="poly">囲む</button><button data-m="line">線に沿って</button><button data-m="circle">円</button></div>
+    <div class="seg hidden" id="areaTask"><button data-t="tiles" class="on">航空写真を保存</button><button data-t="tgt">対象を描く</button></div>      <!-- v0.11.7：切り替えはなくした（航空写真の保存だけの画面） -->
+    <div class="seg" id="areaSeg"><button data-m="view" class="on">画面</button><button data-m="poly">囲む</button><button data-m="line">線</button><button data-m="circle">円</button></div>
     <div id="areaHint"></div>
     <div class="chips" id="areaOpt"></div>
     <input type="text" id="areaName" placeholder="範囲の名前（任意。例：第7号用水路）" autocomplete="off">
@@ -770,7 +777,7 @@ function fieldsOf(type) { return (CFG.fields || []).filter(f => f.type === type)
 function typeOf(name) { return (CFG.types || []).find(t => t.name === name); }
 
 /* ---------------- サーバーとのやりとり ---------------- */
-const VERSION = 'v0.11.6β';
+const VERSION = 'v0.11.7β';
 const NEED_SERVER = '0.7';              // この版の画面が前提とする受け付け側（Apps Script）の版
 const SYNC_SERVER = '0.8';              // ほかの端末の調査票を受け取れる受け付け側の版（それより古ければ、今までどおり自分の分だけ）
 function verLt(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; }
@@ -1304,7 +1311,7 @@ function longPress(el, onTap, onLong) {
 
 /* ---------------- 区画のメニュー（番号を変える・削除） ---------------- */
 function sheet(build) {
-  const box = $('sheetBox'); box.innerHTML = ''; sheet.locked = false;
+  const box = $('sheetBox'); box.innerHTML = ''; box.className = 'sheetbox'; sheet.locked = false;
   if (!build) { $('sheet').classList.add('hidden'); document.body.classList.remove('sheetopen'); sheetMapsHold(false); return; }
   build(box); $('sheet').classList.remove('hidden'); document.body.classList.add('sheetopen'); sheetMapsHold(true); box.scrollTop = 0;
 }
@@ -1694,11 +1701,12 @@ async function start() {
   $('dock').classList.remove('hidden'); document.body.classList.add('hasdock');
   checkDaily();
   flush(); updateSync();
+  try { if (sessionStorage.getItem('reopenGear')) { sessionStorage.removeItem('reopenGear'); setTimeout(() => { if ($('sheet') && $('sheet').classList.contains('hidden')) $('gear').click(); }, 200); } } catch (e) {}     // v0.11.7：業務選択で切り替えたあと
 }
 /* v0.10.13：設定を取り直して当てる。区画の一覧はサーバーの値を正とする（送信待ちの分は画面に出すときに足す） */
 async function cfgGet(ms) {
   const c = await callIn(ms, 'api_getConfig');
-  CFG = c; LS.set('cfg', CFG); online = true; mergeTargets(CFG.targets); noteServer(CFG.ver); applyServerExtras();
+  CFG = c; LS.set('cfg', CFG); online = true; mergeTargets(CFG.targets); noteServer(CFG.ver); applyServerExtras(); origPullSet(CFG.origPull);
   Object.keys(CFG.visited || {}).forEach(t => LS.set('plots:' + t, CFG.visited[t]));
   return c;
 }
@@ -2179,11 +2187,8 @@ $('crossSum').onclick = () => { crossOnly = !crossOnly; renderList(); };
 async function renderList() {
   if (typeof renderSendLines === 'function') renderSendLines();
   const pool = Object.values(recsAll()).filter(s => !s.deleted).sort((a, b) => a.created < b.created ? 1 : -1);
-  renderWhoFilter(pool);
+  renderSyncNote(); renderPickNow();
   const every = pool.filter(whoOK);
-  renderDayFilter(every);
-  const ofDay = every.filter(dayOK);
-  renderKindFilter(ofDay); renderCatFilter(ofDay);
   let all = every.filter(recShown);
   // v0.10（R23）：ポール横断のまとめ。押すと横断だけに絞る（もう一度押すと戻す）。横断がなければ出さない
   const xs = all.filter(s => s.cross), cs = $('crossSum');
@@ -2196,7 +2201,7 @@ async function renderList() {
   }
   $('srvCount').textContent = all.length !== every.length ? all.length + '／' + every.length : all.length;
   const box = $('srvItems');
-  if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">' + (every.length ? 'この絞り込みでは調査票がありません（上のボタンで日付・工種を切り替え）。' : 'まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。') + '</span>'; return; }
+  if (!all.length) { listSig = ''; box.innerHTML = '<span style="color:var(--mute);font-size:14px">' + (every.length ? 'この絞り込みでは調査票がありません（「☰ 表示写真選択」で日付などを切り替え）。' : 'まだ調査票がありません。上のボタンで撮影すると、写真と位置が入った調査票ができます。') + '</span>'; return; }
   const me = worker(), sig = JSON.stringify([crossOnly, dayF().v, whoF().v, LS.get('srv:filter', ''), LS.get('srv:cat', '')]) + '|' + me + '|' + JSON.stringify(all.map(s => { const a = adopted(s); return [s.id, s.no, s.photos, s.target, s.kind, s.plot, s.text, a.kind, a.label, s.gps && s.gps.acc, s.suspect, s.situ, s.cross, s.nocho, s.src, s.ktype, s.name, s.cat, s.fn, recDay(s), s.mine, (s.xed || []).length, portPid(s)]; }));
   if (sig !== listSig || !box.querySelector('.reccard')) {
     listSig = sig; box.innerHTML = '';
@@ -3106,6 +3111,9 @@ const KP_TYPES = {
     [{ c: 'ABC' }, { c: 'MIC' }, { c: '～', f: ['→', '/', ':', ''] }, { c: 'STAR' }]] }
 };
 const KP_LABEL = { BS: '⌫', ENT: '⏎', ABC: 'あ⌨', MIC: '🎤' };
+/* v0.11.7：小さく細く見える記号は、表示だけ全角の形で大きく（入る文字は半角のまま） */
+const KP_DISP = { '-': '－', '.': '．', '~': '～', ':': '：', '/': '／', '+': '＋', '=': '＝', '(': '（', ')': '）' };
+const kpDisp = c => KP_DISP[c] || c;
 function kpType() { const t = SET().kpType; return KP_TYPES[t] ? t : 'B'; }
 function kpStar() { return String(LS.get('kpStar', '') || ''); }
 function kpCycle(k) { return [k.c].concat((k.f || []).filter(Boolean)); }
@@ -3119,11 +3127,11 @@ function kpBuild(grid, type, preview) {
     if (k.c === 'BS' || k.c === 'ABC') b.classList.add('fn');
     if (k.c === 'MIC') b.classList.add('mic');
     if (k.c === 'STAR') { b.classList.add('star'); b.textContent = kpStar() || '★'; }
-    else b.textContent = KP_LABEL[k.c] || k.c;
+    else b.textContent = KP_LABEL[k.c] || kpDisp(k.c);
     if (!act && !/^[0-9]$/.test(k.c)) b.classList.add('sym');
     if (k.f && k.f.some(Boolean)) {
-      if (T.show === 'list') { const sm = document.createElement('small'); sm.className = 'seq'; sm.textContent = k.f.filter(Boolean).join(''); b.append(sm); }
-      else ['fu', 'fr', 'fd', 'fl'].forEach((cl, i) => { if (k.f[i]) { const x = document.createElement('i'); x.className = 'fk ' + cl; x.textContent = k.f[i]; b.append(x); } });
+      if (T.show === 'list') { const sm = document.createElement('small'); sm.className = 'seq'; sm.textContent = k.f.filter(Boolean).map(kpDisp).join(''); b.append(sm); }
+      else { ['fu', 'fr', 'fd', 'fl'].forEach((cl, i) => { if (k.f[i]) { const x = document.createElement('i'); x.className = 'fk ' + cl; x.textContent = kpDisp(k.f[i]); b.append(x); } }); if (k.f[0] || k.f[2]) b.classList.add('vf'); }      // v0.11.7：上下に文字があるキーは真ん中の文字を少し小さく・キーを少し高く
     }
     b._k = k; if (!preview) kpWire(b);
     grid.append(b);
@@ -3333,6 +3341,8 @@ $('gear').onclick = () => sheet(box => {
     const rs = el('button', 'btn sub', '🛫 データ送信' + (rj ? '（' + rj + '）' : '')); rs.id = 'resendBtn';
     rs.onclick = () => { const n = resendAll(); flush(); if (typeof uploadPhotos === 'function') uploadPhotos(); sheet(null); toast(n ? n + '件を送り直しています（同じ記録は1回だけ数えます）' : (queue.length ? '送っています' : '送るものはありません（すべて保存済み）')); };
     two.append(pr, rs); box.append(two);
+    const ol = el('div'); ol.id = 'origLeftSet'; ol.className = 'hidden'; ol.style.cssText = 'font-size:13px;color:var(--mute);margin-top:6px'; box.append(ol);
+    origLeft().then(n => { if (!n) return; ol.textContent = '原本 送り残し ' + n + '枚' + (origPullOn() ? '（吸い出しの依頼中・送っています）' : '（Wi-Fiのときに送ります）'); ol.classList.remove('hidden'); });      // v0.11.7
   }
   if (CONN || isPrac()) bizSection(box);
   if (CONN && !isPrac()) siteSection(box);
@@ -3353,7 +3363,7 @@ $('gear').onclick = () => sheet(box => {
     const r = el('div', 'setrow'); r.style.cssText = 'flex-direction:column;align-items:stretch;gap:6px'; r.append(el('span', '', 'キーの並び'));
     const g = el('div', 'chips'); g.id = 'kpTypePick'; const note = el('div'); note.style.cssText = 'font-size:12px;color:var(--mute)';
     const pv = el('div'); pv.id = 'kpPreview'; pv.style.cssText = 'background:#d4dbe0;border-radius:10px;padding:6px;pointer-events:none';
-    const paint = t => { note.textContent = KP_TYPES[t].note; const gr = el('div'); kpBuild(gr, t, true); gr.querySelectorAll('button').forEach(x => { x.style.minHeight = '34px'; x.style.fontSize = '16px'; x.style.padding = '4px 0'; }); pv.replaceChildren(gr); };
+    const paint = t => { note.textContent = KP_TYPES[t].note; const gr = el('div'); kpBuild(gr, t, true); gr.style.zoom = '.62'; pv.replaceChildren(gr); };      // v0.11.7：見本はキーの大きさを変えず全体を縮める（本物と同じ見え方）
     Object.keys(KP_TYPES).forEach(t => { const c = el('button', 'chip' + (kpType() === t ? ' on' : ''), 'タイプ' + t); c.dataset.t = t;
       c.onclick = () => { setSet('kpType', t); g.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === c)); paint(t); kpRebuild(); }; g.append(c); });
     r.append(g, note, pv); box.append(r); paint(kpType());
@@ -3362,13 +3372,13 @@ $('gear').onclick = () => sheet(box => {
   row('ひな形を押したら、すぐ専用キーで数字を入れる', 'kpAuto', 'checkbox');
   row('打った文字で候補を出す', 'sugg', 'checkbox');
   row('「前と同じ」ボタンを出す', 'same', 'checkbox');
-  row('写真はWi-Fi接続時のみ送る。\n帳票は随時送ります。', 'photoManual', 'checkbox');      // v0.11.6：説明は2行だけ
+  row('写真はWi-Fi接続時のみ送る\n帳票は随時送ります', 'photoManual', 'checkbox');      // v0.11.7：「。」なし
   // v0.10.12：他班の写真は「随時」か「Wi-Fi 接続時のみ」の2択（前はチェック1つで、外すと何が起きるか分かりにくかった）
   { const r = el('div', 'setrow'); r.style.cssText = 'flex-direction:column;align-items:flex-start;gap:8px'; r.append(el('span', '', '他班の写真')); const g = el('div', 'chips'); g.id = 'xphPick';
     const cur = SET().xph === 'all' ? 'all' : 'wifi';
     [['all', '随時受け取る'], ['wifi', 'Wi-Fi 接続時のみ受け取る']].forEach(([v, t]) => { const c = el('button', 'chip' + (cur === v ? ' on' : ''), t); c.dataset.v = v; c.onclick = () => { setSet('xph', v); g.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === c)); prefetchThumbs(); }; g.append(c); });
     r.append(g); box.append(r); }
-  row('1行の文字数（全角。半角は0.5字）', 'lim', 'number');
+  row('1行の文字数（半角は0.5字）', 'lim', 'number');
   // v0.10.12：「試験中」の見出しと「図面の位置合わせ」はなくした（位置図の「図面を取り込む」から同じ画面が開く）
   const r2 = el('div', 'setrow'); r2.append(el('span', '', '履歴データを初期化'));
   const rb = el('button', 'minibtn', '初期化'); rb.id = 'histReset'; rb.onclick = () => histResetSheet(); r2.append(rb); box.append(r2);
@@ -3517,7 +3527,7 @@ function areaDraw() {
     if (pts.length >= 2) (AREA.mode === 'poly' ? L.polygon(pts, { ...sty, fill: false, interactive: false }) : L.polyline(pts, { ...sty, interactive: false })).addTo(areaG);
     pts.forEach((p, i) => { const last = i === pts.length - 1; L.circleMarker(p, { radius: last ? 9 : 5, color: '#fff', weight: last ? 4 : 2, fillColor: '#16303f', fillOpacity: 1, interactive: false }).addTo(areaG); });
   }
-  const hint = { view: '保存したい所が画面に全部入るように地図を動かして、「この範囲を保存」を押してください。画面の範囲を、現場で拡大して見る細かさまでまとめて保存します。', poly: '外周の角を順にタップして囲んでください（3点以上）。囲んだ線の外側30mまで含めます。', line: '水路・道路に沿って、曲がり角ごとにタップしてください。両側に下の幅を取ります。', circle: '地図を動かして、十字を現場の真ん中に合わせてください。' }[AREA.mode];
+  const hint = { view: '今見えている範囲をまるごと保存', poly: 'タップで囲んだ範囲を保存', line: '水路や道路に沿って帯状に保存', circle: '今いる所を中心に円で保存' }[AREA.mode];      // v0.11.7：説明は1行だけ
   $('areaHint').textContent = hint;
   $('areaCross').style.display = AREA.mode === 'circle' ? '' : 'none';
   $('areaUndo').disabled = $('areaClear').disabled = AREA.mode === 'circle' || AREA.mode === 'view' || !pts.length;
@@ -3537,8 +3547,9 @@ const KEEP_DAYS = 150, DAY = 86400000;
 function areasAll() { return LS.get('tileAreas', []); }
 function areasSet(l) { LS.set('tileAreas', l); }
 function areaAlive(a) { return a.alive && a.exp > Date.now(); }
-function areaLabel(a) { return (a.name || (a.view ? '見ていた範囲' : '') || { poly: '囲んだ範囲', line: '線に沿った範囲', circle: '円の範囲' }[a.mode]); }
-function areaKind(a) { return a.view ? '見ている範囲' : a.mode === 'poly' ? '囲む' : a.mode === 'line' ? '線・片側' + a.buf + 'm' : '円・半径' + a.buf + 'm'; }
+function areaLabel(a) { return a.name || (md(a.at || Date.now()) + ' 保存・' + (a.biz || bizNameNow() || { poly: '囲んだ範囲', line: '線に沿った範囲', circle: '円の範囲' }[a.mode] || '範囲')); }      // v0.11.7：名前の欄はなくし、保存した日と業務名
+function bizNameNow() { return (CFG && CFG.biz && CFG.biz.name) || (CONN && CONN.name) || ''; }
+function areaKind(a) { return a.view ? '画面' : a.mode === 'poly' ? '囲む' : a.mode === 'line' ? '線・片側' + a.buf + 'm' : '円・半径' + a.buf + 'm'; }
 function md(ms) { const d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate(); }
 /* 期限切れの範囲の航空写真を消す（ほかの有効な範囲と重なる所は残す） */
 async function areaCleanup(force) {
@@ -3600,7 +3611,7 @@ function openArea(task) {
   setTimeout(() => { areaMap.invalidateSize(); areaMap.setView(c, f || last ? 16 : 10); areaCleanup(false); areaSavedDraw(); drawTargets(areaMap); drawRecArrows(areaMap); AREA.task = task; if (task === 'tgt') AREA.kind = AREA.kind || LS.get('tgtKind', '用水路'); areaTaskUI(); }, 30);
 }
 $('tileBtn').onclick = () => openArea('tiles');
-$('tgtBtn').onclick = () => openArea('tgt');
+$('tgtBtn').onclick = () => tantoStart();      // v0.11.7：対象を描くの入口はなくし、担当範囲（班の分担）を作図と同じ操作で描く
 document.querySelectorAll('#areaTask button').forEach(b => b.onclick = () => { if (AREA.busy) return; AREA.task = b.dataset.t; if (AREA.task === 'tgt') AREA.kind = AREA.kind || LS.get('tgtKind', '用水路'); areaTaskUI(); });
 document.querySelectorAll('#areaSeg button').forEach(b => b.onclick = () => { if (!AREA.busy) areaSetMode(b.dataset.m); });
 $('areaUndo').onclick = () => { AREA.pts.pop(); areaDraw(); };
@@ -3629,7 +3640,7 @@ async function areaRun(sh, tiles, fromId) {
   if (ok) {
     const list = areasAll(); let a = fromId && list.find(x => x.id === fromId);
     if (!a) { a = { id: 'a' + now.toString(36) }; list.push(a); }
-    Object.assign(a, { name, mode: sh.mode, pts: sh.pts, buf: sh.buf, view: !!sh.view, n: tiles.length, at: now, exp: now + KEEP_DAYS * DAY, alive: true });
+    Object.assign(a, { name: name || a.name || '', biz: bizNameNow(), mode: sh.mode, pts: sh.pts, buf: sh.buf, view: !!sh.view, n: tiles.length, at: now, exp: now + KEEP_DAYS * DAY, alive: true });
     areasSet(list); shareArea(a);                // v0.10：範囲をほかのスマホにも知らせる
     konbiniFetch(sh).catch(() => {});        // 熱中症・トイレ対策：近くのコンビニも一緒に保存
   }
@@ -4053,12 +4064,13 @@ function areaTaskUI() {
   document.querySelectorAll('#areaTask button').forEach(x => x.classList.toggle('on', x.dataset.t === AREA.task));
   document.querySelector('#areaSeg button[data-m=circle]').classList.toggle('hidden', tgt);
   document.querySelector('#areaSeg button[data-m=view]').classList.toggle('hidden', tgt);
-  document.querySelector('#areaSeg button[data-m=line]').textContent = tgt ? '線（水路・道路）' : '線に沿って';
+  document.querySelector('#areaSeg button[data-m=line]').textContent = tgt ? '線（水路・道路）' : '線';
   document.querySelector('#areaSeg button[data-m=poly]').textContent = tgt ? '囲む（池・区画）' : '囲む';
   if (tgt && (AREA.mode === 'circle' || AREA.mode === 'view')) AREA.mode = 'line';
   if (!tgt && AREA.mode !== 'view' && !AREA.pts.length) AREA.mode = 'view';       // 航空写真の保存は「見ている範囲」から
   document.querySelectorAll('#areaSeg button').forEach(x => x.classList.toggle('on', x.dataset.m === AREA.mode));
-  $('areaName').placeholder = tgt ? '対象の名前（例：第13号用水路、区画なら 2-1）' : '範囲の名前（任意。例：第7号用水路）';
+  $('areaName').placeholder = tgt ? '対象の名前（例：第13号用水路、区画なら 2-1）' : '';
+  $('areaName').classList.toggle('hidden', !tgt);        // v0.11.7：航空写真の保存では範囲の名前を聞かない
   $('areaSave').textContent = tgt ? 'この対象を登録' : 'この範囲を保存';
   $('areaHist').textContent = tgt ? '対象の一覧（直す・消す）' : '保存の履歴（取り直し）';
   $('areaWipe').classList.toggle('hidden', tgt);
@@ -4143,7 +4155,7 @@ function bizPickSheet() {
       const r = el('button', 'btn sub', (on ? '● ' : '') + b.name); r.className = 'btn sub bizrow'; r.dataset.id = b.id;
       r.style.cssText = 'text-align:left;border-left:8px solid hsl(' + bizHue(b.id) + ',55%,42%)' + (on ? ';font-weight:bold;color:var(--acc)' : '');
       if (b.pending || b.done) { const sm = el('small', '', (b.done ? '　📦 終わった現場' : '') + (b.pending ? '　送信待ち ' + b.pending + '件' : '')); sm.style.cssText = 'font-weight:normal;color:var(--mute)'; r.append(sm); }
-      r.onclick = () => { if (on) { sheet(null); return; } bizSwitch(b.id); };
+      r.onclick = () => { if (on) { sheet(null); return; } try { sessionStorage.setItem('reopenGear', '1'); } catch (e) {} bizSwitch(b.id); };     // v0.11.7：切り替えたあとも設定の画面を開いたまま（読み込み直したら自動で開く）
       box.append(r);
     });
     const no = el('button', 'btn sub', '閉じる'); no.onclick = () => sheet(null); box.append(no);
@@ -4221,14 +4233,129 @@ function applySurveyLayout() {
 const isoDay = () => nowIso().slice(0, 10);
 function recDay(s) { return String(s.created || '').slice(0, 10); }
 function dayF() { const d = LS.get('srv:day', null); if (!d || d.set !== isoDay()) { const n = { set: isoDay(), v: 'today' }; LS.set('srv:day', n); return n; } return d; }
-function dayOK(s) { const v = dayF().v; return v === 'all' || (v === 'today' ? recDay(s) === isoDay() : recDay(s) === v); }
+function dayOK(s) { return dayMatch(s, dayF().v); }
 function recShown(s) {
   const fk = LS.get('srv:filter', ''), fc = LS.get('srv:cat', '');
   return dayOK(s) && (!fk || (s.kind || '工種なし') === fk) && (!fc || (s.cat || '分類なし') === fc);
 }
 /* だれの票を出すか（v0.8〜）。開いた日は「自分」（今までと同じ見え方）。ほかの端末の票があるときだけボタンを出す */
 function whoF() { const d = LS.get('srv:who', null); if (!d || d.set !== isoDay()) { const n = { set: isoDay(), v: 'me' }; LS.set('srv:who', n); return n; } return d; }
-function whoOK(s) { const v = whoF().v; return v === 'all' || (v === 'me' ? s.mine : !s.mine && (s.devNo || '他') === v); }
+function whoOK(s) { return whoMatch(s, whoF().v); }
+/* ====================== v0.11.7：表示写真選択（楽天・ヤフショの「絞り込み」と同じ形） ======================
+ *  一覧の上は［☰ 表示写真選択］と今の絞り込みの1行だけ。押すと下から全画面のシート：だれの／日付／工種／分類 の見出しごとに1行ずつ（件数つき・選んだ行に ✓）
+ *  下に固定で［クリア］［〇件を表示する］。選びながら件数が変わる。押すまで一覧は変わらない
+ *  だれの＝調査票の作業者名でまとめる（号機は出さない）。名前を長押しで「同じ人にまとめる」（まとめ表は受け付け側から全員のスマホへ） */
+const NONAME = '（名前なし）';
+function nameAlias() { const a = siteState().alias; return a && typeof a === 'object' ? a : {}; }
+function nameCanon(n) { n = String(n || '').trim(); if (!n) return NONAME; const al = nameAlias(); let k = 0; while (al[n] && al[n] !== n && k++ < 6) n = al[n]; return n; }
+function whoLabel(v) { return v === 'me' ? '自分' : v === 'all' ? '全員' : String(v).startsWith('n:') ? String(v).slice(2) : v + 'の端末'; }
+function whoMatch(s, v) { return v === 'all' || (v === 'me' ? s.mine : String(v).startsWith('n:') ? nameCanon(s.name) === String(v).slice(2) : !s.mine && (s.devNo || '他') === v); }
+function dayMatch(s, v) { return v === 'all' || (v === 'today' ? recDay(s) === isoDay() : recDay(s) === v); }
+function pickDayLabel(v) { return v === 'today' ? '今日' : v === 'all' ? 'すべての日' : String(v).slice(5).replace('-', '/'); }
+function pickNowText() {
+  const k = LS.get('srv:filter', ''), c = LS.get('srv:cat', '');
+  return [whoLabel(whoF().v), pickDayLabel(dayF().v)].concat(k ? [k] : [], c ? ['分類：' + c] : []).join('・');
+}
+function renderPickNow() { const n = $('srvPickNow'); if (n) n.textContent = pickNowText(); }
+function srvPickSheet() {
+  const pool = Object.values(recsAll()).filter(s => !s.deleted);
+  const d = { who: whoF().v, day: dayF().v, kind: LS.get('srv:filter', ''), cat: LS.get('srv:cat', '') };
+  let moreDays = false;
+  const paint = () => sheet(box => {
+    box.classList.add('pickbox');
+    const hd = el('div', 'pickhd'); hd.append(el('h3', '', '表示写真選択')); const x = el('button', 'pickx', '×'); x.id = 'srvPickX'; x.setAttribute('aria-label', '閉じる'); x.onclick = () => sheet(null); hd.append(x); box.append(hd);
+    const sec = t => { const h = el('div', 'picksec', t); box.append(h); };
+    const row = (label, n, on, fn, cls, data) => { const r = el('button', 'pickrow' + (on ? ' on' : '') + (cls ? ' ' + cls : '')); r.type = 'button'; r.append(el('span', 'pk', (on ? '✓ ' : '') + label), el('span', 'pn', String(n))); r.onclick = () => { if (r._lp) { r._lp = false; return; } fn(); }; if (data) Object.keys(data).forEach(k => r.dataset[k] = data[k]); box.append(r); return r; };
+    // だれの
+    sec('だれの');
+    row('自分', pool.filter(s => s.mine).length, d.who === 'me', () => { d.who = 'me'; paint(); }, '', { who: 'me' });
+    row('全員', pool.length, d.who === 'all', () => { d.who = 'all'; paint(); }, '', { who: 'all' });
+    const cnt = {}; pool.forEach(s => { const n = nameCanon(s.name); cnt[n] = (cnt[n] || 0) + 1; });
+    const al = nameAlias(), members = n => Object.keys(al).filter(k => nameCanon(k) === n && k !== n);
+    Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, 'ja')).forEach(n => {
+      const v = 'n:' + n, mem = members(n);
+      const r = row(n + (mem.length ? '（' + mem.join('・') + ' をまとめています）' : ''), cnt[n], d.who === v, () => { d.who = v; paint(); }, 'nm', { who: v });
+      if (n !== NONAME) holdPress(r, () => { r._lp = true; nameMergeSheet(n, Object.keys(cnt).filter(k => k !== n && k !== NONAME), mem, paint); });
+    });
+    if (Object.keys(cnt).filter(n => n !== NONAME).length >= 2) { const h = el('p', '', '名前を長押しすると、同じ人の名前をまとめられます（例：中田・中田和也・なかだ → 中田）'); h.style.cssText = 'font-size:12px;color:var(--mute);margin:4px 2px'; box.append(h); }
+    const p1 = pool.filter(s => whoMatch(s, d.who));
+    // 日付
+    sec('日付');
+    const dc = {}; p1.forEach(s => { const k = recDay(s); dc[k] = (dc[k] || 0) + 1; });
+    const td = isoDay(), days = Object.keys(dc).filter(k => k !== td).sort().reverse();
+    row('今日', dc[td] || 0, d.day === 'today', () => { d.day = 'today'; paint(); }, '', { day: 'today' });
+    const show = moreDays ? days : days.slice(0, 4);
+    if (!moreDays && d.day !== 'today' && d.day !== 'all' && !show.includes(d.day) && days.includes(d.day)) show.push(d.day);
+    show.forEach(k => row(pickDayLabel(k), dc[k], d.day === k, () => { d.day = k; paint(); }, '', { day: k }));
+    if (!moreDays && days.length > show.length) { const m = el('button', 'pickmore', 'もっと見る（あと' + (days.length - show.length) + '日）'); m.id = 'pickMore'; m.type = 'button'; m.onclick = () => { moreDays = true; paint(); }; box.append(m); }
+    row('すべての日', p1.length, d.day === 'all', () => { d.day = 'all'; paint(); }, '', { day: 'all' });
+    const p2 = p1.filter(s => dayMatch(s, d.day));
+    // 工種（2つ以上あるときだけ）
+    const kc = {}; p2.forEach(s => { const k = s.kind || '工種なし'; kc[k] = (kc[k] || 0) + 1; });
+    if (Object.keys(kc).length >= 2 || d.kind) {
+      sec('工種');
+      row('すべて', p2.length, !d.kind, () => { d.kind = ''; paint(); }, '', { kind: '' });
+      Object.keys(kc).forEach(k => { const r = row(k, kc[k], d.kind === k, () => { d.kind = k; paint(); }, '', { kind: k }); if (k !== '工種なし') r.style.borderLeft = '7px solid ' + kindColor(k); });
+    }
+    const p3 = p2.filter(s => !d.kind || (s.kind || '工種なし') === d.kind);
+    // 分類（あるときだけ）
+    const cc = {}; p3.forEach(s => { if (s.cat) cc[s.cat] = (cc[s.cat] || 0) + 1; });
+    if (Object.keys(cc).length || d.cat) {
+      sec('分類');
+      row('すべて', p3.length, !d.cat, () => { d.cat = ''; paint(); }, '', { cat: '' });
+      Object.keys(cc).forEach(k => row(k, cc[k], d.cat === k, () => { d.cat = k; paint(); }, '', { cat: k }));
+    }
+    const hit = p3.filter(s => !d.cat || (s.cat || '分類なし') === d.cat).length;
+    const ft = el('div', 'pickft');
+    const cl = el('button', 'btn sub', 'クリア'); cl.id = 'pickClear'; cl.onclick = () => { d.who = 'me'; d.day = 'today'; d.kind = ''; d.cat = ''; moreDays = false; paint(); };
+    const go = el('button', 'btn acc', hit + '件を表示する'); go.id = 'pickGo';
+    go.onclick = () => { LS.set('srv:who', { set: td, v: d.who }); LS.set('srv:day', { set: td, v: d.day }); LS.set('srv:filter', d.kind); LS.set('srv:cat', d.cat); sheet(null); renderList(); if (typeof mainMap !== 'undefined' && mainMap) drawRecArrows(mainMap); };
+    ft.append(cl, go); box.append(ft);
+  });
+  paint();
+}
+function holdPress(elm, fn) {
+  let t = null, sx = 0, sy = 0;
+  elm.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; clearTimeout(t); t = setTimeout(() => { t = null; fn(); }, 600); });
+  elm.addEventListener('pointermove', e => { if (t && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) { clearTimeout(t); t = null; } });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => elm.addEventListener(k, () => { clearTimeout(t); t = null; }));
+  elm.addEventListener('contextmenu', e => e.preventDefault());
+}
+/* 名前のまとめ：調査票の名前そのものは書き換えない。「まとめ表」（別名 → 名前）を受け付け側に送り、全員のスマホで表示がそろう */
+function nameMergeSheet(from, others, members, back) {
+  sheet(box => {
+    box.append(el('h3', '', '「' + from + '」'));
+    if (!serverVer || verLt(serverVer, '0.11.7')) { box.append(el('p', '', '名前をまとめるには、受け付け側（Apps Script）を 0.11.7 に更新してください。')); const c = el('button', 'btn sub', '戻る'); c.onclick = back; box.append(c); return; }
+    const step = el('div');
+    if (others.length) {
+      box.append(el('p', '', '同じ人の名前にまとめる（まとめる先を選ぶ）')); box.lastChild.style.cssText = 'font-size:14px;margin:4px 0';
+      others.forEach(to => { const b = el('button', 'btn sub', to); b.className = 'btn sub mergeto'; b.dataset.to = to; b.style.textAlign = 'left';
+        b.onclick = () => { step.innerHTML = ''; step.style.cssText = 'background:var(--warnbg);border-radius:10px;padding:10px;margin-top:8px';
+          step.append(el('div', '', '「' + from + '」を「' + to + '」にまとめます（調査票の名前はそのまま。全員のスマホで表示がそろいます。あとで外せます）'));
+          const y = el('button', 'btn acc', 'まとめる'); y.id = 'mergeYes'; y.onclick = () => { nameMergeSend(from, to); back(); toast('「' + from + '」を「' + to + '」にまとめました'); };
+          const n = el('button', 'btn sub', 'やめる'); n.onclick = () => { step.innerHTML = ''; step.style.cssText = ''; }; step.append(y, n); };
+        box.append(b); });
+    }
+    if (members.length) {
+      box.append(el('p', '', 'まとめを外す')); box.lastChild.style.cssText = 'font-size:14px;margin:10px 0 4px';
+      members.forEach(m => { const b = el('button', 'btn sub', '「' + m + '」を外す'); b.className = 'btn sub mergeoff'; b.onclick = () => { nameMergeSend(m, ''); back(); toast('「' + m + '」のまとめを外しました'); }; box.append(b); });
+    }
+    box.append(step);
+    const c = el('button', 'btn sub', '戻る'); c.onclick = back; box.append(c);
+  });
+}
+function nameMergeSend(from, to) {
+  const al = Object.assign({}, nameAlias());
+  if (to) { al[from] = to; Object.keys(al).forEach(k => { if (al[k] === from) al[k] = to; }); delete al[to]; }
+  else delete al[from];
+  sendSite('名前まとめ', { alias: al });
+}
+function renderSyncNote() {
+  const note = $('srvSyncNote');
+  note.classList.toggle('hidden', useSync() || !serverVer);
+  if (!useSync() && serverVer) note.textContent = 'ほかの端末の票を出すには、受け付け側（Apps Script）を0.8に更新してください';
+}
+$('srvPick').onclick = () => srvPickSheet();
 function renderWhoFilter(pool) {
   const box = $('srvWhoF'); box.innerHTML = '';
   const note = $('srvSyncNote');
@@ -5205,6 +5332,7 @@ function sendSite(action, data) {
   const st = siteState();
   if (action === '責任者') { st.boss = data.name; st.bossAt = op.at; }
   if (action === '担当範囲') { st.areas = data.areas; st.areasAt = op.at; st.areasBy = worker(); st.history = (st.history || []).concat([{ at: op.at, by: worker(), areas: data.areas }]).slice(-10); }
+  if (action === '名前まとめ') { st.alias = data.alias; st.aliasAt = op.at; }
   LS.set('site', st); renderDevBar(); refreshTargets();
 }
 function siteAreaSave(name, pts, fromCode) {
@@ -5217,15 +5345,21 @@ function siteAreaSave(name, pts, fromCode) {
   }
   sendSite('担当範囲', { areas });
 }
-function areaAt(lat, lon) { if (lat == null) return null; const r = Math.PI / 180, kx = 6371000 * r * Math.cos(lat * r), ky = 6371000 * r; return (siteState().areas || []).find(a => a.pts && a.pts.length >= 3 && inPoly([0, 0], a.pts.map(p => [(p[1] - lon) * kx, (p[0] - lat) * ky]))) || null; }
+function areaAt(lat, lon) {
+  if (lat == null) return null; const r = Math.PI / 180, kx = 6371000 * r * Math.cos(lat * r), ky = 6371000 * r, all = siteState().areas || [];
+  const hit = all.find(a => !a.line && a.pts && a.pts.length >= 3 && inPoly([0, 0], a.pts.map(p => [(p[1] - lon) * kx, (p[0] - lat) * ky]))); if (hit) return hit;
+  let best = null; all.forEach(a => { if (!a.line || !a.pts || a.pts.length < 2) return; const d = ttLineNear(lat, lon, a); if (d <= (a.buf || TT_BUF) && (!best || d < best.d)) best = { a, d }; });      // v0.11.7：路線の担当（線の近く）
+  return best ? best.a : null;
+}
 function hhmm(at) { return String(at || '').slice(11, 16); }
 function drawSiteLayer(map, g) {
-  (siteState().areas || []).forEach(a => {
-    if (!a.pts || a.pts.length < 3) return;
-    L.polygon(a.pts, { color: '#fff', weight: 7, opacity: .7, fill: false, interactive: false }).addTo(g);
-    L.polygon(a.pts, { color: '#16303f', weight: 3, fill: false, interactive: false }).addTo(g);
-    const c = a.pts.reduce((m, p) => [m[0] + p[0] / a.pts.length, m[1] + p[1] / a.pts.length], [0, 0]);
-    L.marker(c, { interactive: false, icon: L.divIcon({ className: 'tlabel', html: '<span class="tl" style="border-left-color:#16303f"><b>担</b>' + esc(a.name) + '</span>', iconSize: null }) }).addTo(g);
+  /* v0.11.7：担当ごとの色と塗り。航空写真・図面の上、対象の線・作図・写真の印の下の層に置き、押せない（下の印のタップを横取りしない）。担当範囲を描いている間は出さない（描いている形を出す） */
+  if (!(map === mainMap && typeof GK !== 'undefined' && GK.mode === 'tanto')) (siteState().areas || []).forEach(a => {
+    if (!a.pts || a.pts.length < (a.line ? 2 : 3)) return;
+    const pane = ttPane(map), col = ttColor(a), st = ttSt(a);
+    if (a.line) { L.polyline(a.pts, { pane, color: '#fff', weight: 11, opacity: .6, interactive: false }).addTo(g); L.polyline(a.pts, { pane, color: col, weight: 7, opacity: .7, interactive: false }).addTo(g); }
+    else { L.polygon(a.pts, { pane, color: '#fff', weight: 6, opacity: .6, fill: false, interactive: false }).addTo(g); L.polygon(a.pts, { pane, color: col, weight: 3, fillColor: col, fillOpacity: TT_F[st.f][0], fill: TT_F[st.f][0] > 0, interactive: false }).addTo(g); }
+    L.marker(ttLabelAt(a), { pane, interactive: false, icon: L.divIcon({ className: 'tlabel', html: '<span class="tl" style="border-left-color:' + col + '"><b style="background:' + col + ';color:#fff">担</b>' + esc(a.name) + '</span>', iconSize: null }) }).addTo(g);
   });
   videoMeta().filter(v => v.lat != null).forEach(v => L.marker([v.lat, v.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🎥 ' + esc(String(v.at).slice(11, 16)) + '</span>', iconSize: null }) }).addTo(g));
   (LS.get('konbini', { list: [] }).list || []).forEach(k => L.marker([k.lat, k.lon], { interactive: false, icon: L.divIcon({ className: 'kbmk', html: '<span>🏪 ' + esc(k.brand) + '</span>', iconSize: null }) }).addTo(g));
@@ -5251,7 +5385,7 @@ let progTimer = null;
 async function pullProgress() {
   if (!CONN || !online || document.hidden || !serverVer || verLt(serverVer, NEED_SERVER)) return;
   const sync = useSync(); if (sync) syncSrv(true);
-  try { const r = await call('api_progress', sync ? { noOthers: true } : undefined); if (r && r.others) setOthers(r.others); if (r && r.site) LS.set('site', r.site); if (r && r.todos) setServerTodos(r.todos); if (r && r.marks) setServerMarks(r.marks); refreshTargets(); renderDevBar(); } catch (e) {}
+  try { const r = await call('api_progress', sync ? { noOthers: true } : undefined); if (r && r.others) setOthers(r.others); if (r && r.site) LS.set('site', r.site); if (r && r.todos) setServerTodos(r.todos); if (r && r.marks) setServerMarks(r.marks); if (r && r.origPull !== undefined) origPullSet(r.origPull); refreshTargets(); renderDevBar(); } catch (e) {}
 }
 function startProgress() { clearInterval(progTimer); progTimer = setInterval(pullProgress, 300000); pullProgress(); }
 /* 今日、この現場で動いている機種（自分も入れる） */
@@ -5277,7 +5411,7 @@ function siteSection(box) {        // v0.11.6：責任者は［変える］で�
   const b = el('button', 'minibtn', st.boss ? '変える' : '決める'); b.id = 'bossBtn'; b.onclick = () => bossPickSheet(); r.append(b);
   box.append(r);
   const btns = el('div', 'btnrow');
-  const draw = el('button', 'btn sub', '担当範囲を描く'); draw.onclick = () => { sheet(null); openArea('tgt'); AREA.kind = '担当範囲'; areaSetMode('poly'); };
+  const draw = el('button', 'btn sub', '担当範囲を描く'); draw.id = 'tantoBtn'; draw.onclick = () => { sheet(null); tantoStart(); };
   const list = el('button', 'btn sub', '担当範囲の一覧・前に戻す'); list.onclick = () => areaListSheet();
   const prog = el('button', 'btn sub', '進み具合を見る'); prog.id = 'progBtn'; prog.onclick = () => { pullProgress().then(progressSheet); };
   btns.append(draw, list, prog); box.append(btns);
@@ -5419,6 +5553,7 @@ function prepSheet() {
     row(kb > 0, kb ? 'コンビニ ' + kb + '店を保存済み' : 'コンビニはまだです（航空写真と一緒に取ります）', kbb);
     const rj = LS.get('rejected', []).length, wait = queue.length + photoPending + rj + videoPending().length;
     row(!wait, wait ? '送信待ちが ' + wait + '件あります（電波のある所で送ってください' + (rj ? '。⚙「送れなかった記録を送り直す」も' : '') + '）' : '送信待ちはありません');
+    { const at = box.lastChild; origLeft().then(n => { if (!n) return; const r = el('div', 'setrow'); r.id = 'origLeftPrep'; const t = el('span', '', '⚠ 原本 送り残し ' + n + '枚（Wi-Fiにつなぐと送ります）'); t.style.cssText = 'color:var(--warn);font-weight:bold'; r.append(t); at.after(r); }); }      // v0.11.7
     const ch = el('div', '', '🔋 明日に向けて充電しておきましょう（モバイル バッテリーも）'); ch.style.cssText = 'font-size:14px;margin:10px 0'; box.append(ch);
     const memo = memoBox(box);
     const sv = el('button', 'btn acc', 'メモを保存して閉じる'); sv.id = 'prepSave'; sv.onclick = () => { memoSet(memo.value.trim()); sheet(null); toast('準備チェックを閉じました'); };
@@ -5729,9 +5864,21 @@ async function uploadDocs() {
     }
   } catch (e) {} finally { docSending = false; }
 }
+/* v0.11.7：原本の吸い出し（PC のメニューから依頼）。依頼が届いたら Wi-Fi でなくても原本を送り、送り終えたら受け付け側に知らせる */
+function netKnown() { try { const c = navigator.connection; return !!(c && c.type && c.type !== 'unknown'); } catch (e) { return false; } }
+let origPullN = 0;
+function origPullSet(o) { if (o === undefined) return; const was = origPullOn(); LS.set('origPull', o || null); if (!was && origPullOn() && typeof uploadPhotos === 'function') setTimeout(() => uploadPhotos(), 0); }
+function origPullOn() { const o = LS.get('origPull', null); return !!(o && o.id && LS.get('origPullDone', '') !== o.id); }
+async function origPullFinish() {
+  const o = LS.get('origPull', null); if (!o || !o.id) return;
+  const left = (await idb.all().catch(() => [])).filter(p => p.q === 'orig' && !p.sent && !p.broken).length; if (left) return;
+  try { await call('api_origDone', { id: o.id, n: origPullN, devNo: devNo() }); LS.set('origPullDone', o.id); origPullN = 0; } catch (e) {}
+}
+async function origLeft() { try { return (await idb.all()).filter(p => p.q === 'orig' && !p.sent && !p.broken).length; } catch (e) { return 0; } }
 async function uploadPhotos(force) {
   if (uploading || !CONN || keyBad) return;
-  if (SET().photoManual && force !== true && !uploadPhotos.go && !onWifi()) { if (typeof renderSendLines === 'function') renderSendLines(); return; }   // 写真もWi-Fiのときに手で送る設定
+  const manualOnly = SET().photoManual && force !== true && !uploadPhotos.go && !onWifi();
+  if (manualOnly && !origPullOn()) { if (typeof renderSendLines === 'function') renderSendLines(); return; }   // 写真もWi-Fiのときに手で送る設定（原本の吸い出しの依頼があるときは原本だけ送る）
   uploading = true;
   try {
     const every = (await idb.all()).filter(p => !p.sent).sort((a, b) => a.at < b.at ? -1 : 1);
@@ -5739,7 +5886,10 @@ async function uploadPhotos(force) {
     let list = every.filter(p => !p.broken && p.rec !== hold && !p.q);
     // v0.11.6：原本・3種類の控えは、本体の写真を送り終えたあとにこっそり送る（送信待ちの数には入れない）。本体がまだの控えは待つ
     const mainLeft = new Set(every.filter(p => !p.q).map(p => p.pid));
-    list = list.concat(every.filter(p => p.q && !p.broken && !mainLeft.has(p.of) && p.rec !== hold));
+    // v0.11.7：原本は Wi-Fi のときだけ送る（Android）。Wi-Fi か見分けられない端末（iPhone）は今までどおり、ほかを送り終えたあと。PC から「吸い出す」の依頼があるときは電波の種類によらず送る
+    const pull = origPullOn(), origOK = pull || onWifi() || !netKnown();
+    list = list.concat(every.filter(p => p.q && !p.broken && !mainLeft.has(p.of) && p.rec !== hold && (p.q !== 'orig' || origOK)));
+    if (manualOnly) list = list.filter(p => p.q === 'orig');
     for (const p of list) {
       let data;
       try { data = await b64(p.blob); if (!data) throw new Error('空'); }
@@ -5748,8 +5898,10 @@ async function uploadPhotos(force) {
       const arg = p.q ? { q: p.q, of: p.of || '', mime: p.mime || (p.blob && p.blob.type) || 'image/jpeg' } : {};      // q を先頭に（受け付け側が大きい原本を見分ける）
       const res = await callIn(p.q ? 180000 : 30000, 'api_photo', Object.assign(arg, { pid: p.pid, rec: p.rec, name: p.name, b64: data, at: p.at, devNo: (rr && rr.devNo) || devNo() }));     // v0.9：撮った日_機種のフォルダに入れるため。v0.11.6：q＝控えの種類
       p.sent = true; p.url = res && res.url || ''; await idb.put(p); photoError = '';
+      if (p.q === 'orig' && pull) origPullN++;
       await refreshPending(); online = true;
     }
+    if (pull) await origPullFinish();
     uploadDocs();
   } catch (e) {
     if (e.server && e.message === 'KEY') keyBad = true; else if (!e.server) online = false;
@@ -6010,6 +6162,7 @@ function gkDrawAll() {
     if (!map._gk) map._gk = L.layerGroup().addTo(map);
     map._gk.clearLayers();
     let list = gkMarks(); $('gkCount').textContent = list.length ? '（' + list.length + '件）' : '';
+    if (GK.mode === 'tanto') { ttDraw(map); return; }        // v0.11.7：担当範囲を描いている間は、作図の印は出さない（すっきり見せる）
     if (GK.drag && GK.sel) list = list.map(m => m.id === GK.sel ? gkShift(m, GK.drag.dlat, GK.drag.dlon) : m);
     if (!$('gkOn').checked && !GK.mode) return;
     const hl = new Set(GK.hits || []); if (gkMoving() && GK.sel) hl.add(GK.sel);
@@ -6087,6 +6240,7 @@ function gkBar() {
   const x = gkSess(), n = x.groups.length, st = gkStyle();
   const sessLine = n ? '　この回の作業 ' + n + '件（「終わる」でまとめて送ります）' : '';
   const undoRow = r => { b(r, '↶ 戻す', gkUndo, '', 'gkUndo').disabled = !n && !GK.pts.length; b(r, '↷ やり直す', gkRedo, '', 'gkRedo').disabled = !x.redo.length && !GK.ptRedo.length; };
+  if (GK.mode === 'tanto') { ttBar(row, b); return; }
   if (GK.mode === 'check') {
     $('gkHint').innerHTML = '<b>✓ 図面チェック中</b>　図面の文字を <b>2回タップ＝✓</b>・<b>長押し＝✎ 違う</b>・1回タップ＝選ぶ（拡大は2本指で）' + sessLine;
     const r = row(); r.classList.add('fix'); undoRow(r); b(r, '終わる（送る）', () => gkMode(''), 'end', 'gkEnd');
@@ -6134,7 +6288,7 @@ function gkTool(k) {
 /* フリーハンド・囲み・なぞって消す の間は、指1本で地図が動かない（図面を手で押さえている感じ）。拡大・移動は2本指 */
 function gkLock() {
   if (!mainMap) return;
-  const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area' || GK.tool === 'move')) || (GK.mode === 'erase' && GK.etool === 'swipe') || (GK.mode === 'edit' && GK.edMove);
+  const lock = (GK.mode === 'draw' && (GK.tool === 'free' || GK.tool === 'area' || GK.tool === 'move')) || (GK.mode === 'erase' && GK.etool === 'swipe') || (GK.mode === 'edit' && GK.edMove) || (GK.mode === 'tanto' && (TT.tool !== 'edit' || !!TT.sel));
   if (lock) mainMap.dragging.disable(); else mainMap.dragging.enable();
   mainMap.getContainer().classList.toggle('gklock', !!lock); document.body.classList.toggle('gkdrawing', !!lock);
   mainMap.getContainer().classList.toggle('gkmode', !!GK.mode);    // v0.10.11：作図などの間は写真の点・丸を押せなくする（地図を押したことにする）
@@ -6237,23 +6391,26 @@ function gkMoveDone() {
 }
 /* ---- モードの切り替え。ほかのモードに移る・終わるときは、この回の作業をまとめて送る ---- */
 async function gkMode(mode) {
+  if (GK.mode === 'tanto' && mode !== 'tanto') tantoLeave();
   if (GK.mode && GK.pts.length && GK.mode === 'draw') toast('確定していない描きかけの点は消しました');
   const n = gkCommit();
   if (GK.mode && n) toast(n + '件をまとめて送ります');
   GK.mode = mode; GK.pts = []; GK.ptRedo = []; GK.stroke = null; GK.hits = []; GK.moving = null; GK.movePts = null; GK.sel = null; GK.drag = null; GK.edMove = false;
   if (mode === 'draw') GK.tool = 'pt';
   if (mode === 'erase') GK.etool = 'tap';
+  if (mode === 'tanto') tantoInit();
   if (mainMap) { if (mode) mainMap.doubleClickZoom.disable(); else mainMap.doubleClickZoom.enable(); }
   gkLock();
   if (mode === 'check') { await gkLoadTexts(); if (!docShown().length) toast('図面を重ねていません。文字のない所（場所）に✓・✎を付けられます'); }
   ['gkCheck', 'gkDraw', 'gkEraseBtn', 'gkEditBtn'].forEach(id => { const x = $(id); if (x) x.classList.toggle('on', { gkCheck: 'check', gkDraw: 'draw', gkEraseBtn: 'erase', gkEditBtn: 'edit' }[id] === mode); });
   gkBar(); gkDrawAll();
+  if (mainMap && typeof drawTargets === 'function') try { drawTargets(mainMap); } catch (e) {}       // v0.11.7：担当範囲の層（モードの間は隠す）
   if (mode) $('gkBar').scrollIntoView({ block: 'start' });
 }
 /* チェックの操作が効くか（図面チェックモード・作図モードの「✓ チェック」） */
 const gkChecking = () => GK.mode === 'check' || (GK.mode === 'draw' && GK.tool === 'check');
 /* なぞる（フリーハンド・なぞって消す）か */
-const gkStroking = () => (GK.mode === 'draw' && GK.tool === 'free') || (GK.mode === 'erase' && GK.etool === 'swipe');
+const gkStroking = () => (GK.mode === 'draw' && GK.tool === 'free') || (GK.mode === 'erase' && GK.etool === 'swipe') || (GK.mode === 'tanto' && TT.tool === 'free');
 /* 線を間引く（形を崩さない程度に：画面で1.5ピクセル） */
 function gkSimplify(pts, tol) {
   if (pts.length < 3) return pts.slice();
@@ -6276,6 +6433,15 @@ function gkAttach(map) {
   ct.addEventListener('pointerdown', e => {
     if (e.isPrimary) ptrs.clear();          // 1本目の指：前に離し損ねた指の記録は捨てる（印を消して描き直したときなど）
     ptrs.add(e.pointerId);
+    if (GK.mode === 'tanto' && TT.tool === 'edit' && TT.sel) {       // v0.11.7：担当範囲の角を動かす・辺に点を足す・角の長押しで消す
+      if (ptrs.size > 1) { if (TT.drag) { TT.drag = null; gkDrawAll(); } clearTimeout(lpT); return; }
+      if (e.target.closest && e.target.closest('.leaflet-control')) return;
+      const g = ttGrab(map, cpOf(e)); clearTimeout(lpT);
+      if (g) { TT.drag = Object.assign(g, { pid: e.pointerId }); try { ct.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault();
+        if (!g.add) lpT = setTimeout(() => { if (TT.drag && !TT.drag.on) { const i = TT.drag.i; TT.drag = null; longDone = Date.now(); strokeEnd = Date.now(); gkDrawAll(); ttDelVertex(i); } }, 600);
+        gkDrawAll(); }
+      return;
+    }
     if (gkMoving()) {
       if (ptrs.size > 1) { if (GK.drag) { GK.drag = null; gkDrawAll(); } return; }      // 2本指＝拡大・移動
       if (!GK.sel || (e.target.closest && e.target.closest('.leaflet-control'))) return;
@@ -6295,6 +6461,10 @@ function gkAttach(map) {
     lpT = setTimeout(() => { const r = ct.getBoundingClientRect(), cp = L.point(down.x - r.left, down.y - r.top); longDone = Date.now(); clearTimeout(singleT); lastTap = null; const hit = gkHit(map, cp); gkEdit(gkGeom(hit, map.containerPointToLatLng(cp))); }, 600);
   });
   ct.addEventListener('pointermove', e => {
+    if (TT.drag && GK.mode === 'tanto' && ptrs.size === 1) {
+      const p = cpOf(e); if (!TT.drag.on && p.distanceTo(TT.drag.s) < 6) return;
+      TT.drag.on = true; clearTimeout(lpT); const q = map.containerPointToLatLng(p); TT.drag.pts[TT.drag.i] = [r7(q.lat), r7(q.lng)]; e.preventDefault(); gkDrawAll(); return;
+    }
     if (GK.drag && gkMoving() && ptrs.size === 1) {
       const p = cpOf(e);
       if (!GK.drag.on && p.distanceTo(GK.drag.s) < 8) return;                          // 少し動くまではタップ（選び直し）として扱う
@@ -6311,6 +6481,7 @@ function gkAttach(map) {
   });
   ['pointerup', 'pointercancel'].forEach(t => ct.addEventListener(t, e => {
     ptrs.delete(e.pointerId); clearTimeout(lpT); down = null;
+    if (TT.drag && GK.mode === 'tanto') { strokeEnd = Date.now(); ttDragEnd(t === 'pointerup'); return; }
     if (GK.drag) { const d = GK.drag; GK.drag = null; if (d.on) { strokeEnd = Date.now(); if (t === 'pointerup') gkMoveCommit(d.dlat, d.dlon); else gkDrawAll(); } return; }
     if (!GK.stroke) return;
     const path = GK.stroke; GK.stroke = null;
@@ -6318,6 +6489,7 @@ function gkAttach(map) {
     let len = 0; for (let i = 0; i + 1 < path.length; i++) len += path[i].distanceTo(path[i + 1]);
     strokeEnd = Date.now();
     if (GK.mode === 'erase') { const hits = path.length ? gkSwipeHits(map, path) : []; GK.hits = []; if (hits.length) gkErase(hits); else gkDrawAll(); return; }
+    if (GK.mode === 'tanto') { ttFreeDone(map, path); return; }
     if (path.length < 3 || len < 15) { gkDrawAll(); return; }
     const sp = gkSimplify(path, 1.5).map(p => { const q = map.containerPointToLatLng(p); return [r7(q.lat), r7(q.lng)]; });
     gkPush([gkOp('追加', { id: 'mk' + uuid().slice(3, 15), kind: 'line', orig: '', text: '', lat: sp[0][0], lon: sp[0][1], pts: sp, len: null, free: true, st: gkStyle() })]);
@@ -6325,6 +6497,11 @@ function gkAttach(map) {
   ct.addEventListener('contextmenu', e => { if (GK.mode) e.preventDefault(); });
   map.on('click', e => {
     if (Date.now() - strokeEnd < 350) return;
+    if (GK.mode === 'tanto') {
+      if (TT.tool === 'area') { TT.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); TT.ptRedo = []; gkBar(); gkDrawAll(); }
+      else if (TT.tool === 'edit') ttTapSelect(map, e.containerPoint);
+      return;
+    }
     if (GK.mode === 'draw' && (GK.tool === 'pt' || GK.tool === 'area')) { GK.pts.push([r7(e.latlng.lat), r7(e.latlng.lng)]); GK.ptRedo = []; gkBar(); gkDrawAll(); return; }
     if (GK.mode === 'draw' && GK.tool === 'text') { gkTextAt(e.latlng); return; }
     if (gkMoving()) { if (GK.sel) gkMoveSel(null); return; }
@@ -6336,6 +6513,215 @@ function gkAttach(map) {
     lastTap = { t: now, cp }; clearTimeout(singleT);
     singleT = setTimeout(() => { const lt = lastTap; lastTap = null; if (lt) gkAsk(gkGeom(gkHit(map, lt.cp), map.containerPointToLatLng(lt.cp))); }, 400);
   });
+}
+/* ====================== v0.11.7：担当範囲（班の分担）を作図と同じ操作で描く ======================
+ *  道具：⬠ 囲み（タップで角を打つ）／✍ フリーハンド（なぞる。始めと終わりが近ければ囲み、離れていれば路線＝線の近く30mがその担当）／👆 選んで直す
+ *  選んで直す：角の丸を指で動かす・辺を押すとそこに点が増えてそのまま動かせる・角を長押しで消す・名前・色・塗りを変える
+ *  ［↶ 戻す］［↷ やり直す］は1操作ずつ。［✔ 確定］で全員のスマホへ（設定は今までどおり積み重ねて残り「前に戻す」で戻せる）
+ *  確定前の形はそのつど下書きに残し、次に開くと続きから */
+const TT_COL = { rd: ['#d32f2f', '赤'], bl: ['#1565c0', '青'], gr: ['#2e7d32', '緑'], or: ['#ef6c00', '橙'], pu: ['#6a1b9a', '紫'], br: ['#6d4c41', '茶'] };
+const TT_F = { l: [.15, '薄い'], m: [.3, '中くらい'], h: [.45, '濃い'], n: [0, 'なし'] };
+const TT_BUF = 30;      // 路線の担当の幅（線から片側30m）
+var TT = { work: [], undo: [], redo: [], tool: 'area', sel: null, pts: [], ptRedo: [], drag: null, base: '' };
+function ttSt(a) { const st = Object.assign({ c: 'rd', f: 'l' }, (a && a.st) || {}); if (!TT_COL[st.c]) st.c = 'rd'; if (!TT_F[st.f]) st.f = 'l'; return st; }
+function ttColor(a) { return TT_COL[ttSt(a).c][0]; }
+function ttNextColor(list) { const used = new Set((list || []).map(a => ttSt(a).c)); return Object.keys(TT_COL).find(k => !used.has(k)) || Object.keys(TT_COL)[(list || []).length % 6]; }
+function ttNewCode(list) {
+  const used = new Set(); (siteState().history || []).concat([{ areas: siteState().areas || [] }, { areas: list }]).forEach(h => (h.areas || []).forEach(a => used.add(a.code)));
+  let i = 0, code; do { code = i < 26 ? String.fromCharCode(65 + i) : 'Z' + (i - 25); i++; } while (used.has(code));
+  return code;
+}
+const ttClone = l => JSON.parse(JSON.stringify(l || []));
+const ttDirty = () => JSON.stringify(TT.work) !== TT.base;
+function ttKeep() { if (ttDirty()) LS.set('ttDraft', { work: TT.work, at: nowIso() }); else LS.del('ttDraft'); }      // 確定前の形はそのつど下書きに残す（画面を離れても・閉じても消えない）
+function ttChange(next, msg) { TT.undo.push(JSON.stringify(TT.work)); TT.redo = []; TT.work = next; ttKeep(); gkBar(); gkDrawAll(); if (msg) toast(msg); }
+function ttUndo() {
+  if (TT.pts.length) { TT.ptRedo.push(TT.pts.pop()); gkBar(); gkDrawAll(); return; }
+  if (!TT.undo.length) { toast('戻す操作はありません'); return; }
+  TT.redo.push(JSON.stringify(TT.work)); TT.work = JSON.parse(TT.undo.pop()); if (TT.sel && !TT.work.some(a => a.code === TT.sel)) TT.sel = null; ttKeep(); gkBar(); gkDrawAll(); toast('1つ戻しました');
+}
+function ttRedo() {
+  if (TT.ptRedo.length) { TT.pts.push(TT.ptRedo.pop()); gkBar(); gkDrawAll(); return; }
+  if (!TT.redo.length) { toast('やり直す操作はありません'); return; }
+  TT.undo.push(JSON.stringify(TT.work)); TT.work = JSON.parse(TT.redo.pop()); if (TT.sel && !TT.work.some(a => a.code === TT.sel)) TT.sel = null; ttKeep(); gkBar(); gkDrawAll(); toast('やり直しました');
+}
+function tantoInit() {
+  const d = LS.get('ttDraft', null), cur = ttClone(siteState().areas || []);
+  TT = { work: cur, undo: [], redo: [], tool: 'area', sel: null, pts: [], ptRedo: [], drag: null, base: JSON.stringify(cur) };
+  if (d && Array.isArray(d.work) && JSON.stringify(d.work) !== TT.base) { TT.undo = [TT.base]; TT.work = d.work; toast('確定していない下書きから続けます（戻すで元に戻せます）'); }
+}
+function tantoLeave() {
+  TT.pts = []; TT.drag = null;
+  if (ttDirty()) { LS.set('ttDraft', { work: TT.work, at: nowIso() }); toast('確定していない担当範囲は下書きに残しました（次に開くと続きから）'); }
+  else LS.del('ttDraft');
+}
+function tantoStart() {
+  if (typeof L === 'undefined') { toast('地図を読み込めませんでした'); return; }
+  showMap(); setTimeout(() => gkMode('tanto'), 60);
+}
+function ttTool(k) { if (TT.pts.length && k !== 'area') { toast('打ちかけの点は消しました'); TT.pts = []; } TT.tool = k; TT.ptRedo = []; if (k !== 'edit') TT.sel = null; gkLock(); gkBar(); gkDrawAll(); }
+function ttFinishPoly() {
+  if (TT.pts.length < 3) { toast('3点以上打ってください'); return; }
+  ttName({ pts: TT.pts.slice() });
+}
+/* 名前を付けて足す（新しい範囲）／名前を直す（a があるとき） */
+function ttName(nw, a) {
+  sheet(box => {
+    box.append(el('h3', '', a ? '担当の名前を直す' : '担当の名前'));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'ttName'; inp.placeholder = '例：北ブロック・中田'; inp.value = a ? a.name : ''; box.append(inp);
+    const used = [...new Set((siteState().history || []).flatMap(h => (h.areas || []).map(x => x.name)).filter(Boolean))].slice(-6).reverse().filter(n => !TT.work.some(x => x.name === n));
+    if (used.length && !a) { const c = el('div', 'chips'); used.forEach(n => { const x = el('button', 'chip', n); x.type = 'button'; x.onclick = () => { inp.value = n; }; c.append(x); }); box.append(c); }
+    const ok = el('button', 'btn acc', a ? '直す' : 'この範囲を足す'); ok.id = 'ttNameOk';
+    ok.onclick = () => {
+      const v = inp.value.trim(); if (!v) { toast('担当の名前を入れてください（例：北ブロック・中田）'); inp.focus(); return; }
+      sheet(null);
+      const next = ttClone(TT.work);
+      if (a) { const t = next.find(x => x.code === a.code); if (t) t.name = v; ttChange(next, '名前を直しました'); return; }
+      const code = ttNewCode(next);
+      next.push(Object.assign({ code, name: v, pts: nw.pts, st: { c: ttNextColor(next), f: nw.line ? 'n' : 'l' } }, nw.line ? { line: true, buf: TT_BUF } : {}));
+      TT.pts = []; TT.ptRedo = []; TT.sel = code;
+      ttChange(next, '担当「' + v + '」を足しました（「確定」で配ります）');
+    };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
+    const no = el('button', 'btn sub', a ? 'やめる' : 'もう少し描く'); no.onclick = () => sheet(null);
+    box.append(ok, no); setTimeout(() => inp.focus(), 100);
+  });
+}
+function ttSelArea() { return TT.work.find(a => a.code === TT.sel) || null; }
+function ttStyleSet(key) {
+  const a = ttSelArea();
+  if (!a) { toast('色・塗りは、直したい範囲を「👆 選んで直す」で選んでから変えます'); return; }
+  const ks = Object.keys(key === 'c' ? TT_COL : TT_F), st = ttSt(a), next = ttClone(TT.work), t = next.find(x => x.code === a.code);
+  st[key] = ks[(ks.indexOf(st[key]) + 1) % ks.length]; t.st = st; ttChange(next);
+}
+function ttRemoveSel() {
+  const a = ttSelArea(); if (!a) return;
+  sheet(box => {
+    box.append(el('h3', '', '「' + a.name + '」を外しますか？'));
+    box.append(el('p', '', '「確定」するまでは、戻すで元に戻せます。')); box.lastChild.style.cssText = 'font-size:13px;color:var(--mute)';
+    const y = el('button', 'btn dangerline', '外す'); y.id = 'ttDelYes'; y.onclick = () => { sheet(null); TT.sel = null; ttChange(TT.work.filter(x => x.code !== a.code), '外しました（戻すで戻せます）'); };
+    const n = el('button', 'btn sub', 'やめる'); n.onclick = () => sheet(null); box.append(y, n);
+  });
+}
+function ttCommit() {
+  if (TT.pts.length) { toast('囲みの途中です。「⬠ 囲みを確定」か「戻す」をしてください'); return; }
+  if (!ttDirty()) { gkMode(''); toast('変わったところはありません'); return; }
+  const list = ttClone(TT.work); TT.base = JSON.stringify(list);
+  sendSite('担当範囲', { areas: list }); LS.del('ttDraft');
+  gkMode(''); toast('担当範囲を確定しました（' + list.length + '範囲。全員のスマホへ配ります）');
+}
+function ttClose() {
+  if (!ttDirty() && !TT.pts.length) { gkMode(''); return; }
+  sheet(box => {
+    box.append(el('h3', '', '確定していない変更があります'));
+    const a = el('button', 'btn acc', '確定して配る'); a.id = 'ttCloseCommit'; a.onclick = () => { sheet(null); TT.pts = []; ttCommit(); };
+    const b = el('button', 'btn sub', '下書きに残して閉じる'); b.id = 'ttCloseKeep'; b.onclick = () => { sheet(null); gkMode(''); };
+    const c = el('button', 'btn dangerline', '変更を捨てて閉じる'); c.id = 'ttCloseDrop'; c.onclick = () => { sheet(null); TT.work = JSON.parse(TT.base); TT.pts = []; LS.del('ttDraft'); gkMode(''); toast('変更を捨てました'); };
+    const d = el('button', 'btn sub', '続ける'); d.onclick = () => sheet(null);
+    box.append(a, b, c, d);
+  });
+}
+function ttBar(row, b) {
+  const st = ttSt(ttSelArea()), sel = ttSelArea();
+  const how = { area: 'タップで角を打つ→「囲みを確定」（地図は2本指）', free: 'なぞる。始めと終わりを近づけると囲み、離すと路線（線から' + TT_BUF + 'm）', edit: sel ? '角の丸を動かす・辺を押すと点が増える・角を長押しで消す' : '直したい範囲をタップして選ぶ' };
+  $('gkHint').innerHTML = '<b>担当範囲</b>　' + how[TT.tool] + (sel ? '　選択中：<b>' + esc(sel.name) + '</b>' : '') + (ttDirty() ? '　<b>未確定</b>（「確定」で全員へ配る）' : '');
+  const r1 = row(); r1.classList.add('tools');
+  [['area', '⬠ 囲み'], ['free', '✍ フリーハンド'], ['edit', '👆 選んで直す']].forEach(([k, t]) => { const x = b(r1, t, () => ttTool(k), TT.tool === k ? 'on' : '', 'ttT_' + k); x.setAttribute('aria-pressed', TT.tool === k); });
+  const r2 = row(); r2.classList.add('style');
+  const cb = b(r2, '', () => ttStyleSet('c'), 'cyc', 'ttS_c'); cb.innerHTML = '色：<i class="sw" style="background:' + TT_COL[st.c][0] + '"></i>' + TT_COL[st.c][1]; cb.disabled = !sel;
+  const fb = b(r2, '塗り：' + TT_F[st.f][1], () => ttStyleSet('f'), 'cyc', 'ttS_f'); fb.disabled = !sel || !!(sel && sel.line);
+  if (sel) { b(r2, '名前', () => ttName(null, sel), 'cyc', 'ttRename'); b(r2, '外す', ttRemoveSel, 'cyc', 'ttDel'); }
+  const r3 = row(); r3.classList.add('fix');
+  b(r3, '📍 今の場所', ttHere, '', 'ttHere').disabled = TT.tool !== 'area';
+  b(r3, '⬠ 囲みを確定', ttFinishPoly, 'go', 'ttFinish').disabled = !(TT.tool === 'area' && TT.pts.length >= 3);
+  const r4 = row(); r4.classList.add('fix');
+  b(r4, '↶ 戻す', ttUndo, '', 'ttUndo').disabled = !TT.undo.length && !TT.pts.length;
+  b(r4, '↷ やり直す', ttRedo, '', 'ttRedo').disabled = !TT.redo.length && !TT.ptRedo.length;
+  b(r4, '閉じる', ttClose, '', 'ttClose');
+  b(r4, '✔ 確定', ttCommit, 'end', 'ttCommit');
+}
+async function ttHere() {
+  const f = await getFixNow(8);
+  if (!f) { toast('今の位置が取れません'); return; }
+  TT.pts.push([r7(f.lat), r7(f.lon)]); TT.ptRedo = []; gkBar(); gkDrawAll(); toast('今の位置で点を打ちました（±' + Math.round(f.acc) + 'm）');
+}
+/* 描く：担当範囲モードの間は、確定前の形（TT.work）を作図の層に出す */
+function ttDraw(map) {
+  const g = map._gk;
+  TT.work.forEach(a => {
+    if (!a.pts || a.pts.length < 2) return;
+    const col = ttColor(a), st = ttSt(a), sel = a.code === TT.sel, pts = sel && TT.drag && TT.drag.pts ? TT.drag.pts : a.pts;
+    if (a.line) { L.polyline(pts, { color: '#fff', weight: sel ? 14 : 11, opacity: .7, interactive: false }).addTo(g); L.polyline(pts, { color: col, weight: sel ? 9 : 7, opacity: .85, interactive: false }).addTo(g); }
+    else { L.polygon(pts, { color: '#fff', weight: sel ? 8 : 6, opacity: .7, fill: false, interactive: false }).addTo(g); L.polygon(pts, { color: col, weight: sel ? 4 : 3, fillColor: col, fillOpacity: TT_F[st.f][0], fill: TT_F[st.f][0] > 0, interactive: false }).addTo(g); }
+    L.marker(ttLabelAt(a, pts), { interactive: false, icon: L.divIcon({ className: 'tlabel', html: '<span class="tl" style="border-left-color:' + col + '"><b style="background:' + col + ';color:#fff">担</b>' + esc(a.name) + '</span>', iconSize: null }) }).addTo(g);
+    if (sel && TT.tool === 'edit') pts.forEach((p, i) => L.circleMarker(p, { radius: TT.drag && TT.drag.i === i ? 13 : 10, color: '#fff', weight: 3, fillColor: col, fillOpacity: 1, interactive: false }).addTo(g));
+  });
+  if (TT.pts.length) {
+    const ar = TT.pts.length >= 3 ? L.polygon : L.polyline;
+    ar(TT.pts, { color: '#16303f', weight: 3, dashArray: '6 5', fill: TT.pts.length >= 3, fillOpacity: .1, interactive: false }).addTo(g);
+    TT.pts.forEach((p, i) => L.circleMarker(p, { radius: i === TT.pts.length - 1 ? 8 : 5, color: '#fff', weight: 3, fillColor: '#16303f', fillOpacity: 1, interactive: false }).addTo(g));
+  }
+}
+function ttLabelAt(a, pts) { pts = pts || a.pts; if (a.line) return L.latLng(pointAt({ pts }, lineCum(pts).slice(-1)[0] / 2)); return pts.reduce((m, p) => [m[0] + p[0] / pts.length, m[1] + p[1] / pts.length], [0, 0]); }
+/* フリーハンドが終わったとき：始めと終わりが近ければ囲み、離れていれば路線 */
+function ttFreeDone(map, path) {
+  let len = 0; for (let i = 0; i + 1 < path.length; i++) len += path[i].distanceTo(path[i + 1]);
+  if (path.length < 3 || len < 30) { gkDrawAll(); return; }
+  const closed = path[0].distanceTo(path[path.length - 1]) < Math.max(40, len * 0.12);
+  let sp = gkSimplify(path, 4);
+  if (closed && sp.length > 3 && sp[0].distanceTo(sp[sp.length - 1]) < 1) sp = sp.slice(0, -1);
+  const ll = sp.map(p => { const q = map.containerPointToLatLng(p); return [r7(q.lat), r7(q.lng)]; });
+  if (closed && ll.length < 3) { gkDrawAll(); return; }
+  gkDrawAll(); ttName({ pts: ll, line: !closed });
+}
+/* 選んで直す：画面の上の当たり判定 */
+function ttHitArea(map, cp) {
+  const ll = map.containerPointToLatLng(cp); let best = null;
+  TT.work.forEach(a => {
+    if (!a.pts || a.pts.length < 2) return;
+    const cps = a.pts.map(p => map.latLngToContainerPoint(p)), n = cps.length;
+    let d = Infinity; for (let i = 0; i + 1 < n + (a.line ? 0 : 1); i++) d = Math.min(d, ttSegD(cp, cps[i], cps[(i + 1) % n]));
+    if (!a.line && inPoly([ll.lng, ll.lat], a.pts.map(p => [p[1], p[0]]))) d = Math.min(d, 6);
+    if (d <= 22 && (!best || d < best.d)) best = { a, d };
+  });
+  return best && best.a;
+}
+function ttSegD(p, a, b) { const vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy, t = l2 ? Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / l2)) : 0; return Math.hypot(p.x - a.x - t * vx, p.y - a.y - t * vy); }
+function ttTapSelect(map, cp) { const a = ttHitArea(map, cp); TT.sel = a ? a.code : null; gkLock(); gkBar(); gkDrawAll(); if (a) toast('選びました：' + a.name); }
+/* 指を置いた所：角なら動かす、辺なら点を足して動かす */
+function ttGrab(map, cp) {
+  const a = ttSelArea(); if (!a) return null;
+  const cps = a.pts.map(p => map.latLngToContainerPoint(p));
+  let vi = -1, vd = 24; cps.forEach((q, i) => { const d = q.distanceTo(cp); if (d < vd) { vd = d; vi = i; } });
+  if (vi >= 0) return { i: vi, pts: a.pts.map(p => p.slice()), add: false, s: cp, on: false };
+  const n = cps.length; let ei = -1, ed = 18;
+  for (let i = 0; i + 1 < n + (a.line ? 0 : 1); i++) { const d = ttSegD(cp, cps[i], cps[(i + 1) % n]); if (d < ed) { ed = d; ei = i; } }
+  if (ei < 0) return null;
+  const pts = a.pts.map(p => p.slice()), q = map.containerPointToLatLng(cp); pts.splice(ei + 1, 0, [r7(q.lat), r7(q.lng)]);
+  return { i: ei + 1, pts, add: true, s: cp, on: true };
+}
+function ttDragEnd(commit) {
+  const d = TT.drag; TT.drag = null; if (!d) return;
+  if (!commit || (!d.on && !d.add)) { gkDrawAll(); return; }
+  const next = ttClone(TT.work), t = next.find(x => x.code === TT.sel); if (!t) { gkDrawAll(); return; }
+  t.pts = d.pts; ttChange(next, d.add ? '点を足しました' : null);
+}
+function ttDelVertex(i) {
+  const a = ttSelArea(); if (!a) return;
+  const min = a.line ? 2 : 3; if (a.pts.length <= min) { toast(a.line ? '路線は2点より少なくできません' : '囲みは3点より少なくできません'); return; }
+  sheet(box => {
+    box.append(el('h3', '', i + 1 + '番目の点'));
+    const y = el('button', 'btn dangerline', 'この点を消す'); y.id = 'ttVxDel';
+    y.onclick = () => { sheet(null); const next = ttClone(TT.work), t = next.find(x => x.code === a.code); t.pts.splice(i, 1); ttChange(next, '点を消しました（戻すで戻せます）'); };
+    const n = el('button', 'btn sub', 'やめる'); n.onclick = () => sheet(null); box.append(y, n);
+  });
+}
+/* 担当範囲の層（ふだんの表示）：航空写真・図面の上、対象の線・作図・写真の印の下。押せない（下の印のタップを横取りしない） */
+function ttPane(map) { if (!map.getPane('tantoPane')) { const p = map.createPane('tantoPane'); p.style.zIndex = 380; p.style.pointerEvents = 'none'; } return 'tantoPane'; }
+function ttLineNear(lat, lon, a) {
+  const r = Math.PI / 180, kx = 6371000 * r * Math.cos(lat * r), ky = 6371000 * r, P = p => ({ x: (p[1] - lon) * kx, y: (p[0] - lat) * ky }), o = { x: 0, y: 0 };
+  let d = Infinity; for (let i = 0; i + 1 < a.pts.length; i++) d = Math.min(d, ttSegD(o, P(a.pts[i]), P(a.pts[i + 1])));
+  return d;
 }
 $('gkCheck').onclick = () => gkMode(GK.mode === 'check' ? '' : 'check');
 $('gkDraw').onclick = () => gkMode(GK.mode === 'draw' ? '' : 'draw');
